@@ -1,0 +1,140 @@
+
+
+<section id="tour">
+
+<div class="row">
+<!--header--> 
+<div class="col-lg-12">
+    <h1 class="text-center tourHead">Tour list
+    
+    
+    </h1>
+    <hr class="my-4" />
+    <div class="float-right">
+        <a class="btn btn-primary" href="<?php echo site_url("tour/create");?>">Add New</a>
+    </div>
+</div>
+<h1>&nbsp;</h1>
+
+
+<div class="container-fluid">
+    
+    <!--dynamic content-->
+    
+        <div class="tour_list"></div>
+        <br />
+        <div class="tour_pagin"></div>
+    
+    
+    
+    <!--end of dynamic content-->
+
+</div>
+
+
+
+</div>
+
+</section>
+<script>
+
+$(function(){
+    var $el = $("#tour");
+
+    var $page_status = $(".status");
+
+    var vTour = (function(){
+
+        var $tour_list = $el.find(".tour_list");
+        var $tour_pagin = $el.find(".tour_pagin");
+        var $tourHead = $el.find(".tourHead");
+
+        function getTourList(page=1){
+            $tour_list.html("");
+            var url = "<?php echo site_url("tour/modGetTourList/");?>"+page;
+            $.ajax({
+                url : url,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    var num = parseInt(rs.get_tour.length);
+                    //console.log(rs);
+                    
+                    $tourHead.html(`Listing from ${num} item(s) / ${rs.num_tour} item(s) in total.`);
+                    $.each(rs.get_tour,function(i,v){
+                        var onsale = `<span class="badge badge-success">Yes</span>`;
+                        if(parseInt(v.mark_draft) !== 0){
+                            onsale = `<span class="badge badge-danger">No</span>`;  
+                        }
+                        //---edit url
+                        var editUrl = "<?php echo site_url("tour/create/");?>"+v.t_id;
+                        //---view url
+                        var viewUrl = "<?php echo site_url("tour/detail/");?>"+v.t_id;
+                        var tmp = `
+                        <div class="list-group">
+                            <div class="list-group-item">
+                            <a href="${editUrl}"  class="">
+                            ${v.t_name}
+                            </a>
+                            <hr class="my-4" />
+                            <br />
+                            <a class="btn btn-sm btn-info  lnDetail" href="${viewUrl}" target="_blank">View</a>
+                            <a class="btn btn-sm btn-danger btnDel" data-t_id="${v.t_id}">Delete</a>
+                            </div>
+                           </div>
+                        <br />
+                        `;
+                        $tour_list.append(tmp);
+                    });
+                    $tour_pagin.html(rs.pagination);
+                }
+            });
+        }
+        //----
+        function delTour(cmd,id){
+            switch(cmd){
+                case"delete":
+                    var url = "<?php echo site_url("tour/modDelTour/");?>"+id;
+                    $.ajax({
+                        url : url,
+                        success : function(e){
+                            var rs = $.parseJSON(e);
+                            $page_status.html(rs.msg).show();
+                            setTimeout(function(){
+                                $page_status.html("Loading...").fadeOut("slow");
+                                getTourList();
+                            },2000);
+                        }
+                    });
+                break;
+                default:
+                    var msg = `This will delete item id ${id} this operation cannot be undo \nAre you sure you want to delete?`;
+                    if(confirm(msg) === true){
+                        delTour("delete",id);
+                    }else{
+                        return false;
+                    }
+                break;
+            }
+        }
+
+        //----
+        function getEvent(){
+            getTourList();
+            
+            $tour_pagin.delegate(".pagination a","click",function(e){
+                e.preventDefault();
+                var cur_page = $(this).attr("data-ci-pagination-page");
+                getTourList(cur_page);
+            });
+
+            $tour_list.delegate(".btnDel","click",function(e){
+                e.preventDefault();
+                var id = $(this).attr("data-t_id");
+                delTour(null,id);
+            });
+        }
+        return{ getEvent:getEvent}
+    })();
+    vTour.getEvent();
+});
+</script>

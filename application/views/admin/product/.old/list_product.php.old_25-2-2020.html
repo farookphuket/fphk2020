@@ -1,0 +1,610 @@
+<section id="sys_info">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10">
+                <h1 class="text-center">
+                    <?php echo "{$sysName} version {$sysVersion}"?>
+                </h1>
+                <p style="text-align:center;color:green;">
+                    Last update <?php echo $sysDate; ?>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+<section id="product">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="float-right">
+                    <a  class="btn btn-lg btn-primary lnCreate" style="color:white;font-weight:bold;">Add Product</a>
+                </div>
+            </div>
+            <div class="col-lg-12">
+                <p>&nbsp;</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="alert alert-success">
+                    <h1 class="numAll" style="color:blue;text-align:right;">0</h1>
+
+                </div>
+                <p style="text-align:right;color:green;">All product</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="alert alert-info">
+                    <h1 class="numSale" style="color:blue;text-align:right;">0</h1>
+
+                </div>
+                <p style="text-align:right;color:green;">product on sale</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="alert alert-danger">
+                    <h1 class="notSale" style="color:red;text-align:right;">0</h1>
+
+                </div>
+                <p style="text-align:right;color:green;">product MUTE</p>
+            </div>
+            <div class="col-lg-12">
+                <p>&nbsp;</p>
+                <p>
+                    &nbsp;
+                </p>
+            </div>
+
+            <div class="col-lg-12">
+                <div class="p_list"></div>
+                <div class="p_pagin"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade md">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title">
+
+                    </h1>
+                    <button class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <?php
+                        $f = "admin/product/_frm_product";
+                        $this->load->view($f);
+                    ?>
+                    <p>&nbsp;</p>
+                    <div class="fResult"></div>
+                    <div class="modal_status">
+                    </div>
+                    <p>&nbsp;</p>
+                    <div class="float-right alert alert-success">
+                        <div class="form-group">
+                            <label class = "checkbox-inline">
+                                <input type = "checkbox" name="on_sale" id ="on_sale" class="on_sale">  On sale
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary btnSave" type="submit" form="sProduct">Save</button>
+                    <button class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade mdConf">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title">Confirm delete?</h1>
+                    <button class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="p_id" class="p_id"  />
+                    <section class="confMsg">
+
+                    </section>
+                    <section class="confResult">
+
+                    </section>
+                    <div class="modal_status">
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a style="color:white;font-weight:bold;" class="btn btn-primary btn-lg lnConf">yes, delete it</a>
+                    <a style="color:white;font-weight:bold;" data-dismiss="modal" class="btn btn-danger btn-lg">Close</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+ $(function(){
+     var $p = $("#product");
+     var $page_status = $(".status");
+     var p = (function(){
+        var lnCreate = getEl(".lnCreate");
+        var $numAll = getEl(".numAll");
+        var $numSale = getEl(".numSale");
+        var $notSale = getEl(".notSale");
+
+        //--- form hidden element
+        var p_id = getEl(".p_id");
+        var p_user_id = getEl(".p_user_id");
+        var kw_id = getEl(".kw_id");
+
+        var $p_list = getEl(".p_list");
+        var $p_pagin = getEl(".p_pagin");
+        //-------modal
+        var $md = getEl(".md");
+        var $mdTitle = getEl(".modal-title");
+
+        //---- confirm modal
+        var $mdConf = getEl(".mdConf");
+        var $confMsg = getEl(".confMsg");
+        var $confResult = getEl(".confResult");
+        var lnConf = getEl(".lnConf");
+
+        //---------form
+        var $f = getEl("#sProduct");
+        var p_name = getEl(".p_name");
+        var p_sum = getEl(".p_sum");
+        var p_body = getEl(".p_body");
+        var p_price = getEl(".p_price");
+
+        //---   checkbox
+        var chk_onSale = getEl(".on_sale");
+        //---seo
+        var keyurl = getEl(".keyurl");
+        var keyword = getEl(".keyword");
+        var keydes = getEl(".keydes");
+
+        //-- show result
+        var $fResult = getEl(".fResult");
+        var $modal_status = getEl(".modal_status");
+        var btnSave = getEl(".btnSave");
+
+        function showProductLabel(){
+            var all = 0;
+            var sale = 0;
+            var not = 0;
+            var url = "<?php echo site_url("product/adminList");?>";
+            $.ajax({
+                url : url,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    //console.log(rs);
+                    all = rs.get_all.length;
+                    $.each(rs.get_all,function(i,v){
+                        if(parseInt(v.on_sale) === 0){
+                            not++;
+                        }else{
+                            sale++;
+                        }
+                    });
+                    $numAll.html(all);
+                    $notSale.html(not);
+                    $numSale.html(sale);
+                }
+            });
+        }
+        //-------------------------------
+        //----------    showList
+        function showList(page=1){
+            $p_list.html("");
+            var url = "<?php echo site_url("product/adminList/");?>"+page;
+            $.ajax({
+                url : url,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    //console.log(rs);
+                    $.each(rs.get_p,function(i,v){
+                        var sale = `<span class="alert alert-success">ON Sale</span>`;
+                        if(parseInt(v.on_sale) === 0){
+                            sale = `<span class="alert alert-danger">NOT Sale</span>`;
+                        }
+                        var view_url = "<?php echo site_url("product/detail/");?>"+v.uniq_id;
+                        var tmp = `<div class="card">
+                        <div class="card-header">
+                            <h1 class="text-center">${v.pd_title}</h1>
+                        </div>
+                        <div class="card-body">
+                            ${v.pd_sum}
+                            <p>
+                            &nbsp;
+                            </p>
+                            <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th>
+                                    Date
+                                    </th>
+                                    <td>
+                                    <strong>Add</strong> ${v.date_add} <strong>Update</strong> ${v.date_update}
+                                    </td>
+                                </tr>
+                                <tr>
+                                <th>
+                                Price
+                                </th>
+                                <td>
+                                ${v.pd_price}
+                                </td>
+                                </tr>
+                                <tr>
+                                    <th>
+                                        Sale
+                                    </th>
+                                    <td>
+                                    ${sale}
+                                    </td>
+                                </tr>
+                            </table>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="float-right">
+                                <a href="${view_url}" target="_blank" class="btn btn-info btn-lg lnView" data-pd_id="${v.pd_id}">View</a>
+                                <a class="btn btn-primary btn-lg lnEdit" data-pd_id="${v.pd_id}">Edit</a>
+                                <a class="btn btn-danger btn-lg lnDel" data-pd_id="${v.pd_id}">Delete</a>
+                            </div>
+                        </div>
+                        </div>
+                        <p>
+                        &nbsp;
+                        </p>`;
+                        $p_list.append(tmp);
+                    });
+                    if(rs.pagination){
+                        $p_pagin.html(rs.pagination);
+                    }
+                }
+            });
+        }
+        //-----------   showForm
+        function showForm(cmd,id){
+            tinymce.activeEditor.setMode("design");
+            $f.trigger("reset");
+
+            switch(cmd){
+                case"edit":
+                    var url = "<?php echo site_url("product/adminEdit/");?>"+id;
+                    $.ajax({
+                        url : url,
+                        success : function(e){
+                            //
+                            var rs = $.parseJSON(e);
+                            $.each(rs.get,function(i,v){
+                                if(parseInt(v.on_sale) !== 0){
+                                    chk_onSale.prop("checked",true);
+                                }
+                                kw_id.val(v.kw_id);
+                                keyurl.val(v.og_url);
+                                keyword.val(v.kw_page_keyword);
+                                keydes.val(v.kw_page_des);
+                                p_id.val(v.pd_id);
+                                p_user_id.val(v.user_id);
+                                p_name.val(v.pd_title);
+                                p_price.val(v.pd_price);
+                                p_sum.val(v.pd_sum);
+                                tinymce.activeEditor.setContent(v.pd_body);
+                                $mdTitle.html(`Editing ${v.pd_title}...`);
+
+                                //---   show form result
+                                var fRes = `<div class="container">
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <h1 class="text-center">Editing...${v.pd_title}</h1>
+                                        <p>&nbsp;</p>
+                                    </div>
+                                    <div class="col-lg-12">
+                                        ${v.pd_sum}
+                                    </div>
+                                    <p>&nbsp;</p>
+                                    <div class="col-lg-12">
+                                        ${v.pd_body}
+                                    </div>
+                                </div>
+                                </div>`;
+                                $fResult.html(fRes);
+                                //--- show modal status
+                                var mdStatusShow = `<span class="alert alert-warning">Editing ${v.pd_title}...</span>`;
+                                $modal_status.html(mdStatusShow).show();
+
+                            });
+                            getTemplate(rs);
+                        }
+                    });
+                break;
+                default:
+                    $mdTitle.html("Create new product | เพิ่มสินค้า");
+                    p_id.val(0);
+                    getTemplate();
+                break;
+            }
+
+            $($md).modal("show");
+        }
+        //----------------------
+        //--------- getTMP
+        function getTemplate(obj){
+            p_name.attr("placeholder","Enter Product Title").val("");
+
+            var img_1 = "https://lh3.googleusercontent.com/FFyJQ0YdsRdEBfjwoM4xnnZJoAJHN6tQk5XGpvzC_rBtiQlK1w_8Rx4GyKlFYCejGrkGDyyqAHBYCM02sskN13_YyyqLjBfbEkT_c-wTP_WSKzhE3O0etM2dpoLOuND9oT2rVWwLpXw=w2400";
+
+            var img_2 = "https://lh3.googleusercontent.com/s9mba2mj7tW9b3VKS3fQhisZFBQQCXGFdjQv953g3XF_TC5V-yyi7c5oIKApVj1ndb5iP3OGv7q4vlxYCGW4WYkP1kMe7W-qYwwOxZ4B0SGYLkZofGBEtDNzWKQgD4NX5R1UyOI7qTo=w2400";
+
+            //---   3 boat
+            var img_3 = "https://lh3.googleusercontent.com/w3ldmwEsNF9ovSAhIWCtVK00I1nfGLl7mq2tva2uAP0XVvkPUaUE6w10-eJZgqKsW26WtDgRajlW8mCTko3MRblNfep4QJXvor0p9JgkSeSXtzZt-I49bFaKFyXHL_xSqwK0aqSGkQE=w2400";
+
+            //console.log(obj);
+
+            var t_sum = `<div class="row">
+                <div class="col-lg-4">
+                    <img src="${img_1}" class="responsive" />
+                    <p class="text-center">Your photo title
+                    </p>
+                </div>
+                <div class="col-lg-8">
+                    <p>Your product summary can be a long paragraph.</p>
+                </div>
+            </div>`;
+            var t_body = `<section id="product_body">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <h1 class="text-center">New product title</h1>
+                        </div>
+                        <p>&nbsp;</p>
+                        <!-- div tag show image 1 -->
+                        <div class="col-lg-12">
+                            <img src="${img_2}" class="responsive" />
+                            <p class="text-center">Image title here</p>
+                        </div>
+                        <!-- END OF div tag show image 1 -->
+                        <p>&nbsp;</p>
+                        <div class="col-lg-12">
+                            <img src="${img_3}" class="responsive" />
+                            <p style="text-align:right;color:green;font-weight:bold;">Image title</p>
+                            <p>In this "div" tag is can be a multiple line of text to explain about the product in detail.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            `;
+            if(obj){
+                $.each(obj.get,function(i,v){
+                    p_name.val(v.pd_title);
+                    t_sum = `${v.pd_sum}`;
+
+                    t_body = `${v.pd_body}`;
+                });
+            }
+            p_sum.val(t_sum);
+            tinymce.activeEditor.setContent(t_body);
+            //--------
+
+            //------    show the result
+            var showResult = `<div class="container">
+                <div class="row">
+                    <div class="col-lg-12">
+                        ${t_sum}
+                    </div>
+                    <p>&nbsp;</p>
+                    <div class="col-lg-12">
+                        ${t_body}
+                    </div>
+                </div>
+            </div>`;
+            $fResult.html(showResult);
+        }
+        //----------------------------
+        //--------  pFirstSave
+        function pFirstSave(){
+            var id = parseInt(p_id.val());
+            var msg = "";
+            if(id === 0){
+                if(p_name.val().length > 8){
+                    var url = "<?php echo site_url("product/adminFirstSave");?>";
+                    var data = {p_name : p_name.val()};
+                    $.ajax({
+                        type : "post",
+                        url : url,
+                        data : data,
+                        success : function(e){
+                            var rs = $.parseJSON(e);
+                            kw_id.val(rs.kw_id);
+                            p_id.val(rs.id);
+                            msg = `<span class="alert alert-warning">Create new product</span>`;
+                            getSummary();
+
+
+                        }
+                    });
+
+                }else{
+                    msg = `Error : product name is too short`;
+                }
+            }else{
+
+                msg = `<span class="alert alert-warning">edit mode</span>`;
+            }
+            $modal_status.html(msg).show();
+        }
+        //---------------------------
+        //-------   setSale
+        function setSale(){
+            var onS = 0;
+            var showM = `<span class="alert alert-danger">Product is NOT ON SALE</span>`;
+            if(chk_onSale.is(":checked")){
+                onS = 1;
+                showM = `<span class="alert alert-success">Product is  ON SALE</span>`;
+            }
+            $modal_status.html(showM).show();
+            return parseInt(onS);
+        }
+        //-------   pSave
+        function pSave(){
+            btnSave.unbind();
+            var sale = setSale();
+            $f.submit(function(e){
+                e.preventDefault();
+
+                var data = $(this).serialize()+"&on_sale="+parseInt(sale);
+                var url = $(this).attr("action");
+                $.post(url,data,function(e){
+                    var rs = $.parseJSON(e);
+                    var msgShow = `<span class="alert alert-success">Data has been save you can close this window when you have done.</span>`;
+                    $modal_status.html(msgShow).show();
+                    setTimeout(function(){
+                        getSummary();
+                        showForm("edit",rs.p_id);
+                    },3000);
+
+                });
+            });
+        }
+        //---------------------
+        //--    delProduct
+        function delConf(id){
+            $mdTitle.html("");
+            $confMsg.html("");
+            $confResult.html("");
+            var url = "<?php echo site_url("product/adminEdit/");?>"+id;
+            $.ajax({
+                url : url,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    $.each(rs.get,function(i,v){
+                        p_id.val(v.pd_id);
+                        $mdTitle.html(`Confirm to delete ${v.pd_title}`);
+                        var cfMsg = `<h1 class="text-center">You are about to delete ${v.pd_title}</h1><div class="alert alert-danger">
+                        <p>
+                        This operation cannot be undo!
+                        </p>
+                        <p>
+                        Are you sure you want to delete "${v.pd_title}" ?
+                        </p>
+                        </div>`;
+                        $confMsg.html(cfMsg);
+                        var cfRes = `<div class="container">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                ${v.pd_title}
+                            </div>
+                            <p>
+                            &nbsp;
+                            </p>
+                            <div class="col-lg-12">
+                                ${v.pd_sum}
+                            </div>
+                            <p>
+                            &nbsp;
+                            </p>
+                            <div class="col-lg-12">
+                                ${v.pd_body}
+                            </div>
+                        </div>
+                        </div>`;
+                        $confResult.html(cfRes);
+                    });
+                    $($mdConf).modal("show");
+                }
+            });
+        }
+        //--------------
+        //---   delProduct
+        function delProduct(id){
+            lnConf.hide();
+            $mdTitle.html("operation Done!");
+            $confResult.fadeOut("slow");
+            $confMsg.html(`<div class="alert alert-success">
+            <h1>DATA HAS BEEN DELETED!</h1>
+            <p>
+            You can close this window now.
+            </p>
+            </div>`);
+
+            var url = "<?php echo site_url("product/adminDel/");?>"+id;
+            $.ajax({
+                url : url,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    var tmp = `<span class="alert alert-success">
+                    Data has been deleted! there are ${rs.last_num} item(s) from the last operation!</span>`;
+                    $modal_status.html(tmp).show();
+                    setTimeout(function(){
+                        $modal_status.html("").fadeOut("slow");
+                        getSummary();
+
+                    },14000);
+                }
+            });
+        }
+
+        //--------  getSummary
+        function getSummary(){
+            showProductLabel();
+            showList();
+        }
+        //---------------------------
+        //-------   getEl   -----
+        function getEl(el){
+            return $p.find(el);
+        }
+        function getEvent(){
+            getSummary();
+
+            //---button lnCreate click
+            lnCreate.on("click",function(){
+                showForm();
+            });
+
+            //---edit product
+            $p_list.delegate(".lnEdit","click",function(){
+                var id = $(this).attr("data-pd_id");
+                showForm("edit",id);
+            });
+
+            //--- del product
+            $p_list.delegate(".lnDel","click",function(e){
+                e.preventDefault();
+                var id = $(this).attr("data-pd_id");
+                delConf(id);
+            });
+            p_name.on("blur",function(){
+                pFirstSave();
+            });
+
+            //---   pagination
+            $p_pagin.delegate(".pagination a","click",function(e){
+                e.preventDefault();
+                var page = $(this).attr("data-ci-pagination-page");
+                showList(page);
+            });
+            //---   checkbox
+            chk_onSale.on("change",function(){
+                setSale();
+            });
+            //------    submit click
+            btnSave.on("click",function(){
+                pSave();
+            });
+            //--    delete confirm
+            lnConf.on("click",function(){
+                var id = p_id.val();
+                delProduct(id);
+            });
+        }
+         return{getEvent:getEvent}
+     })();
+
+     //---call
+     p.getEvent();
+ });
+</script>

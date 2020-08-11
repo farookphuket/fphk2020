@@ -1,0 +1,286 @@
+<script>
+
+
+
+//call jQuery
+$(function(){
+    var $el = $("#container");
+    var page_status = $el.find(".status");
+    var modal_status = $el.find(".modal_status");
+
+
+    var manUser = (function(){
+
+        //---modal edit or del user form
+        var lnAddUser = $el.find(".lnAddUser");
+        var lnDelUser = $el.find(".lnDelUser");
+        var lnEditUser = $el.find(".lnEditUser");
+        var mdEditUser = $el.find(".mdManUser");
+
+        //modal title
+        var mdTitle = $el.find(".modal-title");
+        
+        //--form id
+        var frmUser = $el.find("#editUser");
+        var u_id = $el.find(".u_id");
+        var u_name = $el.find(".u_name");
+        var u_email = $el.find(".u_email");
+        var btnSave = $el.find(".btnSave");
+
+        //---active and ban
+        var active = $el.find("#u_active");
+        var ac_txt = $el.find(".active_txt");
+        // ac_txt.addClass("label-danger")
+        // .removeClass("label-success")
+        // .val("Not Active");
+
+        var ban = $el.find("#u_ban");
+        var ban_txt = $el.find(".ban_txt");
+        // ban_txt.addClass("label-success")
+        // .val("Not BAN");
+
+        var mod = $el.find("#u_mod");
+        var mod_txt = $el.find(".mod_txt");
+        mod_txt.addClass("label-info")
+        .val("Normal member");
+
+        //---from user
+        function formUser(cmd,id){
+            switch(cmd){
+                case"edit":
+                    //alert("edit user "+id);
+                    editUser(id);
+                break;
+                default:
+                    
+                    frmUser.trigger("reset");
+                    ban_txt.addClass("label-success")
+                    .val("Not BAN");
+
+                    //--active will be not set by default
+                    active.prop("checked",false);
+                    ac_txt.addClass("label-danger").
+                    val("Not Activated");
+                    u_name.attr("placeholder","Please Enter name").val("");
+                    u_email.attr("placeholder","Please Enter email")
+                    .val("");
+
+                    //--moderate set to none
+                    mod.val(0);
+                    mod_txt.removeClass("label-warning")
+                    .addClass("label-info")
+                    .val(`Normal Member`);
+                    mdTitle.html("Create new User");
+                    $(mdEditUser).modal("show");
+                break;
+
+            }
+        }
+        //--------Edit user
+        function editUser(id){
+            
+            frmUser.trigger("reset");
+            var url = "<?php echo site_url("users/admin");?>";
+            var data = {u_id : id,cmd : "edit_user"};
+            $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    //call edit form
+                    //console.log(rs);
+                    $.each(rs.get,function(i,v){
+                        $(".modal-title").html("Editing... "+v.name);
+                        
+                        u_name.val(v.name);
+                        u_email.val(v.email);
+                        u_id.val(v.id);
+
+                        //active 
+                        var ac = parseInt(v.is_activated);
+                        var ac_t = "NOT Active";
+                        if(ac !== 0){
+                            active.prop("checked",true)
+                            .val(ac);
+                            ac_t = "Activated";
+                            ac_txt.removeClass("label-danger")
+                            .addClass("label-success");
+                        }
+                        ac_txt.val(ac_t);
+
+                        //is ban
+                        var ba = parseInt(v.is_ban);
+                        var b_txt = "NOT Ban";
+                        if(ba !== 0){
+                            ban.prop("checked",true)
+                            .val(ba);
+                            ban_txt.removeClass("label-success")
+                            .addClass("label-danger");
+                            b_txt = "Ban";
+                        }
+                        ban_txt.val(b_txt);
+
+                        //---user is moderate
+                        var mo = parseInt(v.moderate);
+                        var m_txt = "Normal Member";
+                        if(mo !== 0){
+                            mod.prop("checked",true)
+                            .val(mo);
+                            mod_txt.removeClass("label-default")
+                            .addClass("label-warning");
+                            m_txt = "User set to Moderate";
+                        }
+                        mod_txt.val(m_txt);
+                        mod.val(mo);
+
+                        $(mdEditUser).modal("show");
+                    });
+                }
+            });
+        }
+        //----Active user
+        function userActive(){
+
+            var ac = 0;
+            var tx = "Not Active";
+            ac_txt.removeClass("label-success")
+            .addClass("label-danger");
+            if(active.is(":checked")){
+                ac = 2;
+                tx = "Actived";
+                ac_txt.removeClass("label-danger")
+                .addClass("label-success");
+                
+            }
+            ac_txt.val(tx);
+            active.val(ac);
+            console.log("ac is "+ac);
+            return parseInt(ac);
+        }
+        //-------user ban
+        function userBan(){
+
+            var ba = 0;
+            var tx = "Not Ban";
+            ban_txt.removeClass("label-danger")
+            .addClass("label-success");
+            if(ban.is(":checked")){
+                ba = 2;
+                tx = "Ban";
+                ban_txt.removeClass("label-success")
+                .addClass("label-danger");
+            }
+            ban_txt.val(tx);
+            ban.val(ba);
+            console.log("user ban is "+ba);
+            return parseInt(ba);
+        }
+        //----
+        //--user set mod Wed 23/5/2018
+        function setMod(){
+                var m = 0;
+                var m_txt = "User set as Member";
+                mod_txt.removeClass("label-warning")
+                .addClass("label-info");
+            if(mod.is(":checked") === true){
+                m_txt = "Set user to Moderate";
+                m = 2;
+                mod_txt.removeClass("label-info")
+                .addClass("label-warning");
+            }
+             console.log(`mod is ${m}`);
+             mod_txt.val(m_txt);
+             mod.val(m);   
+            
+        }
+
+
+        //----saveUser
+        function saveUser(){
+            
+            btnSave.unbind();
+
+            frmUser.submit(function(evt){
+                evt.preventDefault();
+                var cmd = "save_user";
+                var url = $(this).attr("action");
+                var data = $(this).serialize()+"&cmd="+cmd;
+                $.post(url,data,function(o){
+                    //console.log(o);
+                    var rs = $.parseJSON(o);
+                    modal_status.html(rs.msg).show();
+                    setTimeout(function(){location.reload();},500);
+                });
+            });
+        }
+        //--------delUser
+        function delUser(id){
+            var conf = `Are you sure to delete user id ${id}?`;
+            if(confirm(conf) === true){
+                var url = "<?php echo site_url("users/admin");?>";
+                var data = {u_id : id,cmd : "del_user"};
+                $.ajax({
+                    type : "post",
+                    url : url,
+                    data : data,
+                    success : function(e){
+                        var rs = $.parseJSON(e);
+
+                        page_status.html(rs.msg).show();
+                        setTimeout(function(){
+                            page_status.fadeOut("slow");
+                            location.reload();
+                        },2000);
+                    }
+                });
+            }
+            return false;
+        }
+        //---------
+        function getEvent(){
+            
+            //call form to add new user
+            lnAddUser.on("click",function(){
+                formUser();
+            });
+            //--call form to edit
+            lnEditUser.on("click",function(evt){
+                
+                var id = $(this).attr("data-u_id");
+                formUser("edit",id);
+            });
+
+            active.on("change",function(){
+                
+                userActive();
+            });
+
+            ban.on("change",function(){
+                userBan();
+            });
+
+            //--btnSave click
+            btnSave.on("click",function(){
+                
+                saveUser();
+            });
+
+            //del user
+            lnDelUser.on("click",function(){
+                var id = $(this).attr("data-u_id");
+                delUser(id);
+            });
+
+            //--
+            mod.on("change",function(){
+                setMod();
+            });
+            
+        }
+        return{ getEvent : getEvent}
+    })();
+
+    manUser.getEvent();
+});
+</script>

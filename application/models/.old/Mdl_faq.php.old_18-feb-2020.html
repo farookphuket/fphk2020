@@ -1,0 +1,593 @@
+<?php 
+class Mdl_faq extends MY_Model{
+
+    protected $_tb_faq = "tbl_faq";
+
+    public $ip;
+    public $browser;
+    public $os;
+
+
+    public $is_login;
+    public $is_admin;
+    public $moderate;
+    
+    public function __construct(){
+        parent:: __construct();
+
+    }
+
+
+    function all(){
+        $get = $this->db->get($this->_tb_faq);
+        return $get;
+    }
+    function find($where){
+        $get = $this->db
+                    ->where($where)
+                    ->get($this->_tb_faq);
+        return $get;
+    }
+
+    /*
+     *  isRealUser
+     *  will sent the email with link to this user email 
+     *  this user have to click on the link before the session is expire
+     */
+    function isRealUser(){
+        $name = $this->getEl("faq_name");
+        $email = $this->getEl("faq_email");
+        $our_web = site_url();
+        $action_code = $this->randomChar(50);
+        $cf_link = site_url("faq/userHasConfirm/{$action_code}");
+        $time_now = strtotime($this->today_andTime);
+        $expire = (60*60)+($time_now-1800);
+        $ex_show = date("Y-m-d H:i:s",$expire);
+
+        //-- u_data
+        $u_data = array(
+            "faq_uniq_id" => $action_code,
+            "faq_name" => $name,
+            "faq_email" => $email,
+            "faq_ip" => $this->ip,
+            "faq_date" => $this->today,
+            "date_create" => $this->today_andTime
+        );
+        $faq_id = $this->SAVE($u_data,$this->_tb_faq);
+
+        /*
+         *  Send email to user email
+         */
+        $mail_title = "please confirm this is you {$name}";
+        $mail_body = "
+<div style='padding:45px;background-color:#e7e7e7;color:white;'>
+    <div style='background-color:white;color:green;'>
+        <h1>Please confirm this is you</h1>
+        <p>dear {$name}! you have receive this e-mail because someone(maybe you) has request the confirmation link from {$our_web} on {$this->today_andTime}</p>
+        <p>if this is you please make a confirm by click on the link below.</p>
+        <p>
+        Click on  <a href='{$cf_link}' target='_blank'>{$cf_link}<a/><br /> or Copy and paste :<br /> {$cf_link} into your address bar then hit Enter.
+    
+        </p>
+        <p>The link will be expire on {$ex_show}</p>
+    </div>
+    <div style='border:2px dashed #ff0000;padding:25px;background-color:black;color:red;'>
+        <h1 style='text-algin:center'>If this was NOT you</h1>
+        <p>please ignore or delete this email , we are aplologize for this annoying email we will try to fix our system in the future.</p>
+        <p>&nbsp;</p>
+    </div>
+    <div style='background-color:white;color:blue;'>
+        <p style='text-align:right;'>Best regards, farook</p>
+    </div>
+</div>
+";
+        $this->sendMailTo("info@farookphuket.com",$email,$mail_title,$mail_body);
+        //---   send e-mail
+        //----------------------
+
+        $msg = "<p>Dear {$name} we have sent an e-mail to your via @{$email} on {$this->today_andTime}</p>
+            <p>please confirm by go back to your mailbox before {$ex_show} today.</p>";
+        $r_data = array(
+            "msg" => $msg,
+            "faq_id" => $faq_id
+        );
+        return $r_data;
+    }
+
+    //------------------------
+    //---   userHasConfirm
+    function userHasConfirm($code){
+        $name = "";
+        $email = "";
+        $ip = "";
+
+        $our_web = site_url();
+
+        $time_now = strtotime($this->today_andTime);
+        $expire = "";
+        $create = "";
+        $get = $this->find(array("faq_uniq_id" => $code));
+        foreach($get->result() as $row):
+            $create = strtotime($row->date_create);
+            $expire = (60*60)+($create-1800);
+            $name = $row->faq_name;
+            $email = $row->faq_email;
+            $ip = $row->faq_ip;
+        endforeach;
+        
+        $ex_show = date("Y-m-d H:i:s",$expire);
+        if($time_now >= $expire):
+            $msg = "<div class='alert alert-danger'><h1 class='text-center'>Error : your link has expired
+</h1></div>";
+            else:
+                //---   set session for this user        
+                $sess_data = array(
+                            "sess_name" => $name,
+                            "sess_email" => $email,
+                            "sess_ip" => $ip,
+                            "action_code" => $code,
+                            "real_human" => true
+                        ); 
+                $this->session->set_userdata($sess_data);
+            
+                //-----------------------
+$msg = "<div class='alert alert-success'>
+    <h1 class='text-center' style='color:blue;'>
+        Dear {$name} Thank you!
+    </h1>
+    <p>
+    your code has been set ,thank you for your confirmation! 
+    </p>
+    </div>";
+            endif;
+
+
+
+        $r_data = array(
+            "msg" => $msg
+        );
+        return $r_data;
+    }
+
+
+    function saveFaq(){
+        $action_code = $this->getEl("action_code");
+        $name = $this->getEl("faq_name");
+        $email = $this->getEl("faq_email");
+        $faq_id = $this->getEl("faq_id");
+
+        $title = $this->getEl("faq_title");
+        $body = $this->getEl("faq_body");
+
+        $u_data = array(
+            "faq_title" => $title,
+            "faq_body " => $body,
+            "faq_time" => date("H:i:s",time()),
+            "date_update" => $this->today_andTime
+        );
+        if($action_code):
+            if($faq_id):
+
+                $msg = "Success action ID {$action_code} @{$faq_id} has been updated";
+                $this->SAVE($u_data,$this->_tb_faq,array("faq_id" => $faq_id));
+
+                $this->faqMailUser();
+                $this->faqAdminNotice();
+            endif;
+            
+        endif;
+        $r_data = array(
+            "msg" => $msg,
+            "faq_id" => $faq_id
+        );
+        return $r_data;
+    }
+    //--------------------------------------
+    //---   faqMailUser
+    function faqMailUser(){
+        $name = $this->getEl("faq_name");
+        $email = $this->getEl("faq_email");
+
+        $title = $this->getEl("faq_title");
+        $body = $this->getEl("faq_body");
+        $our_web = site_url();
+
+        //--    Sent email to this user
+        $mail_title = "You have made F.A.Q on {$our_web}";
+        $mail_body = "<div style='padding:25px;background-color:#e7e7e7;color:green;'>
+    <div style='backround-color:white;color:blue;'>
+        <h1 style='text-algin:center;'>You have made F.A.Q on {$our_web}</h1>
+        <p>Dear {$name} you have made F.A.Q. at {$our_web} on date {$this->today_andTime} as the detail below</p>
+        
+    </div>
+    <div style='padding:20px;background-color:black;color:red;'>
+        <h1>{$title}</h1>     
+        <p>{$body}</p>
+    </div>
+    
+    <div style='padding:20px;background-color:white;color:blue;'>
+        <p>
+            if this was not you please ignore or delete this e-mail.
+        </p>
+        <p>We are apologize for this annoying e-mail.</p>
+        <p style='text-align:right;'>Best regard <br /> Farook</p>
+    </div>
+
+</div>";
+
+    $this->sendMailTo('info@farookphuket.com',$email,$mail_title,$mail_body);
+ 
+    } 
+    
+    function faqAdminNotice(){
+        $name = $this->getEl("faq_name");
+        $email = $this->getEl("faq_email");
+        $ip = $this->session->userdata("sess_ip");
+        $title = $this->getEl("faq_title");
+        $body = $this->getEl("faq_body");
+        $our_web = site_url();
+        $mail_title = "New F.A.Q from {$email} user name {$name} IP {$ip}";
+        $mail_body = "<div style='padding:25px;background-color:#e7e7e7;'>
+    <div style='background-color:white;'>
+        <h1 style='text-align:center;'>New Faq from {$name}</h1>
+        <p>From IP {$ip} has made the FAQ at {$our_web} on {$this->today_andTime} </p>
+    </div>
+    <div style='padding:25px;color:white;background-color:black;'>
+      <h1 style='text-align:center;'>{$title}</h1>  
+        <p>{$body}</p>
+    </div>
+</div>";
+
+        $this->sendMailTo('','info@farookphuket.com',$mail_title,$mail_body);
+    }
+
+    //----------    8-Feb-2020
+    /*
+     * F.A.Q Last edit on 14-12-19
+     */
+    // function getFaqAll($limit=false,$offset=false){
+    //     $get = $this->db
+    //                 ->order_by("faq_date","DESC")
+    //                 ->get($this->_tb_faq,$limit,$offset);
+    //     return $get;
+    // }
+    //
+    // function getFaqBy($by){
+    //
+    //     $get = $this->db
+    //                 ->where($by)
+    //                 ->get($this->_tb_faq);
+    //     return $get;
+    // }
+    //
+
+    /*
+     *
+     *  ADMIN SECTION START 13-Feb-2020
+     *
+     */
+    //---------------------------------
+    
+    //----------------------------------
+
+    function adminSave(){
+        $faq_id = $this->getEl("faq_id");
+        $faq_title = $this->getEl("faq_title");
+        $faq_body = $this->getEl("faq_body");
+        $chk_show = $this->getEl("is_show");
+        if(!$chk_show):
+            $chk_show = 0;
+        else:
+            $chk_show = 1;
+        endif; 
+
+        !($faq_id)?$faq_name = $this->user_name:$faq_name = "";
+        $faq_data = array(
+            "faq_title" => $faq_title,
+            "faq_body" => $faq_body,
+            "faq_is_show" => $chk_show,
+            "faq_date" => $this->today,
+            "faq_time" => date("H:i:s",time())
+        );
+        $msg = "";
+        if(!$faq_id):
+            //--- create
+            $save = $this->SAVE($faq_data,$this->_tb_faq);
+            $faq_id = $save;
+            $msg = "Success : data has been created @{$faq_id}";
+        else:
+            //--- edit
+        unset($faq_data["faq_date"]);
+            $save = $this->SAVE($faq_data,$this->_tb_faq,array("faq_id" => $faq_id));
+           $msg = "Success : data has been updated @{$faq_id}"; 
+        endif;
+
+        $r_data = array(
+            "faq_id" => $faq_id,
+            "msg" => $msg
+        );
+        return $r_data;
+    }
+
+    
+    //-------
+    function getFaq($where=false,$limit=false,$offset=false){
+
+        $faq_id = 0;
+        
+        if($where):
+            $get = $this->db
+                        ->where($where)
+                        ->order_by("faq_date","DESC")
+                        ->get($this->_tb_faq,$limit,$offset);
+            
+            
+        else:
+            //$get = $this->getTB($this->_tb_faq,null,$limit,$offset);
+            $get = $this->db
+                        ->order_by("faq_date","DESC")
+                        ->get($this->_tb_faq,$limit,$offset);
+                        
+        endif;
+
+        return $get;
+
+    }
+
+
+    function adminDel($id){
+
+        $where = array("faq_id" => $id);
+        $del = $this->DEL($where,$this->_tb_faq);
+        $msg = "Success : data has been deleted";
+        $r_data = array(
+            "msg" => $msg
+        );
+        return $r_data;
+    }
+
+
+
+    //---
+    // function numFaqAns($faq_id){
+    //     
+    //     $where_ans = array("faq_id" => $faq_id);
+    //     $get_ans = $this->getTB($this->_tb_ans,$where_ans)->result();
+    //     $num_ans = count($get_ans);
+    //     
+    //     //set faq_data to update
+    //     $faq_data = array("faq_has_ans" => $num_ans);
+    //     $this->saveTB($this->_tb_faq,$faq_data,array("faq_id" => $faq_id));
+    // }
+
+    //---getAns
+    // function getAns($where){
+    //     $get = $this->db
+    //                 ->order_by("ans_date","ANS")
+    //                 ->where($where)
+    //                 ->get($this->_tb_ans);
+    //     return $get;
+    // }
+    //---------saveAns
+    // function saveAns($data,$where=false){
+    //     $save = "";
+    //     $ans_id = "";
+    //     
+    //     if($where):
+    //         $save = $this->saveTB($this->_tb_ans,$data,$where);
+    //         $ans_id = $where["ans_id"];
+    //     else:
+    //         $save = $this->saveTB($this->_tb_ans,$data);
+    //         $ans_id = $save;
+    //     endif;
+    //     return $ans_id;
+    // }
+
+    //--------save data to faq
+    // function saveFaq(){
+    //     //--- last update 16-Dec-2019
+    //     $faq_id = $this->getEl("faq_id");
+    //     $faq_name = $this->getEl("faq_name");
+    //     $faq_email = $this->getEl("faq_email");
+    //     $faq_title = $this->getEl("faq_title");
+    //     $faq_body = $this->getEl("faq_body");
+    //
+    //
+    //     $faq_data = array(
+    //         "faq_title" => $faq_title,
+    //         "faq_ip" => $this->ip,
+    //         "faq_name" => $faq_name,
+    //         "faq_email" => $faq_email,
+    //         "faq_body" => $faq_body,
+    //         "faq_date" => $this->today,
+    //         "faq_time" => date("H:i:s",time()),
+    //         "date_create" => $this->today_andTime,
+    //         "date_update" => $this->today_andTime
+    //         
+    //     );
+    //     $msg = "";
+    //     
+    //     if(!$faq_id):
+    //         //--create 
+    //        $s = $this->faqSentMailNotice(); 
+    //         $save = $this->SAVE($faq_data,$this->_tb_faq);
+    //         $faq_id = $save;
+    //         $msg = "your message has been save! ,please check your email @".$s["u_email"]." and click the link to confirm that you are a real person.";
+    //         
+    //     else:
+    //         //--- update
+    //         unset($faq_data["date_create"]);
+    //         $save = $this->SAVE($faq_data,$this->_tb_faq,array("faq_id" => $faq_id));
+    //         $msg = "Success : message @{$faq_id} has been updated";
+    //     endif;
+    //     $r_data = array(
+    //         "msg" => $msg,
+    //         "faq_id" => $faq_id
+    //     );
+    //
+    //     return $r_data;
+    // }
+
+
+
+    /*  NO LONGER USE
+    function faqSentMailNotice(){
+    
+        $uEmail = $this->getEl("faq_email");
+        $uName = $this->getEl("faq_name");
+
+        $time_create = date("Y-m-d H:i:s",time());
+        $time_expire = (strtotime($time_create)+900);
+
+        $expire_show = date("Y-m-d H:i:s",$time_expire);
+        //$expire = date("Y-m-d H:i",strtotime('+15 minutes'));
+
+        $ulink = site_url("faq/userHasConfirm/{$this->ip}");
+
+        $conf_link = "<a href='{$ulink}' target='_blank'>Yes, I am a real person</a>";
+        /*
+         * sent mail to user
+         */
+        /*
+        $u_title = "Dear ${uName} please confirm it was you!";
+        $u_body = "<div style='border:2px solid #ff0000;background-color:#e7e7e7;'>
+            <h1 style='text-align:center;color:blue;'>dear <u>${uName}</u> please confirm if this was you!</h1>
+            <div style='background-color:white;'>
+                <h2 style='color:green;text-algin:center'>
+                    Dear ${uName} please response this message.
+                </h2>
+                <p>
+                    This message has send from 'https://www.farookphuket.com' as you have requested and enter your email({$uEmail}) into our F.A.Q section on {$this->today_andTime} <br />this is the reason why you have receive this message.
+
+                </p>
+                <p>
+                    However ! your message will not be appear on the website unless we have prove that you are the real person and your message is not a spam.<br />
+to confirm you are a real person please click on the link below within 15 minute (until {$expire_show} ). 
+                </p>
+                <p>
+                    {$conf_link}
+                </p>
+                <p>&nbsp;</p>
+                <p style='text-align:center;color:red'>
+                PS : <br />
+                Please ignore this email if you never do anything on 'www.farookphuket.com'
+                </p>
+            </div>
+            </div>";
+        $this->sendMailTo("info@farookphuket.com",$uEmail,$u_title,$u_body);
+        
+/*
+ * * End user mail
+*/
+
+        /*
+        $a_title = "new F.A.Q. from farookphuket.com";
+        $a_body = "<div style='padding:10px;border:2px solid #ff0000;'>
+       <h1>New F.A.Q from ip {$this->ip}</h1>
+        <p>The new faq on the website farookphuket.com from the name : {$uName} the email : {$uEmail} on {$this->today_andTime}.      
+            
+            </div>";
+$this->sendMailTo("info@farookphuket.com",null,$a_title,$a_body);
+        /*
+         *Send mail to admin
+         */
+
+        /*
+        $r_data = array(
+            "u_email" => $uEmail
+            
+        );
+        return $r_data;
+    }
+    //------------------
+    */
+
+
+
+
+    //--    userHasConfirm
+//     function userHasConfirm($where){
+//         $get = $this->getFaq($where)->result();
+//         $start = 0;
+//         $expire = 0;
+//         $now_time = date("Y-m-d H:i:s",time());
+//
+//         $uName = "";
+//         $uEmail = ""; 
+//         $faqTitle = "";
+//         $faqBody = "";
+//
+//         $t_msg = "";
+//         foreach($get as $row):
+//             $start = strtotime($row->date_create);
+//             $uName = $row->faq_name;
+//             $uEmail = $row->faq_email;
+//             $faqTitle = $row->faq_title;
+//             $faqBody = $row->faq_body;
+//             $t_msg = $row->date_create; 
+//         endforeach;
+//
+//         $t_create = $start;
+//         $t_expire = (60*60)/4+($t_create);
+//         $t_show = date("Y-m-d H:i:s",$t_expire);
+//
+//             $t1 = strtotime($now_time);
+//             $t2 = $start;
+//             $expire = round(abs($t1-$t2)/60,2);
+//
+//             $notice_admin = 0;
+//             if($expire > 15):
+//                 $msg = "<div class='alert alert-danger'>
+//                 <h1 class='text-center'>Error : your link has expired</h1>
+//                 <p>
+//                     <span class='badge badge-danger'>
+//                         Sorry :
+//                     </span> &nbsp;
+//
+//                     your link has created on {$t_msg} and will expire on {$t_show}.
+//                 </p>
+//                 </div>";
+//             else:
+// $msg = "<div class='alert alert-success'>
+//     <h1 class='text-center'>Thank you</h1>
+//     <p>thank you for your confirmed,we will post your message on our F.A.Q section soon.</p><p> link created on {$t_msg} will expire on {$t_show}</p></div>";
+//                 $notice_admin = 1;
+//             endif;
+//             //$msg = "<br /><br />your link is create on {$t_msg} but now is {$now_time} it is {$expire} different!";
+//
+// /*
+//  * sent the email notice to admin
+//  */
+//     $m_title = "The ip {$this->ip} has been proved!";
+//     $m_body = "<div style='border:2px solid #ff0000;padding:10px;background-color:#e7e7e7;'>
+//   <div style='background-color:white;'>
+//     <h1>The user email {$uEmail} has confirm on page</h1>
+//     <p>F.A.Q title : <br />
+//     {$faqTitle}
+//     </p>
+//     <p>F.A.Q Body 
+//     <br />
+//     {$faqBody}
+//     </p>
+//     <p>at {$this->today_andTime} let go to check!</p>
+//     </div>      
+//         </div>";
+//         if($notice_admin != 0):
+//             //-- only notice if the link has not expire
+//             $this->sendMailTo(null,'admin@farookphuket.com',$m_title,$m_body);
+//         endif;
+//             $r_data = array(
+//                 "msg" => $msg
+//             );
+//             return $r_data;
+//     }
+    //------------delFaq will also delete the answer 
+    //--that related to the faq_id 
+    // function delFaq($id){
+    //     $where = array("faq_id" => $id);
+    //     $this->delTB($this->_tb_ans,$where);
+    //     $this->delTB($this->_tb_faq,$where);
+    //     return true;
+    // }
+
+}//-------end of file

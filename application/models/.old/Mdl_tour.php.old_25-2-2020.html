@@ -1,0 +1,292 @@
+<?php
+
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+class Mdl_tour extends MY_Model{
+    protected $_tb_tour = "tbl_tour";
+    protected $_tb_seo = "seo";
+    protected $_tb_user = "users";
+
+
+
+    public $today;
+
+    public $ip;
+    public $os;
+    public $browser;
+
+    public $user_name;
+    public $user_email;
+    public $user_id;
+
+    function __construct() {
+        parent::__construct();
+        $this->today = date("Y-m-d",time());
+
+        $this->user_name = $this->getUserName();
+        $this->user_email = $this->getUserEmail();
+        $this->user_id = $this->getUserId();
+        $this->ip = $this->getIP();
+        $this->os = $this->getOS();
+        $this->browser = $this->getBrowser();
+    }
+
+
+    function getTour($where=false,$limit=false,$offset=false){
+
+        if(!$where):
+            $get = $this->db
+                    ->order_by("date_create","DESC")
+                    ->get($this->_tb_tour,$limit,$offset);
+        else:
+            $get = $this->db
+                    ->where($where)
+                    ->order_by("date_create","DESC")
+                    ->get($this->_tb_tour,$limit,$offset);
+        endif;
+        return $get;
+    }
+    //----
+
+    //---11-1-19 get Tour item with seo
+    function seoGetTour($w){
+        $where = array(
+            "{$this->_tb_tour}.t_id" => $w
+        );
+
+        $j1 = "{$this->_tb_seo}.kw_id = {$this->_tb_tour}.kw_id";
+
+        $j2 = "{$this->_tb_tour}.user_id={$this->_tb_user}.id";
+
+        $get = $this->db
+                    ->join($this->_tb_tour,$j1)
+                    ->join($this->_tb_user,$j2)
+                    ->where($where)
+                    ->get($this->_tb_seo);
+
+       return $get;
+
+    }
+
+    //---saveTour
+    function saveTour($data,$where=false){
+        $save = 0;
+        $t_id = 0;
+        if(!$where):
+            $save = $this->saveTB($this->_tb_tour,$data);
+            $t_id = $save;
+        else:
+            $save = $this->saveTB($this->_tb_tour,$data,$where);
+            $t_id = $where["t_id"];
+        endif;
+
+        return $t_id;
+    }
+
+    //----delTour
+    function delTour($where){
+        $this->delTB($this->_tb_tour,$where);
+        return true;
+    }
+
+
+    /*
+    test to make a global method on 31-july-2019
+
+    */
+    function READ_TOUR($where){
+
+      $j1 = "{$this->_tb_seo}.kw_id={$this->_tb_tour}.kw_id";
+      $j2 = "{$this->_tb_user}.id={$this->_tb_tour}.user_id";
+
+      $get = $this->db
+                  ->join($this->_tb_seo,$j1)
+                  ->join($this->_tb_user,$j2)
+                  ->where($where)
+                  ->get($this->_tb_tour);
+      return $get;
+
+    }
+    //------------
+    //-----GET_TOUR
+    function GET_TOUR($where=false,$limit=false,$offset=false){
+      $get = "";
+      $t_id = "{$this->_tb_tour}.t_id";
+      $j1 = "{$this->_tb_user}.id={$this->_tb_tour}.user_id";
+      $j2 = "{$this->_tb_seo}.kw_id = {$this->_tb_tour}.kw_id";
+      if($where):
+        $get = $this->db
+                    ->join($this->_tb_user,$j1)
+                    ->join($this->_tb_seo,$j2)
+                    ->where($where)
+                    ->order_by("{$this->_tb_tour}.date_create","DESC")
+                    ->get($this->_tb_tour,$limit,$offset);
+          else:
+            $get = $this->db
+                        ->join($this->_tb_user,$j1)
+                        ->join($this->_tb_seo,$j2)
+                        ->order_by("{$this->_tb_tour}.date_create","DESC")
+                        ->get($this->_tb_tour,$limit,$offset);
+
+      endif;
+
+      return $get;
+    }
+    //-------------------------------
+    //-------SAVE_TOUR
+    function SAVE_TOUR($data,$where=false){
+      $save = "";
+      $t_id = 0;
+      if(!$where):
+        //---no id set
+        $save = $this->db
+                      ->set($data)
+                      ->insert($this->_tb_tour);
+        $t_id = $this->db->insert_id();
+      else:
+        $save = $this->db
+                      ->where($where)
+                      ->set($data)
+                      ->update($this->_tb_tour);
+        $t_id = $where["t_id"];
+      endif;
+      return $t_id;
+    }
+    //------------
+    //---- DEL_TOUR
+    function DEL_TOUR($where){
+      $t_id = $where["t_id"];
+      $kw_id = 0;
+      $get = $this->GET_TOUR(array("{$this->_tb_tour}.t_id" => $t_id))->result();
+      foreach($get as $row):
+        $kw_id = $row->kw_id;
+        $this->Mdl_seo->delTag(array("{$this->_tb_seo}.kw_id" => $kw_id));
+        $t_id = $row->t_id;
+
+      endforeach;
+      $this->db
+            ->where(array("t_id" => $t_id))
+              ->delete($this->_tb_tour);
+      $get = $this->GET_TOUR()->result();
+      $num = count($get);
+      $data = array(
+        "last_num" => $num
+      );
+      return $data;
+    }
+
+    //-------GLOBAL METHOD END -------
+    //------------------------
+    /*
+      Moderator Section
+
+    */
+    function modFirstSave(){
+      $title = $this->modGetEl("title");
+      $u_id = $this->user_id;
+
+      //--create new item
+      $t_data = array(
+        "t_name" => $title,
+        "user_id" => $u_id,
+        "date_create" => $this->today_andTime
+      );
+      $t_id = $this->SAVE_TOUR($t_data);
+      $d_url = site_url("tour/detail/{$t_id}");
+
+      $seo_data = array(
+        "article_publisher" => $this->user_name,
+        "kw_date_add" => $this->today_andTime,
+        "kw_canonical" => $d_url,
+        "og_url" => $d_url,
+        "og_site_name" => site_url(),
+        "kw_page_keyword" => "Edit tour key word for {$title}",
+        "kw_page_des"  => "Edit description for {$title}"
+      );
+      $kw_id = $this->Mdl_seo->saveTag($seo_data);
+
+      //---put the seo key to match with the seo table
+      $t_update = array(
+        "kw_id" => $kw_id
+      );
+      $this->SAVE_TOUR($t_update,array("t_id" => $t_id));
+
+      $data = array(
+        "t_id" => $t_id,
+        "kw_id" => $kw_id
+      );
+      return $data;
+    }
+    //-----------
+    //---modSave
+    function modSave(){
+      //---get form element
+      $t_id = $this->modGetEl("tour_id");
+      $kw_id = $this->modGetEl("kw_id");
+      $user_id = $this->modGetEl("user_id");
+
+      //---seo field
+      $keyword = $this->modGetEl("keyword");
+      $keydes = $this->modGetEl("keydes");
+      $se_data = array(
+        "kw_page_keyword" => $keyword,
+        "kw_page_des" => $keydes,
+        "og_description" => $keydes,
+        "og_title" => $keyword
+      );
+      $this->Mdl_seo->saveTag($se_data,array("kw_id" => $kw_id));
+
+      //----- tour field
+      $title = $this->modGetEl("title");
+      $sum = $this->modGetEl("sum");
+      $body = $this->modGetEl("body");
+
+      $fullprice = $this->modGetEl("fullprice");
+      $duration = $this->modGetEl("duration");
+      $location = $this->modGetEl("location");
+
+      $mark = $this->modGetEl("draft");
+
+      $t_data = array(
+        "user_id" => $this->user_id,
+        "t_name" => $title,
+        "t_summary" => $sum,
+        "t_program" => $body,
+        "full_price" => $fullprice,
+        "t_duration" => $duration,
+        "t_destination" => $location,
+        "mark_draft" => $mark
+      );
+
+      //---unset if the user id is not match
+      if($this->user_id != $user_id):
+        unset($t_data["user_id"]);
+      endif;
+      //--save tour data
+      $save = $this->SAVE_TOUR($t_data,array("t_id" => $t_id));
+
+      $data = array(
+        "t_id" => $t_id,
+        "kw_id" => $kw_id
+      );
+      return $data;
+    }
+
+    //------------------
+    //----modGetEl return the input form
+    function modGetEl($el){
+      return $this->input->post($el);
+    }
+
+    /*
+    End Of Moderator section
+    */
+
+
+
+
+
+}//end of Mdl_tour

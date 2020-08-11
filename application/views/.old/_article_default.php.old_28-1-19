@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <?php 
+    $tag_head = "component/_tag_in_head.php";
+    $this->load->view($tag_head);
+  ?>
+  
+</head>
+<body>
+        <?php 
+          $close_page = "component/_close_msg_tmp.php";
+          $this->load->view($close_page);
+        ?>
+      <section id="article">
+        <?php $this->load->view($subview);?>
+      </section>
+</body>
+</html>
+
+
+
+
+  

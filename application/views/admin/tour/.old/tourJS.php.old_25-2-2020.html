@@ -1,0 +1,22 @@
+<script>
+
+$(function(){
+    var $el = $("#tour");
+
+
+    var manTour = (function(){
+        
+
+        function getSummary(){
+            alert("tour");
+        }
+        function getEvent(){
+            getSummary();
+        }
+        return{getEvent : getEvent}
+    })();
+
+    manTour.getEvent();
+
+});
+</script>

@@ -1,0 +1,114 @@
+<form action="<?php echo site_url("product/adminSave");?>" id="sProduct">
+
+    <div class="col-lg-12">
+        <h1 class="text-center">SEO </h1>
+    </div>
+    <div class="form-group">
+        <label for="og_url">Share URL</label>
+        <input type="text" name="og_url" id="og_url" class="og_url form-control">
+        
+    </div>
+    <div class="form-group">
+        <label for="keyword">Keyword</label>
+        <input type="text" name="keyword" id="keyword" class="keyword form-control">
+
+        <input type="hidden" name="kw_id" class="kw_id">
+        <input type="hidden" name="pd_user_id" class="pd_user_id">
+        <input type="hidden" name="p_id" class="p_id">
+        <input type="hidden" name="cat_id" class="cat_id">
+
+    </div>
+    <div class="form-group">
+        <label for="keydes">Description</label>
+        <input type="text" name="keydes" id="keydes" class="keydes form-control">
+    </div>
+    <p class="pt-4">&nbsp;</p>
+    <div class="form-group">
+        <select name="cat_id" id="cat_id" class="form-control cat_id">
+            <option value="0">
+                -- Select Category--
+            </option>
+<?php
+    if($get_cat):
+            
+        $num = 0;
+        foreach($get_cat as $row):
+            $num++;
+            ?>
+                <option value="<?php echo $row->cat_id; ?>">
+            <?php echo"{$num} {$row->cat_section} {$row->cat_title}"; ?>
+        </option>
+            <?php
+        endforeach;
+    endif;
+?>
+        </select>
+        <p class="pt-2">&nbsp;</p>
+    </div>
+    <div class="form-group">
+        <select name="set_tmp" id="set_tmp" class="form-control set_tmp">
+            <option value=0>--Select Template--</option>       
+<?php
+        if($get_tmp):
+
+            $num_tmp = 0;
+
+            foreach($get_tmp as $row):
+                $num_tmp++;
+?>
+    <option value="<?php echo"{$row->tmp_id}"; ?>">
+        <?php echo"{$num_tmp} {$row->tmp_title}"; ?>
+    </option>
+<?php
+            endforeach;
+        endif;
+?>
+        </select>
+        <input type="hidden" name="tmp_id" id="tmp_id" class="tmp_id">
+    </div>
+    <p class="pt-4">&nbsp;</p>
+    <div class="from-group">
+        <label for="p_name">Product Name</label>
+        <input type="text" name="p_name" id="p_name" class="form-control p_name" required>
+    </div>
+    <p>&nbsp;</p>
+    <div class="form-group">
+        <label for="p_sum">product summary</label>
+        <textarea class="form-control tinymce p_sum" name="p_sum" id="p_sum"></textarea>
+        <p class="pt-4">&nbsp;</p>
+    </div>
+    <div><p>&nbsp;</p></div>
+    <div class="form-group">
+        <label for="p_body">Product detail</label>
+        <textarea name="p_body" id="p_body" class="form-control tinymce p_body"></textarea>
+    </div>
+    <p class="pt-4">&nbsp;</p>
+    <div class="form-group">
+        <label for="p_price">Price</label>
+        <input type="number" name="p_price" id="p_price" class="form-control p_price">
+    </div>
+    <div class="form-group">
+        <label for="" class="checkbox-inline">
+            <input type="checkbox" name="onSale" id="onSale" class="form-control onSale"> 
+        <span class="badge badge-warning">
+            On Sale
+        </span>
+        </label>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="modal_status">
+                </div>
+
+            </div>
+            <div class="col-lg-12">
+                <div class="fResult">
+                    
+                </div>
+            </div>
+        </div>     
+    </div>
+    
+</form>

@@ -1,0 +1,252 @@
+<div class="jumbotron">
+        <div class="page-header">
+        <h2>All booking <?php echo $num_all_booking; ?> item(s).</h2>
+        </div>
+</div>
+<div class="what_new">
+    <ul>
+        <li class="alert alert-danger">
+            Note : Do not flag all this ticket as DEPOSITE unless they sent the paypal bill to confirm!
+        </li>
+    </ul>
+</div>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th width="5%">no.</th>
+                    <th>Name</th>
+                    
+                    <th width="20%">Booking Date | Depart Date</th>
+                    <th width="15%">Price info</th>
+                    <th width="5%">Ticket Status</th>
+                    <th width="10%">On board</th>
+                </tr>
+            </thead>
+
+            <tbody>
+            <?php
+            if($num_all_booking == 0 ):
+                
+                ?>
+            <tr>
+                <td colspan=7>There are no data</td>
+            </tr>
+                <?php
+            else:
+    
+                $num = 0;
+                foreach($get_booking_page as $row):
+                    $num++;
+
+                    ?>
+                <tr>
+                    <td><?php echo $num; ?></td>
+                    <td>
+                        <div class="row">
+                        <label class="alert alert-info">
+                            <?php echo $row->bk_name;?>
+                        </label>
+                        <label class="alert-default">
+                            <?php echo"Email : {$row->bk_email}"; ?>
+                        </label>
+                        <button type="button" class="btn btn-default btn-sm ln_edit" id="<?php echo $row->bk_id; ?>">
+                            <span class="glyphicon glyphicon-pencil"></span> Edit 
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm ln_del" id="<?php echo $row->bk_id; ?>">
+                            <span class="glyphicon glyphicon-trash"></span> Delete
+                        </button>
+                        </div>
+                    </td>
+                    
+                    <td>
+                    <?php
+                        //$book_day = date("y-m-d",$row->bk_date);
+                        $book_day = $row->bk_date;
+                        $go_day = $row->going_date;
+                        //echo"<p>Departe date : {$go_day}</p><p>Book date : {$book_day}</p>";
+                    ?>
+                    
+                    <label class="alert alert-danger">
+                        <?php echo"Departure : {$go_day}";?>
+                    </label>
+                    <label class="alert-info">
+                        <?php echo"Booking on : {$book_day}";?>
+                    </label>
+                    </td>
+                    <td>
+                    <?php
+                        //$go_day = date("y-m-d",$row->going_date);
+                        //echo $row->price_total;
+                        $one_price = $row->price_per_one;
+
+                    ?>
+                    <div class="row">
+                    <label class="alert alert-danger">
+                    Collect : <?php echo $row->collect_more;?>
+                    </label>
+                    <label class="alert-info">
+                    Per person : <?php echo $one_price;?> THB.
+                    </label>
+                    <label class="alert-default">
+                    Total Price <?php echo $row->price_total;?> THB.
+                    </label>
+                    </div>
+                    </td>
+                    <td>
+                        
+                    <?php 
+                        if($row->bk_confirm != 0):
+                            ?> 
+                            <label class="alert alert-success">
+                                Confirmed
+                            </label>
+                            <?php
+                        else:
+                            ?>
+                            <label class="alert alert-danger">
+                                Not Confirm!
+                            </label>
+                            <?php
+                        endif;
+                    ?>
+                    </td>
+                    <td>
+                    <?php 
+                        $onboard = "<label class='alert alert-danger'>NOT ON Tour</label>";
+                        if($row->mark_as_done != 0):
+                            $onboard = "<label class='alert alert-success'>ON Tour</label>";
+                        endif;
+                        echo"{$onboard}";
+                    ?>
+                    </td>
+                   </tr>
+                <?php
+                endforeach; 
+                if($num_all_booking > $per_page):
+                    ?>
+                <tr>
+                    <td colspan="7">
+                        <span class="pagination">
+                        <?php echo $this->pagination->create_links();?>
+                        </span>
+                    </td>
+                </tr>
+                    <?php
+                endif;
+
+            endif;
+?>
+            </tbody>
+        </table>
+
+    </div>
+
+
+
+
+    <div class="modal fade modalEdit">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title">Edit Booking</h1>
+                </div>
+                <div class="modal-body">
+                    <form class="form form-horizontal" id="bookingFrm" action="<?php echo site_url("booking/admin");?>">
+                        <div class="form-group">
+                            <label class="label-control col-sm-4">Name</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control bk_name" name="bk_name">
+                                <input type="hidden" class="bk_id" name="bk_id">
+                                <input type="text" class="bk_num" name="bk_num">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="label-control col-sm-4">Price Per Person</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control price_per_one" name="price_per_one">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="label-control col-sm-4">Deposite</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control deposite" name="deposite">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="label-control col-sm-4">More</label>
+                            <div class="col-sm-6">
+                               <textarea class="form-control bk_more" name="bk_more">
+                                </textarea> 
+
+
+                            </div>
+                        </div>
+
+
+
+                        <div class="form-group">
+                            <label class="label-control col-sm-4">Ticket Status</label>
+                            <div class="col-sm-3">
+                            <select class="bk_status form-control" name="bk_status">
+                                <option value="0">
+                                    --Ticket Status--
+                                </option>
+                                <option value=1>Deposit</option>
+                                <option value=2>Paid</option>
+                            </select>
+                            </div>
+                            <div class="col-sm-3 input-group">
+                                <span class="input-group-addon">
+                                    <input type="checkbox" name="onboard" class="onboard">
+                                </span>
+                                <input type="text" class="form-control on_txt">
+                            </div>
+                        </div>
+
+
+
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-info btnSave" typep="submit" form="bookingFrm">
+                    Save
+                    </button>
+                    <button class="btn btn-default btnCancle" typep="button">
+                    Cancle
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade modalConf">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title">Delete confirm</h1>
+                </div>
+                <div class="modal-body">
+                    Modal body
+                    <input type="hidden" class="bk_id">
+                    <div class="modal_status">
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary btnConf" type="button">
+                        Confirm
+                    </button>
+                    <button class="btn btn-default btnCancle" type="button">
+                        Cancle
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!--end of the html-->
+
+<?php require("bookingJS.php");
+

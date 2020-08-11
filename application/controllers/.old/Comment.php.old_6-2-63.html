@@ -1,0 +1,366 @@
+<?php
+
+class Comment extends MY_Controller{
+
+
+    protected $is_login;
+    protected $moderate;
+    protected $is_admin;
+
+
+    public $o_put;
+    public $user_id;
+
+    public $user_name;
+    public $ip;
+    public $os;
+    public $browser;
+    public $post_day;
+
+    public $sysName;
+    public $sysVersion;
+    function __construct(){
+        parent::__construct();
+
+        $this->load->model("Mdl_comment");
+        $this->load->model("Mdl_users");
+        $this->load->model("Mdl_article");
+        $this->load->library("pagination");
+        $this->load->helper("cookie");
+
+        $this->user_id = $this->Mdl_comment->getUserId();
+        $this->user_name = $this->Mdl_comment->getUserName();
+
+        $this->is_login = $this->user_is_login();
+        $this->is_admin = $this->user_is_admin();
+        $this->moderate = $this->user_is_mod();
+
+        $this->ip = $this->Mdl_comment->getIP();
+        $this->os = $this->Mdl_comment->getOS();
+        $this->browser = $this->Mdl_comment->getBrowser();
+
+        $this->post_day = date("Y-m-d",time());
+
+        $this->sysName = "Comment";
+        $this->sysVersion = "version 2.10";
+
+        $this->data["sysName"] = $this->sysName;
+        $this->data["sysVersion"] = $this->sysVersion;
+
+    }
+
+    function index(){
+        $r_url = site_url();
+
+        if($this->is_login):
+
+            if($this->is_admin):
+                $r_url = site_url("comment/admin");
+              else:
+                $r_url = site_url("comment/u/{$this->user_id}");
+            endif;
+        endif;
+
+        //---redirect to url
+        redirect($r_url);
+    }
+
+
+    function getCommentCount($seg=1){
+        /*--
+        //--will recieve POST section_name item_id
+        //--This method will get all of the comment base on the section name and item id recieve by ajax call at the first form load
+        */
+        $section_name = $this->input->post("section_name");
+        $item_id = $this->input->post("item_id");
+
+
+
+        $where = array(
+            "c_section_name" => $section_name,
+            "c_item_id" => $item_id,
+            "c_show !=" => 0
+        );
+        $get = $this->Mdl_comment->getComment($where)->result();
+        $num_comment = count($get);
+
+        //---pagination
+        $url = "getCommentCount";
+        $per_page = 4;
+        $conf = $this->getConfPagin($per_page,$num_comment,$url);
+        $this->pagination->initialize($conf);
+        $page = $seg;
+        $start = ($page-1)*$conf["per_page"];
+
+        $get_all_comment = $this->Mdl_comment->getComment($where,$conf["per_page"],$start)->result();
+        if($num_comment >= $per_page):
+            $this->o_put["pagination"] = $this->pagination->create_links();
+        endif;
+
+        $this->o_put["get_comment"] = $get_all_comment;
+        $this->o_put["num_comment"] = $num_comment;
+
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+    //-------------------------
+    //-------getMyInfo------------
+    function getMyInfo(){
+        $where = array(
+            "id" => $this->user_id
+        );
+        $get = $this->Mdl_users->getUsers($where)->result();
+        $this->o_put["get_user"] = $get;
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+    //----------------------------------
+    //--getMyComment
+    function getMyComment(){
+        //--will fetch only one row
+        $section_name = $this->input->post("section_name");
+        $item_id = $this->input->post("item_id");
+
+        $owner_email = get_cookie("ck_owner_email");
+
+
+        $where = array(
+            "c_section_name" => $section_name,
+            "c_item_id" => $item_id,
+            "c_user_ip" => $this->ip,
+            "c_date_create" => $this->post_day
+        );
+        $get = $this->Mdl_comment->getComment($where)->result();
+
+        $this->o_put["get_my_comment"] = $get;
+        $this->o_put["owner_email"] = $owner_email;
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+
+    //------------------
+    //---function u create on 9-July-2019
+    function u($u_id){
+      if($this->is_login):
+        $this->data["meta_title"] = "{$this->sysName}&nbsp;{$this->sysVersion}.";
+        $this->data["subview"] = "comment/_member_index";
+        $tmp = "_MEMBER_TMP";
+        $this->load->view($tmp,$this->data);
+      else:
+        redirect(site_url("users/logout"));
+        exit();
+      endif;
+
+    }
+
+    function saveComment(){
+
+        //--only submit by ajax to save data
+        $c_id = $this->input->post("c_id");
+        $c_title = $this->input->post("c_title",true);
+        $c_body = $this->input->post("c_body",true);
+        $section_name = $this->input->post("section_name",true);
+        $item_id = $this->input->post("item_id",true);
+
+        //--user name and email
+        $c_user_name = $this->input->post("c_user_name",true);
+        $c_user_email = $this->input->post("c_user_email",true);
+        $c_user_id = $this->user_id;
+
+        $notice_to_owner = $this->input->post("notice_to_owner");
+
+        //--owner email to sent the notify add 8-7-2019
+        $owner_email = $this->input->post("page_owner_email");
+
+        //---notice owner
+
+
+        //---comment url add Fri 31 Aug 2018
+        $c_comment_url = $this->input->post("comment_url");
+
+        //--post day time
+        $post_day = date("Y-m-d",time());
+        $post_time = date("h:i:s",time());
+        $comment_data = array(
+            "c_section_name" => $section_name,
+            "c_comment_url" => $c_comment_url,
+            "c_item_id" => $item_id,
+            "c_user_ip" => $this->ip,
+            "c_user_id" => $c_user_id,
+            "c_user_name" => $c_user_name,
+            "c_user_email" => $c_user_email,
+            "c_comment_title" => $c_title,
+            "c_comment_body" => $c_body,
+            "c_date_create" => $post_day,
+            "c_date_update" => $post_day,
+            "c_comment_time" => $post_time,
+        );
+        //---edit id
+        $edit_id = 0;
+        if($c_id):
+            unset($comment_data["c_date_create"]);
+            $save = $this->Mdl_comment->saveComment($comment_data,array("c_id" => $c_id));
+            $edit_id = $c_id;
+
+        else:
+            unset($comment_data["c_date_update"]);
+            $save = $this->Mdl_comment->saveComment($comment_data);
+            $edit_id = $save;
+        endif;
+        //---notice the owner
+        $own_title_email = "Some one has comment on your post";
+        $own_body_email = "<div style='border:1px dotted #e7e7e7;'>
+        <h1 style='text-align:ceneter;color:blue;'>Dear owner</h1>
+        <p>
+        <strong>{$c_user_name}</strong> has made a comment on your  <a href='{$c_comment_url}' target='_blank'>Post</a> please click to view or if the link not working please copy the below url :
+        </p>
+        <p>
+        <strong><u>{$c_comment_url}</u></strong>
+        </p>
+        <div style='border:2px dashed #ff0000;margin:0 auto;'>
+          <h1 style='text-align:center'>{$c_title}</h1>
+          <p>
+            {$c_body}
+          </p>
+          <p>
+            Comment E-mail : <strong>{$c_user_email}</strong> &nbsp;
+            Comment Name : <strong>{$c_user_name}</strong>&nbsp;
+            Comment IP : <strong>{$this->ip}</strong>
+          </p>
+        </div>
+        <p style='text-align:right;'>Best regard</p>
+        <p style='text-align:right;'>
+        <strong>{$this->admin_email}</strong>
+        </p>
+        </div>";
+        if($notice_to_owner = 1):
+          $this->sendMailTo(null,$owner_email,$own_title_email,$own_body_email);
+        endif;
+
+        //----------
+        //--notice admin
+        $a_mail_title = "New comment on {$c_comment_url} by ip {$this->ip}";
+        $a_mail_body = "<div style='border:2px dotted #e7e7e7;margin:0 auto;'>
+        <h1 style='text-align:center;color:blue;'>New comment on {$c_comment_url}</h1>
+        <p>The ip {$this->ip} has made a comment on {$this->today_andTime}</p>
+        <div style='width:80%;border:2px dashed #ff0000;'>
+          <h1 style='text-align:center;color:blue;'>
+            {$c_title}
+          </h1>
+          <p>
+            {$c_body}
+          </p>
+          <p>
+            Comment E-mail : <strong>{$c_user_email}</strong> &nbsp;
+            Comment Name : <strong>{$c_user_name}</strong>&nbsp;
+            Comment IP : <strong>{$this->ip}</strong>
+          </p>
+        </div>
+        <p>This e-mail notification send from 'saveComment' function and it seem to be not complete yet! need some improve.</p>
+        </div>";
+
+        //---warning to show when Success
+        $warning = "<div class='alert alert-warning'>
+        <h1 class='text-center'>Dear {$c_user_name}</h1>
+        <p>
+          This is not an Automatic system! your comment that you have made will 'NOT' be shown on the list by now. we have to wait for the approval from admin before this comment can be show.
+        </p>
+        </div>";
+
+        $this->sendMailTo("info@farookphuket.com",$this->admin_email,$a_mail_title,$a_mail_body);
+      //  echo"Comment ID {$save} has been save";
+        $this->o_put["msg"] = "Success : comment has been save";
+        $this->o_put["msg_warning"] = $warning;
+        $this->o_put["c_id"] = $edit_id;
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+
+
+    //------------------------------------------------------------------------
+    //---------------Admin section Create Sat 1 Sep 2018-----------
+    function adminGetAllComment($seg=1){
+        $get_c = $this->Mdl_comment->getComment()->result();
+        $num_c = count($get_c);
+
+
+        //--pagination
+        $url = "adminGetAllComment";
+        $per_page = 10;
+
+        $conf = $this->getConfPagin($per_page,$num_c,$url);
+        $this->pagination->initialize($conf);
+        $page = $seg;
+        $start = ($page-1)*$conf["per_page"];
+        $get_all_c = $this->Mdl_comment->getComment(null,$conf["per_page"],$start)->result();
+        if($num_c >= $per_page):
+            $this->o_put["pagination"] = $this->pagination->create_links();
+        endif;
+
+        $this->o_put["get_comment"] = $get_all_c;
+        $this->o_put["num_comment"] = $num_c;
+
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+    //--------------------------------------
+    //---------------Admin edit  Comment
+    function adminEditComment($c_id){
+        //$c_id = $this->input->post("c_id");
+        $where = array("c_id" => $c_id);
+        $get_c = $this->Mdl_comment->getComment($where)->result();
+        $this->o_put["get_comment"] = $get_c;
+
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+    //----------------------------------
+    //-----------adinSaveComment
+    function adminSaveComment(){
+        $c_id = $this->input->post("c_id");
+        $c_title =$this->input->post("c_title");
+        $c_body = $this->input->post("c_body");
+
+        //---comment status text
+        $c_status_txt = "Wait";
+        $c_approve = $this->input->post("c_approve");
+        $c_show = 0;
+        if($c_approve == 2):
+          $c_status_txt = "Approve";
+          $c_show = 1;
+        endif;
+
+
+        $re_date = $this->today_andTime;
+
+        $comment_data = array(
+            "c_comment_title" => $c_title,
+            "c_comment_body" => $c_body,
+            "c_show" => $c_show,
+            "c_status" => $c_approve,
+            "c_status_txt" => $c_status_txt,
+            "c_last_access" => $re_date
+        );
+
+        $where = array("c_id" => $c_id);
+        $save = $this->Mdl_comment->saveComment($comment_data,$where);
+        $this->o_put["c_id"] = $c_id;
+        $this->o_put["msg"] = "Success : data has been save";
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+
+    //------------------------------------------
+
+    function admin(){
+
+        $this->data["meta_title"] = "{$this->sysName} {$this->sysVersion} | {$this->user_name} | {$this->user_type}";
+        $this->data["subview"] = "comment/c_Admin";
+        $tmp = "_ADMIN_TMP";
+
+        $this->load->view($tmp,$this->data);
+    }
+
+
+    //----------------End of admin section-----------------------------
+}//end of file

@@ -1,0 +1,167 @@
+<script>
+
+
+$(function(){
+
+    var $el = $(".container");
+    var page_status = $el.find(".status");
+    var modal_status = $el.find(".modal_status");
+    var memberSummary = (function(){
+
+        /*
+        ##---User show summary after they have login
+        ##---will show the notification 
+        ##---booking or article 
+        ##---Last update on Thu 26 Apr 2018
+        */
+        var ar_show_list = $el.find(".ar_summary_list");
+
+        var faq_show_list = $el.find(".faq_summary_list");
+
+        function getSummary(){
+            var url = "<?php echo site_url("users/ajaxUserSummary");?>";
+            var data = {
+                user_id : "<?php echo $user_id;?>",
+
+            };
+            $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success : function(e){
+                    
+                    var rs = $.parseJSON(e);
+                    console.log(rs);
+                    
+                    var showAr = `
+                    <table class="table table-striped">
+                        <tbody>
+                            <tr>
+                                <th>
+                                    All article
+                                </th>
+                                <td>
+                                    <h4>
+                                    <span class="label label-default">
+                                        ${rs.get_ar.num_all_ar}
+                                    </span>
+                                    </h4>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    Public
+                                </th>
+                                <td>
+                                    <h4>
+                                    <span class="label label-success">
+                                        ${rs.get_ar.num_pub_ar}
+                                    </span>
+                                    </h4>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    Approve
+                                </th>
+                                <td>
+                                    <h4>
+                                    <span class="label label-success">
+                                        ${rs.get_ar.approve}
+                                    </span>
+                                    </h4>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    Private Article
+                                </th>
+                                <td>
+                                    <h4>
+                                    <span class="label label-warning">
+                                        ${rs.get_ar.num_pri_ar}
+                                    </span>
+                                    </h4>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    Not Approve
+                                </th>
+                                <td>
+                                    <h4>
+                                    <span class="label label-danger">
+                                        ${rs.get_ar.not_approve}
+                                    </span>
+                                    </h4>
+                                </td>
+                            </tr>
+                            
+                        </tbody>
+                    </table>
+                    `;
+
+                    var showFaq = `
+                    <table class="table table-striped">
+                        <tbody>
+                            <tr>
+                                <th>
+                                    All Message
+                                </th>
+                                <td>
+                                    <h4>
+                                        <span class="label label-default">
+                                            ${rs.get_faq.all_faq}
+                                        </span>
+                                    </h4>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th>
+                                    Has reply
+                                </th>
+                                <td>
+                                    <h4>
+                                        <span class="label label-success">
+                                            ${rs.get_faq.has_reply}
+                                        </span>
+                                    </h4>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th>
+                                    Not reply
+                                </th>
+                                <td>
+                                    <h4>
+                                        <span class="label label-danger">
+                                            ${rs.get_faq.no_reply}
+                                        </span>
+                                    </h4>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    `;
+                    
+                    
+                    ar_show_list.append(showAr);
+                    faq_show_list.append(showFaq);
+
+                }
+            })
+        }
+
+        function getEvent(){
+            //console.log(`member summary is run`);
+            getSummary();
+            
+        }
+        return{getEvent : getEvent}
+    })(); 
+    memberSummary.getEvent();
+
+});
+</script>

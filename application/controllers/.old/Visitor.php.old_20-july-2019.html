@@ -1,0 +1,165 @@
+<?php
+/*
+// Visitor is to count the number of visitor
+//Create on 20 July 2019
+//
+//
+*/
+class Visitor extends MY_Controller{
+
+    protected $_tb_visit = "tbl_visiter";
+
+
+    public $ip;
+    public $os;
+    public $browser;
+
+    public $user_name;
+    public $user_id;
+
+    //public $today;
+    //public $today_time;
+    public $today_month;
+    public $today_year;
+    public $cur_ip;
+
+    //---this app
+    public $sysName = "Visitor";
+    public $sysVersion = "1.02";
+    public $sysDate = "20-July-2019";
+
+
+    function __construct(){
+        parent::__construct();
+        $this->load->model("Mdl_visitor");
+
+
+        //---user info
+        $this->ip = $this->Mdl_visitor->ip;
+        $this->cur_ip = $this->Mdl_visitor->ip;
+        $this->user_id = $this->Mdl_visitor->user_id;
+        $this->user_name = $this->Mdl_visitor->user_name;
+        $this->os = $this->Mdl_visitor->os;
+        $this->browser = $this->Mdl_visitor->browser;
+
+        //---month year
+        $this->today_month = date("m",time());
+        $this->today_year = date("Y",time());
+
+        //this app
+        $this->data["sysName"] = $this->sysName;
+        $this->data["sysVersion"] = $this->sysVersion;
+        $this->data["sysDate"] = $this->sysDate;
+
+    }
+
+    function index(){
+        if($this->is_admin):
+          redirect(site_url("visitor/admin"));
+        endif;
+        redirect(site_url());
+        exit();
+    }
+
+
+    //----getTodayVisit
+    function getTodayVisit(){
+      /*
+      //--This method will get the visitor today
+      //----
+      */
+      $where = array("v_cur_visit_date" => $this->today);
+      $get = $this->Mdl_visitor->getVisitor($where)->result();
+      $num = count($get);
+      $this->o_put["get"] = $get;
+      $this->o_put["num"] = $num;
+      $this->output->set_output(json_encode($this->o_put));
+
+    }
+
+    //----get
+    function getMonthVisit(){
+      $where = array(
+        "v_month" => $this->today_month
+      );
+      $get = $this->Mdl_visitor->getVisitor($where)->result();
+      $num = count($get);
+      $this->o_put["get_all"] = $get;
+      $this->o_put["num"] = $num;
+      $this->output->set_output(json_encode($this->o_put));
+    }
+
+    //---getUser will return  now user info
+    function getUser(){
+      /*
+      //-- this method will get the user ip
+      //--to compare if this person has visit today
+      //--then save to DB to return the visitor number today
+      */
+      $this->cur_ip = $this->ip;
+      $cur_day = $this->today;
+      $cur_visit = $this->_saveVisitor();
+      $num = 0;
+      if($cur_visit != 0):
+        $get = $this->Mdl_visitor->getVisitor()->result();
+        $num = count($get);
+      endif;
+      $where = array(
+        "v_ip" => $this->cur_ip,
+        "v_cur_visit_date" => $this->today
+      );
+      $get_u = $this->Mdl_visitor->getVisitor($where)->result();
+      $this->o_put["num_all"] = $num;
+      $this->o_put["get_u"] = $get_u;
+      $this->output->set_output(json_encode($this->o_put));
+
+    }
+
+
+    //----addVisitor 15-july-2019
+    function _saveVisitor(){
+      $where = array(
+        "v_ip" => $this->cur_ip,
+        "v_cur_visit_date" => $this->today
+      );
+      $get = $this->Mdl_visitor->getVisitor($where)->result();
+      $num = count($get);
+      $v_data = array(
+        "v_ip" => $this->cur_ip,
+        "v_browser" => $this->browser,
+        "v_os" => $this->os,
+        "v_month" => $this->today_month,
+        "v_year" => $this->today_year,
+        "v_cur_visit_date" => $this->today
+      );
+      if($num == 0):
+        //---add this ip
+        $this->Mdl_visitor->saveVisitor($v_data);
+      endif;
+      $get_v = $this->Mdl_visitor->getVisitor($where)->result();
+      $num_v = count($get);
+      return $num_v;
+    }
+
+
+
+    /*  ---- Admin section 20 July 2019
+    //-------
+    //----
+    */
+    function admin(){
+      if(!$this->is_admin):
+        redirect(site_url());
+        exit();
+      endif;
+      $this->data["meta_title"] = "{$this->sysName} version {$this->sysVersion} | Admin";
+      $this->data["subview"] = "admin/visitor/visitor_index";
+      $tmp = "_ADMIN_TMP";
+      $this->load->view($tmp,$this->data);
+    }
+
+    /*
+    //----  End of Admin section
+    */
+
+}

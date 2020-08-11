@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <?php
+        $tag_head = "component/_tag_in_head.php";
+        $this->load->view($tag_head);
+    ?>
+</head>
+<body>
+
+    <?php
+        //---menu
+        $menu_sub = "component/_submenu_article.php";
+        $this->load->view($menu_sub);
+    ?>
+
+    <!--header start-->
+    <?php
+        $header = "component/header_default.php";
+        $this->load->view($header);
+    ?>
+    <!--end of header-->
+
+    <section class="bg-primary" id="about">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto text-center">
+            <h2 class="section-heading text-white">Public post by member!</h2>
+            <hr class="light my-4">
+            <p class="text-faded mb-4">
+                public post by member
+            </p>
+
+            <a class="btn btn-light btn-xl js-scroll-trigger" href="<?php echo site_url("users");?>">Back to Home page!</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+      <?php $this->load->view($subview); ?>
+
+
+
+
+    <?php
+        $contact_main = "component/contact_main.php";
+        $this->load->view($contact_main);
+    ?>
+
+    <?php
+        $tag_tail = "component/_tag_in_tail.php";
+        $this->load->view($tag_tail);
+    ?>
+</body>
+</html>

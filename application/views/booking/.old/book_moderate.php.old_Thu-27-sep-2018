@@ -1,0 +1,171 @@
+<div class="container">
+    
+    <div class="page-header">
+        <h2>
+            Manage Booking | จัดการ การจองตั๋ว
+        </h2>
+    </div>
+    <div class="table-resposive">
+        <table class="table table-striped">
+        <thead>
+            <th>#</th>
+            <th>Name & email</th>
+            <th>Date</th>
+            <th>pay to Confirm?</th>
+            <th>Manage</th>
+        </thead>
+        <tbody>
+        <?php 
+            if($num_book == 0):
+        ?>
+        <tr>
+        <td colspan=5>
+        <div class="alert alert-danger">
+        There is no booking now.
+        </div>
+        </td>
+        </tr>
+            <?php 
+                endif;
+                $num = 0;
+                foreach($get_booking as $row):
+                    $num++;
+
+            ?>
+        <tr>
+        <td>
+        <?php echo $num;?>
+        </td>
+        <td>
+        <h4>
+        Name : <span class="label label-info">
+        <?php echo $row->bk_name;?>
+        </span>
+        </h4>
+        <h4>
+        Email : <span class="label label-info">
+        <?php echo $row->bk_email;?>
+        </span>
+        </h4>
+        </td>
+        <td>
+        <h4>
+        Going date : 
+        <span class="label label-danger">
+        <?php echo $row->going_date;?>
+        </span>
+        </h4>
+        <h4>
+        Booking date : 
+        <span class="label label-info">
+        <?php echo $row->bk_date;?>
+        </span>
+        </h4>
+        </td>
+        <td>
+        <?php
+        
+        //echo $row->bk_confirm;
+        $yes = "<h4><span class='label label-success'>Yes</span> </h4>
+        <h4> 
+        <span class='label label-default'>
+            {$row->bk_date_conf}
+        </span>
+        </h4>
+        <h4> 
+        <span class='label label-default'>
+            {$row->conf_name}
+        </span>
+        </h4>
+        ";
+        $no = "<h4><span class='label label-danger'>No</span></h4>";
+        $conf = $no;
+        if($row->bk_confirm != 0):
+            $conf = $yes;
+        endif;
+        echo $conf;
+        ?>
+        </td>
+        <td>
+        <button type="button" class="btn btn-default btn-sm lnEdit" data-bk_id="<?php echo $row->bk_id;?>">
+          <span class="glyphicon glyphicon-pencil"></span> Edit
+        </button>
+        </td>
+        
+        </tr>
+            <?php
+                endforeach;
+                if($num_book > $per_page):
+            ?>
+        <tr>
+        <td colspan=5>
+        <div class="pagination">
+            <?php echo $this->pagination->create_links();?>
+        </div>
+        </td>
+        </tr>
+            <?php
+                endif;
+            ?>
+
+        </tbody>
+        </table>
+    </div>
+
+
+
+
+
+</div>
+
+<div class="modal fade mdBook">
+    <div class="modal-dialog">
+        <div class="modal-content">
+                <div class="modal-header">
+                <button class="close" data-dismiss="modal">&times;</button>
+                    <h2 class="modal-title">Title</h2>
+                </div>
+                <div class="modal-body">
+                    <!--result goes here--> 
+                    <div class="book_result">
+                    
+                    </div>
+
+                    <!--end result-->
+                    <!--form goes here--> 
+                    <form class="form-horizontal " id="frmBooking" action="<?php echo site_url("booking/moderate");?>">
+                        <div class="form-group">
+                            <div class="well">
+                                <p>กรุณาเชคสถานะการจ่ายเงินของลูกค้า ว่ามีการจ่ายมาหรือยัง ก่อนยืนยันสถานะ</p>
+                            </div>
+                           <input type="hidden" name="bk_id" class="bk_id"> 
+                        </div>
+                        <div class="form-group">
+                            <label class="label-control col-sm-4">Booking Status</label>
+                            <div class="col-sm-6 input-group">
+                                <span class="input-group-addon">
+                                    <input type="checkbox" class="bk_confirm" name="bk_confirm">
+                                </span>
+                                <input type="text" class="form-control conf_txt">
+                            
+                            
+                                <span class="input-group-addon">
+                                    <input type="checkbox" class="has_done" name="has_done">
+                                </span>
+                                <input type="text" class="form-control done_txt">
+                            </div>
+                        </div>
+                    </form>
+                    <!--end form-->
+                </div>
+                <div class="modal-footer">
+                <div class="modal_status">
+                </div>
+                <button class="btn btn-info btnSave" type="submit" form="frmBooking">Save</button>
+                </div>
+                
+        </div>
+    </div>
+</div>
+<?php 
+require("moderateJS.php");

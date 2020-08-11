@@ -1,0 +1,362 @@
+<script>
+
+//------Sun 23 Sep 2018
+$(function(){
+
+
+    var $el = $("#container");
+    var page_status = $el.find(".status");
+    var modal_status = $el.find(".modal_status");
+
+    var manUser = (function(){
+        
+        //---show user list
+        var user_list = $el.find(".user_list");
+        var user_pagin = $el.find(".user_pagin");
+        var num_user = $el.find(".num_user"); 
+
+        //--------------
+        //---sidebar right form add user
+        var frmUser = $el.find(".user_form");
+        var user_id = $el.find(".user_id");
+        var user_name = $el.find(".user_name");
+        var user_email = $el.find(".user_email");
+        var user_phone = $el.find(".user_tel");
+        var btnSaveUser = $el.find(".btnSaveUser");
+        
+        //----checkbox
+        var user_ban = $el.find(".user_ban");
+        var user_active = $el.find(".user_active");
+        var user_mod = $el.find(".user_mod");
+
+        //----modal edit user form 
+        var modal_user = $el.find(".modal_user");
+        var mdUserFormTitle = $el.find(".mdUserFormTitle");
+        //-------getUserList
+        function getUserList(page=1){
+            user_list.html("");
+            var url = "<?php echo site_url("users/adminListUser/");?>"+page;
+            $.ajax({
+                url : url,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    num_user.html(rs.num_user);
+                    $.each(rs.get_users,function(i,v){
+                        
+                        var active = `
+                            <h4>
+                                <span class="label label-danger">
+                                    NO
+                                </span>
+                            </h4>
+                        `;
+                        if(parseInt(v.is_activated) !== 0){
+                            active = `
+                            <h4>
+                                <span class="label label-success">
+                                    YES
+                                </span>
+                            </h4>
+                        `;
+                        }
+
+                        var yes = `
+                        <h4>
+                            <span class="label label-success">
+                                YES
+                            </span>
+                        </h4>
+                        `;
+                        var no = `
+                        <h4>
+                            <span class="label label-danger">
+                                NO
+                            </span>
+                        </h4>
+                        `;
+
+                        var ban = yes;
+                        if(parseInt(v.is_ban) === 0){
+                            ban = no; 
+                        }
+
+                        var mod = no;
+                        if(parseInt(v.moderate) !== 0){
+                            mod = yes;
+                        }
+                        
+                        var tmp = `
+                            <li>
+                                <div class="content-wrap">
+                                    <h3>${v.name}</h3>
+                                    <div class="row">
+                                        <!--user detail-->
+                                        <div class="col-md-4">
+                                            <p>${v.email}</p>
+                                        </div>
+                                        <!--end of user detail-->
+                                        <div class="col-md-8">
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered">
+
+                                                    <tr>
+                                                        <th>
+                                                            Phone Number
+                                                        </th>
+                                                        <td>
+                                                            ${v.tel}
+                                                        </td>
+                                                    </tr>
+
+                                                    <!--moderate--> 
+                                                    <tr>
+                                                        <th>
+                                                            Moderate
+                                                        </th>
+                                                        <td>
+                                                            ${mod}
+                                                        </td>
+                                                    </tr>
+                                                    <!--moderate--> 
+
+                                                    <tr>
+                                                        <th>
+                                                            Activated
+                                                        </th>
+                                                        <td>
+                                                            ${active}
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <th>
+                                                            Ban
+                                                        </th>
+                                                        <td>
+                                                            ${ban}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>
+                                                           Register Date
+                                                        </th>
+                                                        <td>
+                                                            ${v.date_register}
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <th>
+                                                            Manage
+                                                        </th>
+                                                        <td>
+                                                            <a class="btn btn-warning btn-sm btnEditUser" data-u_id="${v.id}">Edit</a>&nbsp;
+                                                            <a class="btn btn-danger btn-sm btnDelUser" data-u_id="${v.id}">Delete</a>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        `;
+                        user_list.append(tmp);
+                    });
+
+                    user_pagin.html(rs.pagination);
+                }
+            });
+        }
+        //------------------
+        function adminSaveUser(){
+           btnSaveUser.unbind();
+           frmUser.submit(function(o){
+               o.preventDefault();
+               var url = $(this).attr("action");
+               var data = $(this).serialize();
+               $.post(url,data,function(e){
+                   var rs = $.parseJSON(e);
+                   page_status.html(rs.msg).show();
+                   modal_status.html(rs.msg).show();
+                   
+                   //--set value to edit
+                   user_id.val(rs.user_id);
+                    mdUserFormTitle.html(`Success : operation has been done! you can close this window`);
+                   //---setTimeout
+                   setTimeout(function(){
+                       adminEditUser("edit",rs.user_id);
+                       getSummary();
+                       page_status.html("ready!").fadeOut("slow");
+                       modal_status.html("Ready!").fadeOut("slow");
+                   },2000);
+
+               });
+           });
+           
+        }
+        //----------------
+        function adminEditUser(cmd,id){
+            mdUserFormTitle.html("Loading...");
+            frmUser.trigger("reset");
+           // console.log(`cmd is ${cmd} the id is ${id}`);
+            switch(cmd){
+
+                case"edit":
+                    var url = "<?php echo site_url("users/adminEditUser/");?>"+id;
+                    $.ajax({
+                        url : url,
+                        success : function(e){
+                            var rs = $.parseJSON(e);
+                            $.each(rs.get_user,function(i,v){
+                                user_name.val(v.name);
+                                user_email.val(v.email);
+                                user_phone.val(v.tel);
+                                user_id.val(v.id);
+
+                                var ban = parseInt(v.is_ban);
+                                if(ban !== 0){
+                                    user_ban.prop("checked",true);
+                                }
+                                user_ban.val(ban);
+
+                                var active = parseInt(v.is_activated);
+                                if(active !== 0){
+                                    user_active.prop("checked",true);
+                                }
+                                user_active.val(active);
+
+                                var mod = parseInt(v.moderate);
+                                if(mod !== 0){
+                                    user_mod.prop("checked",true);
+                                }
+                                user_mod.val(mod);
+
+
+                                mdUserFormTitle.html(`Editing....${v.name}`);
+                                $(modal_user).modal("show");
+                            });
+                            
+                        }
+                    });
+
+                break;
+            }
+            
+        }
+        //-----------------
+        //----------adminDelUser---------
+        function adminDelUser(id){
+            var url = "<?php echo site_url("users/adminDelUser/");?>"+id;
+            $.ajax({
+                url : url,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    //console.log(rs);
+                    
+                    
+                    page_status.html(rs.msg).show();
+                    setTimeout(function(){
+                        page_status.html("Ready!").fadeOut("slow");
+                        frmUser.trigger("reset");
+                        getSummary();
+                    },2000);
+
+                   
+                }
+            })
+        }
+
+        //------------------------------------
+        //----------setBoxUser
+        function setBoxUser(cmd){
+            var box_name = "";
+            var opt = 0;
+            switch(cmd){
+                case"user_ban":
+                    box_name = user_ban;
+                    if(box_name.is(":checked")){
+                        opt = 2;
+                    }
+                break;
+                case"user_active":
+                    box_name = user_active;
+                    if(box_name.is(":checked")){
+                        opt = 2;
+                    }
+                break;
+                case"user_mod":
+                    box_name = user_mod;
+                    if(box_name.is(":checked")){
+                        opt = 2;
+                    }
+                break;
+            }
+            box_name.val(opt);
+            return opt;
+            //console.log(`box name is ${cmd} value is ${opt}`);
+            
+        }
+
+        //------------------
+        function getSummary(){
+            getUserList();
+        }
+        //----------------------
+        function getEvent(){
+            getSummary();
+
+            //---pagination event
+            user_pagin.delegate(".pagination a","click",function(e){
+                e.preventDefault();
+                var cur_page = $(this).attr("data-ci-pagination-page");
+                getUserList(cur_page);
+            });
+            //-----------------
+            //-----btnEditUser event
+            user_list.delegate(".btnEditUser","click",function(){
+                var id = $(this).attr("data-u_id");
+
+                adminEditUser("edit",id);
+            });
+            //--------------------------
+            //--------btnDelUser Event
+            user_list.delegate(".btnDelUser","click",function(){
+                var id = $(this).attr("data-u_id");
+
+                adminDelUser(id);
+            });
+            //----------------------------------
+            //--------btnSaveUser action
+            btnSaveUser.on("click",function(){
+                
+                adminSaveUser();
+            });
+            //----------------
+            //-------checkbox user_ban event
+            user_ban.on("change",function(){
+                setBoxUser("user_ban");
+                //console.log($(this));
+                
+            });
+            //--------------
+            user_active.on("change",function(){
+                setBoxUser("user_active");
+                
+                
+            });
+            //-------------------
+            user_mod.on("change",function(){
+                setBoxUser("user_mod");
+                
+                
+            });
+
+            //-----------------
+        }
+        return{ getEvent : getEvent}
+    })();
+    manUser.getEvent();
+});
+
+</script>

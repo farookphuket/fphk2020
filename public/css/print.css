@@ -1,0 +1,37 @@
+html, 
+body {
+    width: 1200px !important;
+}
+
+.hidden{display:none;visibility:hidden}
+.visible-phone{display:none!important}
+.visible-tablet{display:none!important}
+.hidden-desktop{display:none!important}
+.visible-desktop{display:inherit!important}
+
+
+table{
+    /*table-layout:fixed;*/
+    border-collapse:separate;
+    border-spacing:0.25em;
+    border:1px solid red;
+}
+    tr{
+        display:block;
+        border-bottom:1px dashed blue;
+    }
+    tr:last-child{ border:0; }
+        td{
+            padding-right:0.25em;
+            vertical-align:top;
+            border:1px dotted orange;
+            border-width:0 1px;
+        }
+        td:first-child,
+        td + td{ 
+            border-left:0; 
+        }
+        td:last-child{ 
+            padding-right:0; 
+            border-right:0; 
+        }

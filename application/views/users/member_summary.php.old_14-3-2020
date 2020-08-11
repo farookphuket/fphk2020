@@ -1,0 +1,482 @@
+<section class="bg-primary" id="about">
+    <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto text-center">
+              <h2 class="section-heading text-white">
+
+                  <?php echo"Welcome {$user_name} ";?>
+              </h2>
+              <hr class="light my-4">
+              <p class="text-faded mb-4">
+                  Make Booking, Check My Booking,Write my post.
+                </p>
+            </div>
+        </div>
+      </div>
+</section>
+<!--this is the index page for the user after they login will show the summary-->
+<section id="my_profile">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <h1 class="text-center">My Profile</h1>
+
+        <div class="row">
+          <div class="col-md-6">
+            <ul>
+              <li class="alert alert-success">
+                <p>
+                  if you want to change your profile you can do it here.
+                </p>
+              </li>
+              <li class="alert alert-warning">
+                  <p>
+                    to save any change of your profile you have to enter your current password then go to your mailbox you have to click the link to re-activate your account again.
+                  </p>
+              </li>
+              <li class="alert alert-warning">
+                  <p>
+                    when done you must do login again
+                  </p>
+              </li>
+              <li class="alert alert-success">
+                  <p>
+                    Ready? just click the buttn "View or Edit".
+                  </p>
+              </li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <ul>
+              <li class="alert alert-success">
+                <p>
+                  หากท่านต้องการเปลี่ยนแปลงข้อมูลส่วนตัวท่านสามารถเปลี่ยนได้จากที่นี่
+                </p>
+              </li>
+              <li class="alert alert-warning">
+                <p>
+                  สำหรับบันทึกการเปลี่ยนแปลงข้อมูลส่วนตัวท่านจะต้องกรอกรหัสผ่านของท่าน เมื่อสำเร็จท่านจะต้องเชคอีเมลของท่านเพื่อกด Ativate บัญชีของท่านอีกครั้ง
+                </p>
+              </li>
+              <li class="alert alert-warning">
+                <p>
+                  เมื่อการบันทึกสำเร็จท่านจะต้องล๊อกอินใหม่อีกครั้ง
+                </p>
+              </li>
+              <li class="alert alert-success">
+                <p>
+                  พร้อมแล้วใช่ไหมคลิกที่ปุ่ม "View OR Edit" สิ
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="text-center">
+          <a style="color:white;font-weight:bold;" class="btn btn-primary lnShowProfile btn-lg">
+            View or Edit.
+          </a>
+        </div>
+
+        <p>&nbsp;</p>
+      </div>
+      <div class="profile_wrap">
+        <div class="row">
+          <div class="col-lg-6">
+            <h1>Profile view</h1>
+
+            <p>&nbsp;</p>
+            <div class="table-responsive uShow">
+
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <h1>Profile edit</h1>
+            <p>&nbsp;</p>
+            <?php
+              $f = "users/_frm_user_profile";
+              $this->load->view($f);
+            ?>
+            <p>&nbsp;</p>
+          </div>
+        </div>
+
+
+      </div>
+
+    </div>
+  </div>
+</section>
+<script>
+  $(function(){
+    var $u = $("#my_profile");
+    var user = (function(){
+      var $pfWrap = $u.find(".profile_wrap");
+      var $lnShowProfile = $u.find(".lnShowProfile");
+      var $uShow = $u.find(".uShow");
+      //---form
+      var $f = $u.find("#userProfile");
+      var $fResult = $u.find(".fResult");
+      var uId = $u.find(".u_id");
+      var uName = $u.find(".u_name");
+      var uEmail = $u.find(".u_email");
+      var uTel = $u.find(".u_tel");
+      var uAbout = $u.find(".u_about");
+
+      var oldPass = $u.find(".oldPass");
+      var newPass = $u.find(".newPass");
+      var passConfirm = $u.find(".passConfirm");
+
+      var btnSave = $u.find(".btnSave");
+      btnSave.prop("disabled",true);
+
+      //----- expandMe
+      function expandMe(open){
+        var onMe = parseInt(open);
+        var hiddenMe = $pfWrap.is(":hidden");
+
+        //console.log(`the on me is ${onMe}`);
+        if(hiddenMe){
+          $lnShowProfile.html("Close");
+          onMe = 1;
+        }else{
+          $lnShowProfile.html("View or Edit");
+          onMe = 0;
+        }
+
+
+        //console.log(`The on me is ${onMe}`);
+        $pfWrap.slideToggle();
+      }
+      //----editProfile
+      function editProfile(){
+        $f.trigger("reset");
+        var url = "<?php echo site_url("users/editProfile");?>";
+        $.ajax({
+          url : url,
+          success : function(e){
+            //console.log(e);
+            var rs = $.parseJSON(e);
+            $.each(rs.get,function(i,v){
+              var tmp = `
+              <table class="table table-bordered">
+                <tr>
+                  <th>Name</th>
+                  <td>${v.name}</td>
+                </tr>
+                <tr>
+                  <th>Email</th>
+                  <td>${v.email}</td>
+                </tr>
+                <tr>
+                  <th>Tel</th>
+                  <td>${v.tel}</td>
+                </tr>
+                <tr>
+                  <th colspan=2>About</th>
+                </tr>
+                <tr>
+                  <td colspan=2>${v.about_user}</td>
+                </tr>
+              </table>
+              `;
+              uName.val(v.name);
+              uEmail.val(v.email);
+              uTel.val(v.tel);
+              uId.val(v.id);
+              uAbout.val(v.about_user);
+              newPass.val("");
+              oldPass.val(v.passwd);
+              $uShow.append(tmp);
+            });
+          }
+        });
+      }
+
+      //-----------
+      //----checkPass
+      function checkPass(){
+        btnSave.prop("disabled",true);
+        var url = "<?php echo site_url("users/checkPass");?>";
+        var data = {
+          oldPass : oldPass.val(),
+          passConfirm : passConfirm.val()
+        };
+        //console.log(data);
+        $.post(url,data,function(e){
+          var rs = $.parseJSON(e);
+
+          if(parseInt(rs.error) !== 1){
+            btnSave.prop("disabled",false);
+            $fResult.html("loading...").fadeOut("slow");
+          }else{
+            var tmp = `<div class="alert alert-danger">
+            ${rs.msg}
+            </div>
+            `;
+            $fResult.html(tmp).show();
+          }
+        });
+      }
+      //-----------
+      //----saveProfile
+      function saveProfile(){
+        btnSave.unbind();
+        $fResult.html("");
+        $f.submit(function(e){
+          e.preventDefault();
+          var url = $(this).attr("action");
+          var data = $(this).serialize();
+          $.post(url,data,function(e){
+            var rs = $.parseJSON(e);
+            var tmp = `<div class="alert alert-success">
+            ${rs.msg}
+            </div>
+            `;
+            $fResult.html(tmp).show();
+            setTimeout(function(){
+              $fResult.html("loading..").fadeOut("slow");
+              location.href = rs.url;
+            },5000);
+          });
+        });
+      }
+
+      //----------
+      function getEvent(){
+        editProfile();
+        passConfirm.on("blur",function(){
+          checkPass();
+        });
+        btnSave.on("click",function(){
+          saveProfile();
+        });
+
+        //---hide profile
+        $pfWrap.hide();
+        $lnShowProfile.on("click",function(){
+          expandMe(1);
+        });
+      }
+      return{getEvent:getEvent}
+    })();
+    user.getEvent();
+  });
+</script>
+<!--end of profile -->
+
+<section id="my_booking">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="text-center">My Booking</h1>
+                <hr>
+                <div style="text-align:center">
+                    <?php
+                      $booking_url = site_url("booking/u/");
+                    ?>
+                    <a href="<?php echo $booking_url;?>" class="btn btn-primary">See My Booking</a>
+                    <p>&nbsp;</p>
+                </div>
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="alert alert-info">
+                            <h2 class="book_all" style="color:#ff0000;text-align:center;">0</h2>
+                            <p class="text-center">
+                                All Booking
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="alert alert-warning">
+                            <h2 class="not_conf" style="color:#ff0000;text-align:center;">0</h2>
+                            <p class="text-center">
+                                Not Confirm
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="alert alert-success">
+                            <h2 class="has_conf" style="color:#ff0000;text-align:center;">0</h2>
+                            <p class="text-center">
+                                Has Confirmed
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+</section>
+<script>
+    $(function(){
+        var $bk = $("#my_booking");
+
+        var $allBookNum = $bk.find(".book_all");
+        var $noConfNum = $bk.find(".not_conf");
+        var $confNum = $bk.find(".has_conf");
+
+        var all_b = 0;
+        var not_conf = 0;
+        var conf_b = 0;
+
+        function getNumAll(){
+            var url = "<?php echo site_url("booking/getMyTicketList/");?>";
+            $.ajax({
+              url : url,
+              success : function(e){
+                var rs = $.parseJSON(e);
+                all_b = rs.get_ticket.length;
+                if(all_b !== 0){
+                  $allBookNum.css("background-color","blue").html(all_b);
+                  //console.log(rs);
+                  $.each(rs.get_ticket,function(i,v){
+                    //console.log(v);
+                    if(parseInt(v.bk_confirm) !== 0){
+                      conf_b++;
+                    }else{
+                      not_conf++;
+                    }
+                    $noConfNum.html(not_conf);
+
+                  });
+                }
+
+              }
+            });
+        }
+        function getSummary(){
+            getNumAll();
+        }
+        function getEvent(){
+            getSummary();
+        }
+        var booking = (function(){
+            return{getEvent:getEvent}
+        })();
+        booking.getEvent();
+    });
+</script>
+<section id="my_post">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <h1 class="text-center">My Post
+          &nbsp;<span class="badge badge-success num_allPost">0</span>
+        </h1>
+        <hr class="my-4" />
+
+        <?php $lnMyPost = site_url("article/u");?>
+        <div style="text-align:center">
+            <a href="<?php echo $lnMyPost;?>" class="btn btn-primary">See All of my post</a>
+        </div>
+        <p>&nbsp;</p>
+      </div>
+      <div class="col-lg-3">
+        <div class="alert alert-info">
+          <h1 class="num_allPost" style="text-align:center;color:gray;">0</h1>
+          <p class="text-center">All my post</p>
+        </div>
+      </div>
+      <!--show public post start-->
+      <div class="col-lg-3">
+        <div class="alert alert-info">
+          <h1 class="num_pubPost" style="text-align:center;color:green;">0</h1>
+          <p class="text-center">my public post</p>
+        </div>
+      </div>
+      <!-- END OF show public post-->
+      <!--show unpublic post start-->
+      <div class="col-lg-3">
+        <div class="alert alert-warning">
+          <h1 class="num_priPost" style="text-align:center;color:red;">0</h1>
+          <p class="text-center">my private post</p>
+        </div>
+      </div>
+      <!-- END OF show unpublic post-->
+      <!--show NOT Approve post start-->
+      <div class="col-lg-3">
+        <div class="alert alert-warning">
+          <h1 class="num_notApprove" style="text-align:center;color:red;">0</h1>
+          <p class="text-center">NOT Approve post</p>
+        </div>
+      </div>
+      <!-- END OF show NOT Approve post-->
+    </div>
+  </div>
+</section>
+<script>
+  /*
+  Last update this script on 7-Aug-2019
+  */
+  $(function(){
+    var $a = $("#my_post");
+    var my_post = (function(){
+
+      var $numAll = getEl(".num_allPost");
+      var $numPub = getEl(".num_pubPost");
+      var $numPri = getEl(".num_priPost");
+      var $numNot = getEl(".num_notApprove");
+      //---------------------
+      //------- showLabelPubPost
+      function showLabelMyPost(){
+        var all = 0;
+        var pub = 0;
+        var pri = 0;
+        var not = 0;
+
+        var url = "<?php echo site_url("article/uList");?>";
+        $.ajax({
+          url : url,
+          success : function(e){
+            var rs = $.parseJSON(e);
+            //console.log(rs.get_all);
+            all = rs.get_all.length;
+            $.each(rs.get_all,function(i,v){
+              if(parseInt(v.ar_is_approve) === 0){
+                //---not approve
+                not++;
+              }
+
+              if(parseInt(v.ar_show_public) === 0){
+                pri++;
+              }else{
+                pub++;
+              }
+
+            });
+
+            console.log(`All num is ${all}`);
+            $numAll.html(all);
+            $numPub.html(pub);
+            $numPri.html(pri);
+            $numNot.html(not);
+          }
+        });
+
+      }
+      //---------------------
+      function getSummary(){
+        showLabelMyPost();
+      }
+      //-------------------
+      //------- getEl
+      function getEl(el){
+        return $a.find(el);
+      }
+      //-------getEvent
+      function getEvent(){
+        getSummary();
+      }
+      return {getEvent:getEvent}
+    })();
+
+    //--call script
+    my_post.getEvent();
+  });
+  /*
+    End of user home page post script
+  */
+</script>

@@ -1,0 +1,279 @@
+<?php
+
+//---create on 20 Nov 2018
+defined('BASEPATH') OR exit('No direct script access allowed');
+class Login extends MY_Controller{
+
+
+    //-- protected string as user info
+    protected $user_email;
+    protected $user_name;
+    protected $user_id;
+
+    //---protect string as google user
+    protected $g_name;
+    protected $g_email;
+
+    //the table name
+    //edit on Thu 8 Jun 2017
+    protected $_tb_user = "users";
+
+
+    public $o_put;
+    public $msg;
+    public $today;
+    public $user_type;
+    public $ip;
+
+        function __construct() {
+            parent::__construct();
+            $this->load->model("Mdl_users");
+            $this->load->model("Mdl_login");
+
+
+            $this->user_email =  $this->getUserEmail();
+
+        }
+
+
+
+
+        //-----------------
+        //----getLogin
+        function getLogin(){
+            $u = $this->input->post("u_name");
+            $p = $this->make_hash($this->input->post("u_pass"));
+            $get_set = "";
+            $err = 0;
+            $msg = "";
+            $url = site_url();
+            $ban_user = 0;
+            $active_user = 0;
+            /*
+              Check if this name and pass is match the database
+            */
+            $where = array(
+              "name" => $u,
+              "passwd" => $p
+            );
+            $get = $this->Mdl_login->get($where)->result();
+            $num = count($get);
+            if($num == 0):
+              $err = 1;
+              $msg = "Error : wrong user name or password";
+            else:
+              $name = "";
+              $s = $this->Mdl_login->getStatus(array("name" => $u));
+              if($s["ban_user"] != 0):
+                $err = 1;
+                $msg = "Error : your account is BAN";
+              endif;
+              if($s["active_user"] == 0):
+                $err = 1;
+                $msg = "Error : your account is DEACTIVATED";
+              endif;
+              foreach($get as $row):
+                $name = $row->name;
+              endforeach;
+              $get_set = $this->_getUserSet($name);
+            endif;
+
+
+            if($err != 1):
+              $url = $get_set["url"];
+              $this->session->set_userdata($get_set);
+              $this->is_login = $get_set["is_login"];
+
+
+
+              $msg = "Success : login as user {$u}";
+
+            endif;
+
+            $this->o_put["msg"] = $msg;
+            $this->o_put["error"] = $err;
+            $this->o_put["url"] = $url;
+            $this->output->set_output(json_encode($this->o_put));
+        }
+        //----End of getLogin
+        //-------------------------
+        function _getUserSet($name){
+          $url = site_url();
+          $where = array("name" => $name);
+          $u = "";
+          $e = "";
+          $type = "";
+          $id = 0;
+          $mod = 0;
+          $admin = 0;
+          $data = "";
+
+          $get = $this->Mdl_login->get($where)->result();
+          foreach($get as $row):
+            $u = $row->name;
+            $e = $row->email;
+            $id = $row->id;
+            $type = $row->user_type;
+            if($type == 642):
+              $url = site_url("admin");
+              $admin = 1;
+              $type = "admin";
+            endif;
+            if($type == 409):
+              $url = site_url("users/u");
+              $type = "member";
+            endif;
+            if($row->moderate != 0):
+              $url = site_url("users/mod");
+              $mod = 1;
+              $type = "moderate";
+            endif;
+          endforeach;
+
+
+          $data = array(
+            "user_type" => $type,
+            "is_login" => true,
+            "user_name" => $u,
+            "user_email" => $e,
+            "user_id" => $id,
+            "moderate" => $mod,
+            "is_admin" => $admin,
+            "url" => $url
+          );
+
+
+
+          return $data;
+        }
+
+        //----------------------------
+        //-------forgotPass-------
+        function forgotPass(){
+            //---load form to let user type in his info
+            $this->data["meta_title"] = "Lost your password? try login with your google account!";
+            $this->data["subview"] = "users/forgot_pass";;
+            $tmp = "_layout_main";
+            $this->load->view($tmp,$this->data);
+        }
+        ///////////////////
+        ////-----28-6-2019 7:00 a.m.
+        //----googleLogin
+        function googleLogin(){
+            //---create on 11/5/19
+            //---send by ajax
+            $g_email = $this->input->post("g_email");
+            $g_name = $this->input->post("g_name");
+
+            //--protected var
+            $this->g_name = $g_name;
+            $this->g_email = $g_email;
+            //---url to redirect
+            $rd_url = "";
+            $our_web = site_url();
+            //---user data
+            $user_data = "";
+            //---check if the user and email is exit
+            $where = array("email" => $g_email,"name" => $g_name);
+            $get = $this->Mdl_login->get($where)->result();
+            $num = count($get);
+            if(!$num):
+
+                //--create new user
+                $u = $this->_createUser();
+                $u_email = $u["email"];
+                $u_name = $u["name"];
+                $u_pass = $u["passwd"];
+
+
+
+                $user_data = $this->_getUserSet($u_name);
+                $rd_url = $user_data["url"];
+
+
+                $msg = "Success | create new user ,Welcome {$u_name}";
+            else:
+                //---user login
+                $user_data = $this->_getUserSet($g_name);
+                $rd_url = $user_data["url"];
+                $msg = "Success | Welcome {$g_name} email {$g_email}";
+            endif;
+            //-------------Sent Email notice to this user-----
+            $uMailTitle = "Notice New login : to {$our_web}! on {$this->today}";
+            $uMailBody = "<div>
+                <h1 style='text-align:center;color:yellow'>Now Login to {$our_web} using {$g_email}.</h1>
+                <p>
+                <strong>Dear {$g_name}</strong> you have receieved this e-mail because someone or maybe you, have use your google account to login to {$our_web} on {$this->today_andTime}
+                </p>
+            </div>";
+            //-------------------------------
+            //-------email notice to admin
+            $aMailTitle = "New googleUser Login! IP {$this->ip}";
+            $aMailBody = "<div>
+            <h1 style='text-align:center;color:yellow;'>New Google User Login!</h1>
+            <p>
+            <strong>New Login</strong> using google account on {$g_email} today({$this->today_andTime}).
+            </p>
+            <table style='border:1px dotted #ff0000;'>
+                <tr>
+                    <th>
+                        IP | Email
+                    </th>
+                    <td>
+                        {$this->ip} | {$g_email}
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        Date
+                    </th>
+                    <td>
+                        {$this->today_andTime}
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        Bowser
+                    </th>
+                    <td>
+                        {$this->Mdl_users->browser} | {$this->Mdl_users->os}
+                    </td>
+                </tr>
+            </table>
+            </div>";
+
+            $this->sendMailTo(null,$this->admin_email,$aMailTitle,$aMailBody);
+            //------End send admin notice
+            ///////////////////////////////
+
+            $this->session->set_userdata($user_data);
+            $this->user_email = $user_data["user_email"];
+            $this->user_name = $user_data["user_name"];
+            $this->user_id = $user_data["user_id"];
+            $this->is_login = $user_data["is_login"];
+            $this->moderate = $user_data["moderate"];
+            $this->is_admin = $user_data["is_admin"];
+
+            $this->o_put["url"] = $rd_url;
+            $this->o_put["msg"] = $msg;
+            $this->output->set_output(json_encode($this->o_put));
+
+        }
+
+
+    function _createUser(){
+        $user_data = array(
+            "name" => $this->g_name,
+            "email" => $this->g_email,
+            "passwd" => $this->make_hash(1234),
+            "is_activated" => 1,
+            "date_register" => $this->today,
+            "user_type" => 409
+        );
+        $this->Mdl_users->saveUser($user_data);
+        return $user_data;
+    }
+
+
+
+}

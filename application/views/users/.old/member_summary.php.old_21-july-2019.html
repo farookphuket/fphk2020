@@ -1,0 +1,36 @@
+<section class="bg-primary" id="about">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto text-center">
+            <h2 class="section-heading text-white">Welcome 
+            <?php echo $user_name;?>
+            </h2>
+            <hr class="light my-4">
+            <p class="text-faded mb-4">
+            The member area only </p>
+            <p class="text-faded mb-4">
+            ทดสอบ สมาชิก
+            </p>
+            <a class="btn btn-light btn-xl js-scroll-trigger" href="#services">Get Started with us! ทดสอบปุ่ม</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+<?php 
+    //$tkJS = "booking/own_bookingJS.php";
+    $own_booking = "booking/own_booking.php";
+    $this->load->view($own_booking);
+    //$this->load->view($tkJS);
+?>
+
+
+
+
+<section class="user_post">
+    <?php 
+        $postJS = "article/user_ar.php";
+        $this->load->view($postJS);
+    ?>
+</section>

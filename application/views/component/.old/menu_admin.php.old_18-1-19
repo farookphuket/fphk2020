@@ -1,0 +1,148 @@
+ <?php
+        //get the link
+ $name = $this->session->userdata("user_name");
+$user_id = $this->session->userdata("user_id");
+
+ $home = anchor(site_url("admin"),"Home");
+
+ //---faq
+ $faq = anchor(site_url("faq"),"Faq Anonymous");
+
+ $manage_user = anchor(site_url("users/admin"),"Managing User");
+ $login = anchor(site_url("users/login_form"),"Login");
+
+	$article = anchor(site_url("article/category"),"Category");
+    //$list_ar = anchor(site_url("article/manage"),"Manage Article");
+
+    $gallery = anchor(site_url("gallery"),"Gallery");
+    $booking = anchor(site_url("booking/admin"),"Manage Booking");
+    $tour = anchor(site_url("tour"),"Tour");
+    $product = anchor(site_url("product/product_admin_api"),"Product");
+?>
+
+<nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">
+          <?php echo $name; ?>
+          </a>
+        </div>
+<div id="navbar" class="navbar-collapse collapse">
+  <ul class="nav navbar-nav">
+	<li>
+	<?php echo $home;?>
+	</li>
+  <li class="dropdown">
+  <a href="#" class="dropdown-toggle"
+            data-toggle="dropdown" role="button"
+            aria-haspopup="true" aria-expanded="false">Manage Faq
+              <span class="caret"></span></a>
+    <ul class="dropdown-menu">
+      <li>
+        <?php echo $faq;?>
+      </li>
+    </ul>
+  </li>
+       <li>
+                <?php
+                echo $manage_user;
+                ?>
+            </li>
+        <li class="dropdown">
+        <a href="#" class="dropdown-toggle"
+            data-toggle="dropdown" role="button"
+            aria-haspopup="true" aria-expanded="false">Manage Article
+              <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                
+                <li>
+                  <a href="<?php echo site_url("article");?>">Article</a>
+                </li>
+              </ul>
+        </li>
+        <li class="dropdown">
+        <a href="#" class="dropdown-toggle"
+            data-toggle="dropdown" role="button"
+            aria-haspopup="true" aria-expanded="false">
+            Booking and Tour
+            <span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu">
+            <li>
+              <a href="<?php echo site_url("booking");?>" >
+                Booking
+              </a>
+            </li>
+            <li>
+              <a href="<?php echo site_url("tour");?>">
+                Tour
+              </a>
+            </li>
+          </ul>
+        </li>
+<!--
+<li class="dropdown">
+<a href="#" class="dropdown-toggle"
+data-toggle="dropdown" role="button"
+aria-haspopup="true" aria-expanded="false">Article
+<span class="caret"></span></a>
+   <ul class="dropdown-menu">
+     <li>
+        <?php //echo $article; ?>
+     </li>
+
+-->
+<!--
+       <li role="separator" class="divider"></li>
+          <li class="dropdown-header">Manage Article</li>
+          <li>
+            <?php //echo $list_ar; ?>
+          </li>
+          <li><a href="#">One more separated link</a></li>
+          <li><a href="#">Another action</a></li>
+          <li><a href="#">Something else here</a></li>
+   </ul>
+</li>
+-->
+<li>
+<?php
+    echo $gallery;
+?>
+</li>
+<li>
+  <?php echo $product; ?>
+</li>
+<!--
+<li>
+<?php
+  // echo anchor(site_url("users/logout"),"Logout");
+?>
+</li>
+-->
+          </ul>
+
+             <ul class="nav navbar-nav navbar-right">
+        <li>
+        <a href="<?php echo site_url("users/logout");?>">
+          <span class="glyphicon glyphicon-off"></span>
+          Logout
+       </a>
+    </li>
+     <li>
+        <a href="<?php echo site_url("admin/profile/"); ?>">
+                <span class="glyphicon glyphicon-user"></span>
+                <span class="sr-only"></span>
+                <span class="icon-bar"></span>
+                Profile
+            </a>
+        </li>
+      </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>

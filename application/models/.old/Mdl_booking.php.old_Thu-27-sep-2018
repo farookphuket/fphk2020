@@ -1,0 +1,65 @@
+<?php
+
+    class Mdl_booking extends MY_Model{
+
+        
+        
+        //protected $_tb_ar = "tbl_article";
+        //protected $_tb_cat = "tbl_cat";
+        protected $_tb_booking = "tbl_booking";
+
+
+        public function __construct(){
+            
+            parent::__construct();
+        }
+
+
+    //--getBooking
+    function getBooking($where=false,$limit=false,$offset=false){
+        $get = 0;
+        if(!$where):
+            //get everything
+            /*
+            $get = $this->getTB($this->_tb_booking,null,$limit,$offset);
+            comment out Fri 11 May 2018
+            */
+            $get = $this->db 
+                    ->order_by("going_date","DESC")
+                    ->limit($limit,$offset)
+                    ->get($this->_tb_booking);
+        else:
+            /*
+            $get = $this->getTB($this->_tb_booking,$where,$limit,$offset);
+            */
+            $get = $this->db 
+                    ->order_by("going_date","DESC")
+                    ->where($where)
+                    ->limit($limit,$offset)
+                    ->get($this->_tb_booking);
+        endif;
+        return $get;
+    }
+    //------save_booking
+    function save_booking($data,$where=false){
+        $id = 0;
+
+        if(!$where):
+            $this->saveTB($this->_tb_booking,$data);
+        else:
+            $this->saveTB($this->_tb_booking,$data,$where);
+        endif;
+    }
+
+    //----
+    function delBooking($id){
+        if($id):
+            $this->delTB($this->_tb_booking,$id);
+        else:
+            return false;
+        endif;
+        return true;
+    }
+
+
+}//end of the file 

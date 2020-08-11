@@ -1,0 +1,454 @@
+<?php
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+class Admin extends MY_Controller{
+    protected $user_id;
+    protected $user_name;
+    protected $is_login;
+    protected $is_admin;
+
+    public $o_put;
+
+    /*
+       use table to join
+    */
+
+    protected $_tb_ar = "tbl_article";
+    protected $_tb_user = "users";
+    protected $_tb_cat = "tbl_cat";
+    protected $_tb_notice = "tbl_notification";
+    protected $_tb_a = "tbl_answer";
+    protected $_tb_booking = "tbl_booking";
+
+function __construct() {
+        parent::__construct();
+		$this->is_admin = $this->session->userdata("is_admin");
+        $this->user_is_login();
+        $this->user_id = $this->session->userdata("user_id");
+        $this->user_is_admin();
+        $this->user_name = $this->session->userdata("user_name");
+
+//Load the library..edit on Mon-31-July-2017
+        $this->load->library("pagination");
+        //
+        //
+        //
+        //Load the models
+        $this->load->model("Mdl_users");
+		$this->load->model("Mdl_article");
+        $this->load->model("Mdl_admin");
+        $this->load->model("Mdl_cat");
+        $this->load->model("Mdl_booking");
+        $this->load->model("Mdl_faq");
+    if(!$this->is_admin):
+        //echo"No Admin..";
+        redirect(site_url("users/logout"));
+    endif;
+}
+    
+function index(){
+
+        //the landing page will show the notification
+    $cmd = $this->input->post("cmd");
+    //$page = $this->input->post("page");
+        switch($cmd):
+            case"getArticleSummary":
+
+            $get_all = $this->Mdl_tour->getArticle()->result();
+            $num_all = count($get_all);
+            $this->o_put["num_all"] = $num_all;
+            $this->o_put["get_all"] = $get_all;
+
+            $where_pub = array("ar_show_public !=" => 0);
+            $get_public = $this->Mdl_tour->getArticle($where_pub)->result();
+            $this->o_put["num_pub"] = count($get_public);
+
+            $where_pri = array("ar_show_public" => 0);
+            $get_pri = $this->Mdl_tour->getArticle($where_pri)->result();
+            $this->o_put["num_pri"] = count($get_pri);
+
+            $no_approve = array("ar_is_approve" => 0);
+            $get_noap = $this->Mdl_tour->getArticle($no_approve)->result();
+            $this->o_put["not_approve"] = count($get_noap);
+
+            $approve = array("ar_is_approve !=" => 0);
+            $get_ap = $this->Mdl_tour->getArticle($approve)->result();
+            $this->o_put["approve"] = count($get_ap);
+            
+            
+            $this->output->set_output(json_encode($this->o_put));
+        
+            break;
+            default:
+            $this->data["subview"] = "admin/admin_index";
+            $this->data["meta_title"] = "Welcome {$this->user_name}";
+    
+            $where_note = array("notice_read !=" => 1);
+            $get_notice = $this->Mdl_admin->getNotice($where_note)->result();
+            $num_notice = count($get_notice);
+    
+            //--set the pagination
+            $page = $this->input->get("page");
+            if(!$page):
+                $page = 1;
+            else:
+                $page = $page;
+            endif;
+            $per_page = 8;
+            $conf = array(
+                "base_url" => site_url("admin/index/{$page}"),
+                "total_rows" => $num_notice,
+                "per_page" => $per_page
+            );
+            $this->pagination->initialize($conf);
+            $get_all_notice = $this->Mdl_admin
+                                    ->getNotice($where_note,
+                                    $conf["per_page"],
+                                    $this->uri->segment(4))->result();
+            $this->data["num_notice"] = $num_notice;
+            $this->data["per_page"] = $per_page;
+            $this->data["get_notice"] = $get_all_notice;
+            
+    
+            $this->load->view("_layout_admin",$this->data);
+            break;
+        endswitch;
+        
+
+    }
+//---
+    
+    //---The notification
+    function markAsRead(){
+        //--this method will mark only 1 notification
+        //--and page will reload after it has done the operation
+        $cmd = $this->input->post("cmd");
+        $note_id = $this->input->post("note_id");
+        $read = $this->input->post("read");
+        $msg = "";
+        
+        /*
+        if($cmd == "mark"):
+            $note_data = array("notice_read" => 1);
+            $this->Mdl_admin->saveTB($this->_tb_notice,$note_data,array("notice_id" => $note_id));
+            $msg = "You have marked {$note_id} as read";
+        elseif($cmd == "markAll"):
+            
+        else:
+
+        endif;
+         Fri 20 Apr 2017 : using switch
+        */
+        switch($cmd):
+            case"mark":
+                $note_data = array("notice_read" => 1);
+                $this->Mdl_admin->saveTB($this->_tb_notice,$note_data,array("notice_id" => $note_id));
+                $msg = "You have marked {$note_id} as read";
+                $this->o_put["msg"] = $msg;
+                $this->output->set_output(json_encode($this->o_put));
+            break;
+            case"markAll":
+                $where = array("notice_read " => 0);
+                $get = $this->Mdl_admin->getNotice($where)->result();
+                $unread = count($get);
+                //echo"the unread message is {$unread} items";
+                
+                $note_data = array("notice_read" => 1);
+                foreach($get as $row):
+                    if($row->notice_read == 0):
+                        $msg = "All notification are marked";
+                        $this->Mdl_admin->saveTB($this->_tb_notice,$note_data,array("notice_read" => 0));
+                    endif;
+                endforeach;
+                $this->o_put["msg"] = $msg;
+                $this->output->set_output(json_encode($this->o_put));
+            break;
+        endswitch;
+        
+
+    }
+    //--End of the notification
+
+
+   ///show sumary on the admin home page
+   function summaryAjax(){
+        //--this method only ajax call for show the summary
+        //--on the Admin first page
+
+        //--cmd
+        $cmd = $this->input->post("cmd");
+
+        //---switch the case for query
+        switch ($cmd) {
+            case 'arSummary':
+                # code...
+                echo"Article";
+            break;
+            case'getBooking':
+                # code...
+                $book = $this->sumBooking();
+                $this->o_put["all"] = $book["all"];
+                $this->o_put["not_confirm"] = $book["not_confirm"];
+                $this->o_put["confirmed"] = $book["confirmed"];
+                $this->output->set_output(json_encode($this->o_put));
+            break;
+            default:
+                # code...
+            break;
+        }
+
+   }
+
+    //--getbooking call by summaryAjax
+    function sumBooking(){
+        $data = array();
+
+        $confirm = array("bk_confirm !=" => 0);
+        $bk_confirm = $this->Mdl_booking->getBooking($confirm)->result();
+        $data["confirmed"] = count($bk_confirm);
+
+        //--not confirm
+        $not_conf = array("bk_confirm" => 0);
+        $no_conf = $this->Mdl_booking->getBooking($not_conf)->result();
+        $data["not_confirm"] = count($no_conf);
+
+        //--all booking
+        $all_book = $this->Mdl_booking->getBooking()->result();
+        $data["all"] = count($all_book);
+
+        return $data;
+    }
+
+    
+
+//------------------------------------------------------
+    // function getAllNotice(){
+    //     $get = $this->Mdl_admin->getTB($this->_tb_notice);
+    //     $msg = array();
+    //     $msg["get_notice"] = $get->result();
+    //     $msg["num_notice"] = count($get->result());
+    //     //$this->output->set_output(json_encode($msg));
+    //     echo json_encode($msg);
+    // }
+
+//----------Sun-17-Sep-2017
+    // function notice_api($n_id=false){
+        
+    //     require("notice_admin_api.php");
+    // }
+    
+//------------///////////////
+
+function profile(){
+
+    $command = $this->input->post("command");
+    $admin_id = $this->input->post("admin_id");
+    $name = $this->input->post("name");
+    $email = $this->input->post("email");
+    $tel = $this->input->post("tel");
+    $passwd = $this->make_hash($this->input->post("passwd"));
+
+    $a_data = array(
+        "name" => $name,
+        "email" => $email,
+        "tel" => $tel,
+        "last_update" => time(),
+    );
+
+    $error = 0;
+    $msg = array();
+    switch($command):
+        case"check_admin":
+
+            $where = array("passwd" => $passwd);
+            $get = $this->Mdl_admin->getTB($this->_tb_user,$where);
+            $num = count($get->result());
+
+            if($num == 0):
+                $error = 1;
+                $msg["msg"] = "Error : Wrong password!";
+            endif;
+            $msg["error"] = $error;
+            echo json_encode($msg);
+
+        break;
+        case"update":
+            $where = array("id" => $this->user_id);
+            $save = $this->Mdl_admin
+                    ->saveTB($this->_tb_user,$a_data,$where);
+            if(!$save):
+                echo"Error : code=1";
+            else:
+                echo"Success : Data has been save!";
+            endif;
+        break;
+        default:
+
+            $where = array("user_type" => 642,"id" => $this->user_id);
+            $get = $this->Mdl_users->getTB($this->_tb_user,$where);
+            foreach($get->result() as $row):
+                $name = $row->name;
+                $email = $row->email;
+                $tel = $row->tel;
+                $about = $row->about_user;
+                $u_id = $row->id;
+            endforeach;
+
+                $this->data["subview"] = "admin/user/admin_profile";
+                $this->data["meta_title"] = "{$this->user_name}'s profile";
+                $this->data["admin_id"] = $this->user_id;
+                $this->data["name"] = $name;
+                $this->data["email"] = $email;
+                $this->data["tel"] = $tel;
+                $this->data["about"] = $about;
+                $this->load->view("_layout_admin",$this->data);
+
+
+        break;
+    endswitch;
+
+
+}//end of profile
+
+
+//this method will call the other file name booking_manage.php
+//create on Mon-31-July-2017
+/*
+Comment out as no longer use
+function man_booking(){
+
+    require("booking_manage.php");
+    //echo"this is the man_booking";
+}//end of man_booking
+*/
+
+//
+//Last update on Thu 6 July 2017
+///<!-- User section start -->
+/*
+function man_user(){
+    //--Wed 18 Apr 2018
+    //--move this to users section
+    $this->load->library("pagination");
+    $msg = array();
+    $error = 0;
+    $command = $this->input->post("cmd");
+    $u_id = $this->input->post("u_id");
+    $u_name = $this->input->post("u_name");
+    $u_email = $this->input->post("u_email");
+    $u_active = $this->input->post("u_active");
+    $u_ban = $this->input->post("u_ban");
+
+    if(!$u_ban):
+        $u_ban = 0;
+    endif;
+    if(!$u_active):
+        $u_active = 0;
+    endif;
+    $today = date("Y-m-d",time());
+    $user_data = array(
+        "name" => $u_name,
+        "email" => $u_email,
+        "is_activated" => $u_active,
+        "is_ban" => $u_ban,
+        "date_register" => $today,
+        "last_update" => $today,
+        "user_ip" => $this->data["ip"]
+
+    );
+
+    switch($command):
+        case"edit_user":
+            //echo"to edit is {$u_id}";
+            $where = array("id" => $u_id); 
+            $get = $this->Mdl_users->getUsers($where)->result();
+            $this->o_put["get"] = $get;
+            $this->output->set_output(json_encode($this->o_put));
+        break;
+        case"save_user":
+            //save user
+            $save = 0;
+            $msg = "";
+            if(!$u_id):
+                //this is the new user
+                unset($user_data["last_update"]);
+                $user_data["passwd"] = $this->make_hash("1234");
+                $user_data["user_type"] = 409;
+                $user_data["about_user"] = "Dear {$u_name} your account is create by admin and use the unsafe default password please change your password as soon as you can";
+                $save = $this->Mdl_users->saveUser($user_data);
+                $msg = "Success : user has been created";
+            else:
+                //this is the edit user
+                unset($user_data["date_register"]);
+                $where = array("id" => $u_id);
+                $save = $this->Mdl_users->saveUser($user_data,$where);
+                $msg = "Success : data is save";
+            endif;
+            $this->o_put["msg"] = $msg;
+            $this->output->set_output(json_encode($this->o_put));
+            
+        break;
+        case"del_user":
+          $where = array("id" => $u_id);
+          $del = $this->Mdl_users->delUser($where);
+          echo"Success : user has been deleted!";
+            
+        break;
+        default :
+            $get = $this->Mdl_users->getUsers(array("user_type!="=>642));
+           // var_dump($get->result());
+            $num_u = count($get->result());
+            $page = $this->input->get("page");
+
+/*
+            if(!$page):
+                $page = 0;
+            else:
+                $page = $page;
+            endif;
+ */
+/*
+
+            $conf = array(
+                "per_page" => 10,
+                "base_url" => site_url("admin/man_user/{$page}/"),
+                "total_rows" => $num_u
+            );
+            $get_all = $this->Mdl_users
+                ->getTB(
+                $this->_tb_user,
+                array("user_type!=" => 642),
+                $conf["per_page"],
+                $this->uri->segment(3)
+            );
+
+
+            $this->pagination->initialize($conf);
+            $this->data["num_users"] = $num_u;
+            $this->data["get_users"] = $get_all;
+
+            $this->data["subview"] = "admin/user/user_index";
+            $this->data["meta_title"] = "Managing User | Admin";
+
+            $this->load->view("_layout_main",$this->data);
+        break;
+    endswitch;
+
+}//end of man_user
+
+//-----Will comment this method out as no longer user
+//--last use on Thu 19 Apr 2018 //---------
+*/
+
+
+
+/////////End of user section
+//////////////////////////////////////
+
+
+
+
+}//end of file

@@ -1,0 +1,179 @@
+<script>
+
+
+    $(function(){
+
+
+        var $el = $("#container");
+        var modal_status = $el.find(".modal_status");
+        var page_status = $el.find(".status");
+//end of global
+        //
+        var booking = (function(){
+
+            var ln_edit = $el.find(".ln_edit");
+            var ln_del = $el.find(".ln_del");
+
+            var modalEdit = $el.find(".modalEdit");
+            var bookingFrm = $el.find("#bookingFrm");
+            var bk_name = $el.find(".bk_name");
+            var bk_id = $el.find(".bk_id");
+            var price_each = $el.find(".price_per_one");
+            var bk_num = $el.find(".bk_num");
+            var deposite = $el.find(".deposite");
+            var bk_status = $el.find(".bk_status");
+            var bk_more = $el.find(".bk_more");
+            //--mark
+            var mark_done = $el.find(".onboard");
+            var mark_txt = $el.find(".on_txt");
+            mark_txt.val("Mark as NOT GO!");
+            
+            //--------
+            var btnSave = $el.find(".btnSave");
+            var btnCancle = $el.find(".btnCancle");
+
+
+            var modalConf = $el.find(".modalConf");
+
+            var btnConf = $el.find(".btnConf");
+            
+            var url = "<?php echo site_url("booking/admin");?>";
+            function getData(){
+                var data = {
+                        bk_name : bk_name.val(),
+                        deposite : deposite.val(),
+                        bk_status : bk_status.val(),
+                        bk_more : bk_more.val()
+                };
+                return data;
+            }
+            //---mark_as
+            function mark_as(){
+                var done = 0;
+                var t = "not done";
+                if(mark_done.is(":checked") !== false){
+                    done = 1;
+                    t = "Yes it is done";
+                }
+                mark_txt.val(t);
+                mark_done.val(done);
+                return done;
+            }
+            //---
+            function editBooking(c,v){
+                switch(c){
+                    case"edit":
+                        var data = {
+                            bk_id : v,
+                            cmd : "edit"
+                        };
+
+                        //--by default is uncheck
+                        mark_done.prop("checked",false);
+                        mark_txt.val("Mark as NOT DONE");
+
+                        $.ajax({
+                            type : "post",
+                            url : url,
+                            data : data,
+                            success : function(e){
+                                var rs = $.parseJSON(e);
+                                // bk_name.val(rs.bk_name);
+                                // bk_id.val(rs.bk_id);
+                                // deposite.val(rs.price_of_deposite);
+                                // bk_more.val(rs.bk_more);
+                                // bk_status.val(rs.bk_confirm);
+
+                                // $(modalEdit).modal("show");
+                                $(".modal-title").html("Make sure this ticket has pay via paypal!!");
+                                $.each(rs.get_booking,function(i,v){
+                                    bk_name.val(v.bk_name);
+                                    bk_id.val(v.bk_id);
+                                    deposite.val(v.price_of_deposite);
+                                    bk_more.val(v.bk_more);
+                                    bk_num.val(v.bk_num);
+                                    if(parseInt(v.mark_as_done) !== 0){
+                                        mark_done.prop("checked",true);
+                                        mark_txt.val("Mark as DONE");
+                                    }
+                                    bk_status.val(v.bk_confirm);
+                                    price_each.val(v.price_per_one);
+                                    $(modalEdit).modal("show");
+                                });
+                            }
+                        });
+
+                    break;
+                }
+            }
+            function saveBooking(){
+                
+                /*
+                var data = getData();
+                data.cmd = "update";
+                data.bk_id = bk_id.val();
+                $.ajax({
+                    type : "post",
+                    url : url,
+                    data : data,
+                    success : function(e){
+                        alert(e);
+                    }
+                });
+                last edit Thu 22 Mar 2018
+                */
+                btnSave.unbind();
+                bookingFrm.submit(function(evt){
+                    evt.preventDefault();
+                    var cmd = "update";
+                    var data = $(this).serialize()+"&cmd="+cmd;
+                    var url = $(this).attr("action");
+                    $.post(url,data,function(e){
+                        alert(e);
+                        location.reload();
+                    });
+                });
+
+                
+            }//end of saveBooking
+            function delBooking(id){
+                if(confirm("you are about to DELETE booking "+id) === false){
+                    return false;
+                }
+                var data = {cmd : "delete",bk_id : id};
+                $.ajax({
+                    type : "post",
+                    url : url,
+                    data : data ,
+                    success : function(e){
+                        alert(e);
+                        location.reload();
+                    }
+                });
+                
+            }//end of delBooking
+            function getEvent(){
+                ln_edit.on("click",function(){
+                    editBooking("edit",$(this).attr("id"));
+                });
+                ln_del.on("click",function(){
+                    var id = $(this).attr("id");
+                    delBooking(id);
+                });
+                btnSave.on("click",function(){
+                    saveBooking();
+                });
+                btnCancle.on("click",function(){
+                    location.reload();
+                });
+
+                //---mark done
+                mark_done.on("change",function(){
+                    mark_as();
+                });
+            }
+            return{getEvent : getEvent}
+        })();
+        booking.getEvent();
+    });
+</script>

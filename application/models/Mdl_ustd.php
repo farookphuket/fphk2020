@@ -1,0 +1,217 @@
+<?php
+/*
+* class Users last edit on Sat-3-Sep-2016
+*
+*/
+class Mdl_ustd extends MY_Model{
+    protected $_tb_ustd = "tbl_ustd";
+    protected $_tb_user = "users";
+    protected $_tb_tmp = "tbl_template";
+    protected $_tb_cat = "tbl_cat";
+    protected $_order_by;
+
+    //add $_tb_user on Thu 15 June 2017
+
+    public $ip;
+    public $browser;
+    public $os;
+
+    /*
+      Edit moderate section on 1-Aug-2019
+    */
+    protected $user_id;
+    public $user_name;
+
+
+
+
+    function __construct() {
+        parent::__construct();
+
+        $this->ip = $this->getIP();
+        $this->os = $this->getOS();
+        $this->browser = $this->getBrowser();
+
+        //--- 1-Aug-2019
+        $this->user_id = $this->getUserId();
+        $this->user_name = $this->getUserName();
+   }
+
+
+    //-----------Created 23-Sep-2019 10:23 a.m. @BUU ที่รัก
+    //--getUser will return all user if no id
+    //
+    function getWhatNew($where=false){
+
+        if($where):
+            $get = $this->getSt();
+
+        else:
+
+        endif;
+    
+
+    }
+
+    function find($where){
+        $get = $this->db
+                    ->where($where)
+                    ->get($this->_tb_ustd);
+        return $get;
+    }
+
+    function getSt($where=false,$limit=false,$offset=false){
+        $get = "";
+       // $where = "";
+
+        $j1 = "{$this->_tb_user}.id={$this->_tb_ustd}.st_user_id";
+        $j2 = "{$this->_tb_cat}.cat_id={$this->_tb_ustd}.cat_id";
+
+        if($where):
+            $get = $this->db
+                        ->order_by("date_create","DESC")
+                        ->join($this->_tb_user,$j1)
+                        ->join($this->_tb_cat,$j2)
+                        ->where($where)
+                        ->get($this->_tb_ustd,$limit,$offset);
+        else:
+             $get = $this->db
+                        ->order_by("date_create","DESC")
+                        ->join($this->_tb_user,$j1)
+                        ->join($this->_tb_cat,$j2)
+                        ->get($this->_tb_ustd,$limit,$offset); 
+        endif;
+        return $get;
+    }
+
+    function ustdGetTemplate($where){
+        $get = "";
+        if($where):
+            $get = $this->db
+                        ->where($where)
+                        ->get($this->_tb_tmp);
+        endif; 
+        return $get;
+    }
+
+    
+
+
+    /*
+     *  End 15-3-2020
+     *
+     */
+
+    function ustdAdminGet($where,$limit=false,$offset=false){
+        $get = "";
+        $j1 = "{$this->_tb_user}.id={$this->_tb_ustd}.st_user_id";
+        if($where):
+            $get = $this->db
+                        ->order_by("date_create","DESC")
+                        ->join($this->_tb_user,$j1)
+                        ->where($where)
+                        ->get($this->_tb_ustd,$limit,$offset);
+        else:
+            $get = $this->db
+                        ->join($this->_tb_user,$j1)
+                        
+                        ->order_by("date_create","DESC")
+                        ->get($this->_tb_ustd,$limit,$offset);
+
+        endif;
+
+        
+
+        return $get;
+    }
+    function adminSave(){
+        $st_id = $this->getEl("st_id");
+        $set_cat = $this->getEl("set_cat");
+
+        $st_user_id = $this->getEl("st_user_id");
+        $uniq_id = $this->getEl("uniq_id");
+        $st_title = $this->getEl("st_title");
+        $st_sum = $this->getEl("st_sum");
+        $st_body = $this->getEl("st_body");
+        $show_public = !($this->getEl("show_public"))?$show_public=0:$show_public=2;
+        $friend_only = !($this->getEl("friend_only"))?$friend_only=0:$friend_only=2;
+        $private_only = !($this->getEl("private_only"))?$private_only=0:$private_only=2;
+
+        if(!$st_user_id):
+            $st_user_id = $this->user_id;
+        endif;
+
+        if(!$uniq_id):
+            $uniq_id = $this->randomChar(76);
+            endif;
+        $st_data = array(
+            "cat_id" => $set_cat,
+            "uniq_id" => $uniq_id,
+            "st_title" => $st_title,
+            "st_sum" => $st_sum,
+            "st_body" => $st_body,
+            "show_public" => $show_public,
+            "friend_only" => $friend_only,
+            "private_only" => $private_only,
+            "date_create" => $this->today_andTime,
+            "date_update" => $this->today_andTime,
+            "st_user_id" => $st_user_id
+        );
+        $msg = "";
+
+        if(!$st_id):
+          
+            $save = $this->SAVE($st_data,$this->_tb_ustd);
+          
+        $st_id = $save;
+            $msg = "Create new item by {$st_id} uniq id is {$uniq_id}";             
+        else:
+            if($st_user_id !== $this->user_id):
+                unset($st_data["st_user_id"]);
+            endif;
+            unset($st_data["uniq_id"]);
+            unset($st_data["date_create"]);
+            $save = $this->SAVE($st_data,$this->_tb_ustd,array("{$this->_tb_ustd}.st_id" => $st_id));
+         
+            $msg = "update id {$st_id} the uniq id is {$uniq_id}";
+        endif;
+               
+
+        $r_data = array(
+            "msg" => $msg
+        );
+        return $r_data;
+
+    }
+
+    function ustdAdminDelete($id){
+       // $where = array("{$this->_tb_ustd}.st_id" => $id)
+        $get = $this->getSt($id)->result();
+        $num = count($get);
+        $u_name = "";
+        $u_email = "";
+        $st_id = 0;
+
+        $u_id = "";
+        $get_all = "";
+        foreach($get as $row):
+            $u_name = $row->name;
+            $u_email = $row->email;
+            $u_id = $row->id;
+            $st_id = $row->st_id;
+        endforeach;
+         
+        $this->DEL(array("st_id" => $st_id),$this->_tb_ustd);
+        
+        $get_all = $this->getSt(array("st_user_id" => $u_id))->result();
+        $num_all = count($get_all);
+        $msg = "Deleted ${st_id}! There are $num_all item from user {$u_name}";
+        $r_data = array(
+            "msg" => $msg
+        );
+        return $r_data;
+
+    }
+
+
+}//end class

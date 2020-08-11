@@ -1,0 +1,138 @@
+<script> 
+
+
+    $(function(){
+
+        var $el = $(".container");
+        var article = (function(){
+
+            var lnRead = $el.find(".lnRead");
+
+            //--modal
+            var mdRead = $el.find(".mdReadAr");
+            var mdReadTitle = $el.find(".mdArTitle");
+            var mdReadBody = $el.find(".modal-body");
+            //var showReadContent = $el.find(".show_read");
+            var mdReadFooter = $el.find(".modal-footer");
+            
+            //--show the releted link
+            var show_also_id = $el.find(".show_also_id");
+            var see_also = $el.find(".see_also");
+            //var div_show_also = $el.find("#div_show_also");
+
+            //---button close
+            var btnClose = $el.find(".btnClose");
+            
+
+            function readArticle(id){
+                var url = "<?php echo site_url("article/readAr");?>";
+                var data = {
+                    ip : "<?php echo $ip;?>",
+                    ar_id : id
+
+                };
+                $.ajax({
+                    type : "post",
+                    url : url,
+                    data : data,
+                    success : function(e){
+                        //console.log(e);
+                        var rs = $.parseJSON(e);
+                        var title = "Article Title ไตเติ้ล";
+                        var body = "Article Body รายละเอียด";
+                        var post_name = "The post name";
+                        //console.log(rs);
+                        
+                        $.each(rs.get,function(i,v){
+                            title = v.ar_title;
+                            body = v.ar_body;
+                            post_name = `
+                            <div class='row'>
+                                <div class="col-sm-4 col-sm-push-8" style="background-color:lavender;">
+                                    <p>Post by ${v.ar_post_by}</p>
+                                    
+                                </div>
+                                <div class="col-sm-8 col-sm-pull-4" style="background-color:lavenderblush;">
+                                    <p>Post On ${v.date_add}</p>
+                                </div>
+  
+                            </div>
+                            `;
+                            var show = `
+                            <pre>
+                                ${body}
+                            </pre>
+                            `;
+                            mdReadTitle.html(title);
+                            mdReadBody.html(body);
+                            $(mdReadBody).append(post_name);
+                            $(mdRead).modal("show");
+                            
+                            //---set the related link
+                            show_also_id.val(v.cat_id);
+                            showAlso(v.cat_id);
+
+                        });
+                    }
+                });
+                
+            }
+            //------
+            function showAlso(id){
+                //--call the category id
+                var title = `<div class='page-heading text-right'>
+                <h2>See Also</h2>
+                </div>`;
+                var url = "<?php echo site_url("article/getArList");?>";
+                var data = {cat_id : show_also_id.val()};
+                //console.log(`The req id is ${id}`);
+                mdReadBody.append(title);
+                $.ajax({
+                    type : "post",
+                    url : url,
+                    data : data,
+                    success : function(e){
+                        //console.log(e);
+                        var rs = $.parseJSON(e);
+                        var body = ``;
+                        
+                        $.each(rs.get_ar,function(i,v){
+                            body = `<div class="text-right see_also">
+                            <a href="#" data-ar_id="${v.ar_id}" class="lnRead">
+                            ${v.ar_title}
+                            </a>
+                            
+                            </div>
+                            
+                            `;
+                            mdReadBody.append(body);  
+                        });
+                        
+                    }
+                });
+            }
+            //------
+            function getEvent(){
+                lnRead.on("click",function(evt){
+                    evt.preventDefault();
+                    var id = $(this).attr("data-ar_id");
+                    readArticle(id);
+                });
+
+                btnClose.on("click",function(){
+                    location.reload();
+                });
+
+                $(".modal-body").delegate("a.lnRead","click",function(){
+                    var id = $(this).attr("data-ar_id");
+                    readArticle(id);
+                });
+            }
+            return{getEvent : getEvent}
+        })();
+        article.getEvent();
+    });
+
+        
+        
+</script>

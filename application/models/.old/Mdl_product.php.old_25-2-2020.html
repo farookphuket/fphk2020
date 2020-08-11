@@ -1,0 +1,232 @@
+<?php
+
+
+
+ class Mdl_product extends MY_Model{
+
+
+     protected $_tb_product = "tbl_product";
+     protected $_tb_user = "users";
+     protected $_tb_seo = "seo";
+
+    public $ip;
+    public $browser;
+    public $os;
+
+    protected $user_id;
+    public $user_name;
+    public $user_type;
+
+    public $is_login;
+    public $is_admin;
+    public $moderate;
+
+
+
+    function __construct(){
+      parent::__construct();
+
+      $this->user_id = $this->getUserId();
+      $this->user_name = $this->getUserName();
+      $this->user_type = $this->getUserType();
+
+        //--------
+        $this->ip = $this->getIP();
+        $this->os = $this->getOS();
+        $this->browser = $this->getBrowser();
+
+    }
+
+
+    //----------------------
+    function getCat($where=false){
+        $get = 0;
+        if($where):
+            $get = $this->getTB($this->_tb_cat,$where);
+        else:
+            $get = $this->getTB($this->_tb_cat);
+        endif;
+        return $get;
+    }
+//------Tue 19 Sep 2017
+    function saveCat($data,$id=false){
+
+        $save = '';
+
+        if($id):
+            $save = $this->saveTB($this->_tb_cat,$data,$id);
+        else:
+            $save = $this->saveTB($this->_tb_cat,$data);
+        endif;
+
+        return $save;
+    }
+
+//--------------------------
+    function getProduct($where=false){
+        $get = 0;
+        if($where):
+            $get = $this->getTB($this->_tb_product,$where);
+        else:
+            $get = $this->getTB($this->_tb_product);
+        endif;
+
+        return $get;
+    }
+
+    //----------------- GLOBAL  START //------
+     function GET_PRODUCT($where=false,$limit=false,$offset=false){
+        $get = 0;
+        $j1 = "{$this->_tb_user}.id = {$this->_tb_product}.user_id";
+        $j2 = "{$this->_tb_seo}.kw_id = {$this->_tb_product}.kw_id";
+
+
+        if($where):
+            $get = $this->db
+                                ->join($this->_tb_user,$j1)
+                                ->join($this->_tb_seo,$j2)
+                                ->where($where)
+                                ->order_by("date_add","DESC")
+                                ->get($this->_tb_product,$limit,$offset);
+        else:
+            $get = $this->db
+                                ->join($this->_tb_user,$j1)
+                                ->join($this->_tb_seo,$j2)
+                                ->order_by("date_add","DESC")
+                                ->get($this->_tb_product,$limit,$offset);
+        endif;
+        return $get;
+     }
+     //--------------------
+     //-------------    SAVE_PRODUCT
+     function SAVE_PRODUCT($data,$where=false){
+        $p_id = 0;
+        $save = "";
+        if($where):
+            $p_id = $where["pd_id"];
+            $save = $this->db
+                        ->where($where)
+                        ->set($data)
+                        ->update($this->_tb_product);
+
+        else:
+            $save = $this->db
+                        ->set($data)
+                        ->insert($this->_tb_product);
+                        $p_id = $this->db->insert_id();
+        endif;
+        return $p_id;
+     }
+     //--------------------------------------
+     //---------    GET_EL
+     function GET_EL($el){
+        return $this->input->post($el);
+    }
+     //--------------   GLOBAL END //----------
+
+     //--------------   ADMIN   START ------------------
+
+
+     function adminSave(){
+         $p_id = 0;
+
+         $kw_id = $this->GET_EL("kw_id");
+         $p_id = $this->GET_EL("p_id");
+         $p_user_id = $this->GET_EL("p_user_id");
+         $on_sale = $this->GET_EL("on_sale");
+
+         $p_title = $this->GET_EL("p_name");
+         $p_sum = $this->GET_EL("p_sum");
+         $p_body = $this->GET_EL("p_body");
+         $p_price = $this->GET_EL("p_price");
+         if($p_price == 0):
+             $p_price = 1000;
+         endif;
+         //---seo
+         $keyword = $this->GET_EL("keyword");
+         $keydes = $this->GET_EL("keydes");
+         $se_data = array(
+             "kw_page_keyword" => $keyword,
+             "kw_page_des" => $keydes
+         );
+         $this->Mdl_seo->saveTag($se_data,array("kw_id" => $kw_id));
+
+         //--- p_data
+         $p_data = array(
+             "pd_title" => $p_title,
+             "pd_sum" => $p_sum,
+             "pd_body" => $p_body,
+             "pd_price" => $p_price,
+             "date_update" => $this->today_andTime,
+             "on_sale" => $on_sale
+         );
+         $this->SAVE_PRODUCT($p_data,array("pd_id" => $p_id));
+         //----sent output
+         $r_data = array(
+             "kw_id" => $kw_id,
+             "pd_id" => $p_id
+         );
+         return $r_data;
+     }
+
+     //--------- adminFirstSave
+     function adminFirstSave(){
+         $p_name = $this->GET_EL("p_name");
+         $uniq_id = $this->randomChar(64);
+        $p_data = array(
+            "pd_title" => $p_name,
+            "uniq_id" => $uniq_id,
+            "date_add" => $this->today_andTime,
+            "user_id" => $this->user_id,
+            "pd_price" => 100
+        );
+        $p_id = $this->SAVE_PRODUCT($p_data);
+        $url = site_url("product/detail/{$uniq_id}");
+        $kw_title = "product keyword for {$p_name}";
+        $kw_des = "description for {$p_name}";
+        $se_1 = array(
+            "og_url" => $url,
+            "kw_canonical" => $url,
+            "og_type" => "Product",
+            "kw_page_keyword" => $kw_title,
+            "kw_page_des" => $kw_des,
+            "og_title" => $kw_title,
+            "og_description" => $kw_des
+        );
+        $kw_id = $this->Mdl_seo->saveTag($se_1);
+        $p_update = array(
+            "kw_id" => $kw_id
+        );
+        $this->SAVE_PRODUCT($p_update,array("pd_id" => $p_id));
+
+
+        $r_data = array(
+            "pd_id" => $p_id,
+            "kw_id" => $kw_id
+        );
+        return $r_data;
+     }
+     //----------------------------
+     //-------- adminDel
+     function adminDel($id){
+         $kw_id = 0;
+         $where = array(
+             "{$this->_tb_product}.pd_id" => $id
+         );
+         $get = $this->GET_PRODUCT($where)->result();
+         foreach($get as $row):
+             $kw_id = $row->kw_id;
+             $this->Mdl_seo->delTag(array("kw_id" => $kw_id));
+
+         endforeach;
+         $this->db->where($where)->delete($this->_tb_product);
+         $get = $this->GET_PRODUCT()->result();
+         $num = count($get);
+         $r_data = array(
+             "last_num" => $num
+         );
+         return $r_data;
+     }
+
+     /*     --------- END ADMIN ---------- */
+ }

@@ -1,0 +1,19 @@
+<section id="checkBooking">
+    <div class="row">
+        <div class="col-lg-12">
+            <h2 class="text-center">Check your booking</h2>
+            <hr class="my-4" />
+        </div>
+        
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-lg-12">
+                <?php 
+                    $frm = "booking/_frm_checkbooking.php";
+                    $this->load->view($frm);
+                ?>
+        </div>
+    </div>
+
+</section>

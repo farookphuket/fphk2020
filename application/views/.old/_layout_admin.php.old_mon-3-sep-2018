@@ -1,0 +1,31 @@
+<?php $this->load->view("page_head");?>
+<body>
+<?php 
+    
+    $menu_admin = "component/menu_admin";
+    if(!$this->session->userdata("is_login")):
+        $menu = "There is no menu";
+
+    endif;
+    $menu = $menu_admin;
+   
+       
+   $this->load->view($menu);
+?>
+<div class="container-fluid" id="container">
+    <div class="status">
+        <!--status element will be show after run the javascript command
+            this element will be hidden by default
+        -->
+        Status Page
+    </div>    
+<?php 
+$this->load->view($subview);
+?>
+<!--start modal area-->
+
+<!--end modal-->
+    
+    
+</div><!--end of div.container-->
+

@@ -1,0 +1,136 @@
+<div class="container">
+    <form id="check_my_booking" action="<?php echo site_url("booking/checkMyBooking");?>">
+        <div class="row">
+            <div class="col">
+            <input type="email" class="form-control ch_email" id="ch_email" name="ch_email" placeholder="example@email.com" required>
+            </div>
+            <div class="col">
+                <button type="submit" class="btn btn-primary btnCheck" form="check_my_booking">
+                    Check my booking
+                </button>
+            </div>
+        </div> 
+    </form>
+</div>
+<br />
+<br />
+<div class="row">
+    <div class="container">
+        <div class="check_result">
+
+        </div>
+    
+    </div>
+    
+</div>
+
+<script>
+    //-----------myBooking 1-2-19
+    $(function(){
+        var $el = $("#checkBooking");
+        var myBooking = (function(){
+
+            var $frmCh = $el.find("#check_my_booking");
+            var email = $el.find(".ch_email");
+            var btnCheck = $el.find(".btnCheck");
+
+            //---check_result
+            var check_result = $el.find(".check_result");
+            function chBooking(){
+                btnCheck.unbind();
+                check_result.html("");
+                $frmCh.submit(function(e){
+                    e.preventDefault();
+                    var url = $(this).attr("action");
+                    var data = $(this).serialize();
+                    $.post(url,data,function(e){
+                        var rs = $.parseJSON(e);
+                        var no_book = `
+                        <div class="alert alert-danger">
+                            <h2 class="text-center">${rs.msg}</h2>
+                        </div>
+                        `;
+                        if(parseInt(rs.num_booking) !== 0){
+                            //---found booking
+                            console.log(rs.get_booking);
+                            $.each(rs.get_booking,function(i,v){
+                                
+                                var pic_url = "<?php echo site_url("public/payment_confirm/");?>"+v.user_payment_img;
+
+                                var btnShow = "";
+                                var btnPrint = `
+                                <button class="btn btn-success btnPrint" data-bk_id="${v.bk_id}">Print</button>
+                                `;
+                                var btnSentPayment = `
+                                <button class="btn btn-warning btnSentPayMent" data-bk_id="${v.bk_id}">Sent My Payment</button>
+                                `;
+                                if(parseInt(v.bk_confirm) !== 0){
+                                    btnShow = btnPrint;
+                                }else{
+                                    btnShow = btnSentPayment;
+                                }
+
+                                var tmp = `
+                                <div class="card">
+                                    <div class="card-header bg-info">
+                                        <h2 class="text-center">${v.tour_name}&nbsp;
+                                        <span class="bg-danger">${v.going_date}</span>
+                                        </h2>
+                                        
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-lg-3">
+                                                    <img src="${pic_url} " class="responsive" />
+                                            </div>
+                                            <div class="col-lg-9">
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered">
+                                                        <tr>
+                                                            <th>Name</th>
+                                                            <td>${v.bk_user_name}</td>
+                                                        </tr>
+
+                                                        <tr>
+                                                            <th>Booking for</th>
+                                                            <td>${v.tour_name}</td>
+                                                        </tr>
+
+                                                        <tr>
+                                                            <th>people amount</th>
+                                                            <td>${v.bk_num_people}</td>
+                                                        </tr>
+                                                    </table>
+                                            </div>
+                                            </div>
+                                        </div>
+                                        
+                                    </div>
+
+                                    <div class="card-footer">
+                                        ${btnShow}
+                                    </div>
+                                </div>
+                                `;
+                                check_result.append(tmp);
+                            });
+                            
+                        }else{
+                            check_result.html(no_book);
+                        }
+                    });
+                });
+            }
+            function getEvent(){
+                btnCheck.on("click",function(){
+                    chBooking();
+                });
+            }
+            return{getEvent : getEvent}
+        })();
+       //---call object
+       myBooking.getEvent();
+
+
+    });
+</script>

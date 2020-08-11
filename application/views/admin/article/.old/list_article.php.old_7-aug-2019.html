@@ -1,0 +1,375 @@
+<section id="man_article">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="text-right">
+                    <button class="btn btn-primary lnAddAr">Create</button>
+                </div>
+            </div>
+            <div class="col-lg-12">
+                <h1 class="text-center">All Post</h1>
+                <hr class="my-4" />
+            </div>
+        </div>
+
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <th>No</th>
+                            <th>title</th>
+                        </thead>
+                        <tbody>
+    <?php
+        $num = 0;
+        foreach($get_ar as $row):
+            $num++;
+            ?>
+        <tr>
+            <td>
+                <?php
+                    echo $num;
+                ?>
+            </td>
+            <td>
+                <?php
+                    $lnEdit = "<a class='btn btn-info btn-sm lnEdit' data-ar_id='$row->ar_id'>
+                    Edit
+                    </a> ";
+                    $url = site_url("article/read/$row->ar_id");
+                    $lnRead = "<a class='btn btn-info btn-sm lnRead' href='$url' target='_blank'>Read</a>";
+
+                    $lnDel = "<a class='btn btn-danger btn-sm lnDel' data-ar_id='$row->ar_id'>Delete</a>";
+
+                    $pub = "<span class='label-danger'>No</span>";
+                    if($row->ar_show_public != 0):
+                        $pub = "<span class='label-success'>Yes</span>";
+                    endif;
+                    $ap = "No";
+                    if($row->ar_is_approve != 0):
+                        $ap = "Yes";
+                    endif;
+
+                    $shIndex = "No";
+                    if($row->ar_show_index != 0):
+                        $shIndex = "Yes";
+                    endif;
+
+
+                    echo $row->ar_title. "&nbsp;".$lnRead ."&nbsp;&nbsp;".$lnEdit."&nbsp;&nbsp;".$lnDel."<div class='row'>
+
+                    <div class='col-md-3'>
+                    <p>
+                        Post By $row->ar_post_by
+                    </p>
+
+                    </div>
+                    <div class='col-md-3'>
+                        <p>
+                            public $pub
+                        </p>
+                        <p>Approve $ap</p>
+                        <p>
+                        Show index $shIndex
+                        </p>
+                    </div>
+                    <div class='col-md-6'>
+                    <p>
+                        create $row->date_add
+                    </p>
+                    <p>
+                        edit $row->date_edit
+                    </p>
+
+
+                    </div>
+
+                    </div>";
+                ?>
+            </td>
+        </tr>
+
+            <?php
+        endforeach;
+        if($num_ar >= $per_page):
+        ?>
+        <tr>
+            <td>
+            <?php echo $this->pagination->create_links();?>
+            </td>
+        </tr>
+        <?php
+        endif;
+        ?>
+                        </tbody>
+                    </table>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+
+    <div class="modal fade mdFrm">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title frmTitle">Create new post</h1>
+                    <button class="close" data-dismiss="modal">&times;
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <?php
+                    $fr = "admin/article/_form_ar.php";
+                    $this->load->view($fr);
+                    ?>
+                </div>
+                <div class="modal-footer">
+                <button class="btn btn-primary btnSave" type="submit" form="arForm">
+                Save
+                </button>
+                <button class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</section>
+<script>
+    $(function(){
+
+        var $el = $("#man_article");
+
+        var manAr = (function(){
+
+            var lnEdit = $el.find(".lnEdit");
+            var lnDel = $el.find(".lnDel");
+            var lnAddAr = $el.find(".lnAddAr");
+            var $md = $el.find(".mdFrm");
+            var $mdTitle = $el.find(".frmTitle");
+
+            //---------
+            //---form name
+            var frmArticle = $el.find("#arForm");
+            //---form element seo
+            var og_url = $el.find(".og_url");
+            var keyword = $el.find(".meta_keyword");
+            var des = $el.find(".meta_des");
+
+            var kw_id = $el.find(".kw_id");
+            var ar_id = $el.find(".ar_id");
+
+            //---form element
+            var ar_title = $el.find(".ar_title");
+            var ar_sum = $el.find(".ar_sum");
+            var sum_wordCount = $el.find(".sum_wordCount");
+            var ar_body = $el.find(".ar_body");
+
+            //----check box
+            var pub = $el.find(".ar_pub");
+            var show_index = $el.find(".show_index");
+            var approve = $el.find(".approve");
+
+            //---button
+            var btnSave = $el.find(".btnSave");
+
+
+            //--show the last result
+            var $sumResult = $el.find(".sumResult");
+            var $bodyResult = $el.find(".bodyResult");
+            //----------------------------
+            //--------------------
+            function getFrm(cmd,id){
+                $mdTitle.html("");
+                tinymce.activeEditor.setMode("design");
+                frmArticle.trigger("reset");
+                switch(cmd){
+                    case"edit":
+                        var url = "<?php echo site_url("article/adminEditAr/");?>"+id;
+                        $.ajax({
+                            url : url,
+                            success : function(e){
+                                var rs = $.parseJSON(e);
+                                $.each(rs.get_ar,function(i,v){
+                                    //console.log(v);
+
+                                    kw_id.val(v.kw_id);
+                                    ar_id.val(v.ar_id);
+                                    og_url.val(v.og_url);
+                                    keyword.val(v.kw_page_keyword);
+                                    des.val(v.kw_page_des);
+
+                                    $mdTitle.html(`Editing ${v.ar_title}`);
+                                    ar_title.val(v.ar_title);
+                                    ar_sum.val(v.ar_summary);
+                                    ar_body.val(v.ar_body);
+                                    tinymce.activeEditor.setContent(v.ar_body);
+
+                                    var p = parseInt(v.ar_show_public);
+                                    if(p !== 0){
+                                        pub.prop("checked",true);
+                                    }
+
+                                    //---approve
+                                    var a =  parseInt(v.ar_is_approve);
+                                    if(a !== 0){
+                                        approve.prop("checked",true);
+                                    }
+
+                                    //--show index
+                                    var sIndex = parseInt(v.ar_show_index);
+                                    if(sIndex !== 0){
+                                        show_index.prop("checked",true);
+                                    }
+                                    $($md).modal("show");
+
+                                });
+                            }
+
+                        });
+                    break;
+                    default:
+                        $mdTitle.html("Create new Post");
+                        frmArticle.trigger("reset");
+                        $($md).modal("show");
+                    break;
+                }
+
+            }
+            //---------------
+            //-----showSummary
+            function showSummary(){
+                var sum = ar_sum.val();
+                var showSum = `${sum}`;
+                $sumResult.html(showSum);
+            }
+            //------
+            //----count the word in ar_sum on typing
+            function ar_sumCount(){
+                var sum = parseInt(ar_sum.val().length);
+                sum_wordCount.html(sum);
+                showSummary();
+            }
+            //-----
+            function getBodyContent(){
+                var bd = ar_body.val();
+                $bodyResult.html(bd);
+            }
+
+            //---arFirstSave
+            function arFirstSave(){
+                //---will do first save then show in edit mode
+                if(ar_id.val()){
+                    //alert(`The id is ${ar_id.val()} no need to run first save!`);
+                    return false;
+                }else{
+                    var url = "<?php echo site_url("article/adminFirstSave");?>";
+                    var data = {ar_title : ar_title.val()};
+                    //alert(ar_title.val());
+
+                    $.post(url,data,function(e){
+                        var rs = $.parseJSON(e);
+                        $.each(rs.get_ar,function(i,v){
+                            getFrm("edit",v.ar_id);
+                        });
+                    });
+                }
+
+
+            }
+
+            //-------saveAr
+            function saveAr(){
+                btnSave.unbind();
+                frmArticle.submit(function(o){
+                    o.preventDefault();
+                    var url = $(this).attr("action");
+                    var data = $(this).serialize();
+                    $.post(url,data,function(o){
+                        alert(o);
+                    });
+                });
+            }
+            //-----------
+            //---delAr
+            function delAr(cmd,id){
+                switch(cmd){
+                    case"delete":
+                        var url = "<?php echo site_url("article/adminDelAr/");?>"+id;
+                        $.ajax({
+                            url : url,
+                            success : function(e){
+                                alert(e);
+                            }
+                        });
+                    break;
+                    default:
+                        var msg = `You are about to delete post id ${id} this operation cannot be undo\n are you sure to delete?`;
+                        if(confirm(msg) === true){
+                            delAr("delete",id);
+                        }else{
+                            return false;
+                        }
+                    break;
+                }
+            }
+
+            //-----
+            function getEvent(){
+
+                //getFrm();
+
+                //---ar_title blur
+                ar_title.on("blur",function(){
+                    arFirstSave();
+                });
+                //---
+                ar_sum.on("keyup",function(){
+                    ar_sumCount();
+                });
+
+
+                //--ar
+                ar_body.on("blur",function(){
+                    getBodyContent();
+                });
+
+                //---lnAddAr
+                lnAddAr.on("click",function(){
+                    getFrm();
+                });
+
+                //--edit article
+                lnEdit.on("click",function(e){
+                    e.preventDefault();
+                    var id = $(this).attr("data-ar_id");
+                    getFrm("edit",id);
+                });
+                //----lnDel
+                lnDel.on("click",function(e){
+                    e.preventDefault();
+                    var id = $(this).attr("data-ar_id");
+                    delAr(null,id);
+                });
+                //---btnSave click
+                btnSave.on("click",function(){
+                    saveAr();
+                });
+            }
+            return{ getEvent:getEvent}
+        })();
+
+        manAr.getEvent();
+    });
+
+</script>

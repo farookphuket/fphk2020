@@ -1,0 +1,281 @@
+<script>
+
+
+$(function(){
+
+    var $el = $("#container");
+    var page_status = $el.find(".status");
+    
+    //---notification
+    var notice = (function(){
+
+        var chk_read = $el.find(".mark_read");
+        var select_all = $el.find(".select_all");
+        select_all.prop("disabled",true);
+        var num_all_notice = "<?php echo $num_notice;?>";
+
+        //--set 1 element as read
+        function markAsRead(id){
+            var url = "<?php echo site_url("admin/markAsRead");?>";
+            var data = {cmd : "mark",note_id : id};
+            $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    page_status.html(rs.msg).show();
+                    setTimeout(function(){
+                        location.reload();
+                    },2000);
+                }
+            });
+        }
+
+        //--select all
+        function selAll(){
+            var mk = 0;
+            var num = 0;
+            if(select_all.is(":checked") === true){
+                $.each(chk_read,function(){
+                    num++;
+                    chk_read.prop("checked",true);
+                    mk = 2;
+                });
+            }
+            var confMsg = `
+            You are about to set All ${num} item to 'mark as read'\n
+            This operation cannot be undo ,are you sure to process?
+            `;
+            if(confirm(confMsg) !== false){
+                var url = "<?php echo site_url("admin/markAsRead");?>";
+                var data = {cmd : "markAll",read : mk};
+                $.ajax({
+                    type : "post",
+                    url : url,
+                    data : data,
+                    success : function(e){
+                        var rs = $.parseJSON(e);
+                        page_status.html(rs.msg).show();
+                        setTimeout(function(){
+                            page_status.html("reloading...");
+                            location.reload();
+                        },4000);
+                    }
+                });
+            }else{
+                $.each(chk_read,function(){
+                    num++;
+                    chk_read.prop("checked",false);
+                    mk = 0;
+                });
+                select_all.prop("checked",false);
+            }
+            
+        }
+
+        function getEvent(){
+            if(parseInt(num_all_notice) !== 0){
+                select_all.prop("disabled",false);
+            }
+            chk_read.on("change",function(){
+                var id = $(this).attr("data-note_id");
+                markAsRead(id);
+            });
+
+            //--select all
+            select_all.on("change",function(){
+                selAll();
+            });
+        }
+        return{getEvent : getEvent}
+    })();
+    notice.getEvent();
+
+    //--global url just use in home page
+    var url = "<?php echo site_url("admin/index");?>";
+    //---article just show the result
+    var article = (function(){
+
+        
+        var arShowList = $el.find("#arShowList");
+        var show_ar_pagin = $el.find("#show_ar_pagin");
+
+        function getAllAr(){
+            var data = {
+                cmd : "getArticleSummary"
+                
+                
+            };
+           $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    //console.log(rs);
+                    var show = `
+                        <table class="table table-striped">
+                            <tbody>
+                                <tr>
+                                    <th>
+                                        All Article
+                                    </th>
+                                    <td>
+                                    <span class="label label-default">
+                                        ${rs.num_all}
+                                    </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>
+                                        Public Article
+                                    </th>
+                                    <td>
+                                        <span class="label label-success">
+                                            ${rs.num_pub}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>
+                                        Private Article
+                                    </th>
+                                    <td>
+                                        <span class="label label-warning">
+                                            ${rs.num_pri}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>
+                                        Approve
+                                    </th>
+                                    <td>
+                                        <span class="label label-success">
+                                            ${rs.approve}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>
+                                        Not Approve
+                                    </th>
+                                    <td>
+                                        <span class="label label-danger">
+                                            ${rs.not_approve}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    
+                    `;
+
+                    arShowList.append(show);
+                    
+                    
+                }
+            });
+        }
+        
+        
+
+        function getEvent(){
+            getAllAr();
+
+            
+        }
+        return{getEvent : getEvent}
+    })();
+    article.getEvent();
+    //---
+
+    //---member summary
+    var member = (function(){
+
+        function getEvent(){
+            //console.log(`Member show summary`);
+            
+        }
+        return{getEvent : getEvent}
+    })();
+
+    member.getEvent();
+
+    //---booking summary landing page
+    var booking = (function(){
+        var bk_show_list = $el.find("#bkShowList");
+        var url = "<?php echo site_url("admin/summaryAjax");?>";
+        function getBooking(){
+            var data = {
+                cmd : "getBooking"
+            };
+            $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    console.log(rs);
+                    
+                    
+                    var show = `
+                    <table class="table table-striped">
+                    <tr>
+                    <th>
+                    All booking
+                    </th>
+                    <td>
+                        <h5>
+                            <span class="label label-default">
+                                ${rs.all}
+                            </span>
+                        </h5>
+                    </td>
+                    </tr>
+
+                    <tr>
+                    <th>
+                    Not Confirm
+                    </th>
+                    <td>
+                        <h5>
+                            <span class="label label-danger">
+                                ${rs.not_confirm}
+                            </span>
+                        </h5>
+                    </td>
+                    </tr>
+
+                    <tr>
+                    <th>
+                    Has Confirmed
+                    </th>
+                    <td>
+                        <h5>
+                            <span class="label label-success">
+                                ${rs.confirmed}
+                            </span>
+                        </h5>
+                    </td>
+                    </tr>
+                    </table>
+                    `;
+                    $(bk_show_list).append(show);
+                }
+            });
+            
+        }
+        function getEvent(){
+            getBooking();
+        }
+        return{getEvent : getEvent}
+    })();
+
+    booking.getEvent();
+
+
+});
+
+</script>

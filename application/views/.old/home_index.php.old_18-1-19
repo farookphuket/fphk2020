@@ -1,0 +1,82 @@
+<div class="jumbotron">
+    <div class="row">
+        
+            <h1>Welcome! </h1>
+            <h2>you're here with me now!I'm Farook or you can call me Mr.F </h2>
+            <p>and the rest of the letter you want to put it behind for my name is really up to you :D
+            so. where do you want to go? or what do you want me to do for you?</p>
+            <p>
+               <a href="<?php echo site_url("tour");?>" class="btn btn-info" target="_blank" title="See our tour program">What to do where to go?</a>&nbsp;
+               <a class="btn btn-primary btnFBContact" href="https://m.me/farook.fuutime" target="_blank" title="Want to talk with MR.F? please click me now">
+                        Message Farook on Facebook
+               </a>&nbsp;
+                <a href="https://hangouts.google.com/group/5IMnME8WHmcL1umD3" title="Talk to farook in Hangout as a group chat" class="btn btn-info btn-sm" target="_blank">Talk in Google Hangout</a>
+            </p>
+            
+        
+        
+    </div>
+</div>
+    
+
+
+<div class="row">
+  <div class="page-header">
+    <h2>Recent Post</h2>
+  </div>
+  <?php
+    if($num_ar != 0):
+      //--only show if some data
+      foreach($get_ar as $row):
+      ?>
+      <!-- comment out Thu 17 may 2018
+        <div class="col-sm-6">
+        <h3><?php //echo $row->ar_title;?></h3>
+        <p>
+          <?php //echo $row->ar_summary;?>
+        </p>
+        <h4>
+        Read <span class="label label-info">
+        <a href="<?php //echo site_url("article/read/{$row->ar_id}");?>">
+        More?
+        </a>
+        </span>
+        </h4>
+      </div> -->
+        <!--div panel on Thu 17 may 2018-->
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h2>
+                   <?php echo $row->ar_title;?>
+                    <a href="<?php echo site_url("article/read/{$row->ar_id}");?>" target="_blank">
+                        <button type="button" class="btn btn-default btn-sm">
+                        
+                            <span class="glyphicon glyphicon-new-window"></span> Read More
+                        
+                        </button>
+                    </a>
+                </h2>
+            </div>
+            <div class="panel-body">
+                <h3>
+                    <?php echo $row->ar_summary;?>
+                 </h3>
+            </div>
+            <div class="panel-footer">
+                
+            </div>
+        </div>
+        <!--end panel-->
+        
+      <?php
+    endforeach;
+    endif;
+  ?>
+</div>
+
+
+
+
+<?php
+
+        //require("homeJS.php");

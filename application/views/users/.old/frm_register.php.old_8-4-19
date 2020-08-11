@@ -1,0 +1,52 @@
+<div class="row">
+    <div class="col-sm-6">
+        <ul>
+            <li class="alert alert-danger">
+                This system is not an automatic system! please note that if you only want to read the article ,all the article on the website is "Public",free and it always will be.
+            </li>
+        </ul>
+    </div>
+    <div class="col-sm-6">
+        <ul>
+            <li class="alert alert-danger">
+                นี่ไม่ใช่ระบบอัตโนมัติ ท่านไม่จำเป็นต้องเป็นสมาชิกกับทางเว๊บหากท่านต้องการแค่อ่านบทความ บทความทุกอย่างนั้นเป็นสาธารณะ
+            </li>
+        </ul>
+    </div>
+</div>
+
+<form method="post" action="<?php echo site_url("users/signup");?>" class="form-horizontal" id="signup_frm">
+    <div class="form-group">
+        <label for="" class="label-control col-sm-4">User Name</label>
+        <div class="col-sm-6">
+            <input type="text" name="reg_name" class="form-control reg_name">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="" class="label-control col-sm-4">Password</label>
+        <div class="col-sm-6">
+            <input type="password" name="reg_pass" class="form-control reg_pass">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="" class="label-control col-sm-4">Email</label>
+        <div class="col-sm-6">
+            <input type="text" name="reg_email" class="form-control reg_email">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="" class="label-control col-sm-4">&nbsp;</label>
+        <div class="col-sm-6">
+            <button type="submit" class="btn btn-primary btnRegis" name="btnReg" value="1" form="signup_frm">
+                Register
+            </button>
+            <input type="hidden" name="reg_ip" class="reg_ip" value="<?php echo $ip;?>">
+            <div class="modal_status pull-right"></div>
+        </div>
+    </div>
+</form>
+
+
+<?php 
+
+    require("registerJS.php");

@@ -1,0 +1,220 @@
+<?php
+
+class MY_Model extends CI_Model{
+
+    protected $_table_name = '';
+    protected $_order_by = '';
+
+
+//last edit on Tue 13 June 2017
+// Add $_tb_name
+    protected $_tb_name;
+
+
+    //--add Fri 20 Apr 2018
+    public $ip;
+    public $os;
+    public $browser;
+    public $user_name;
+    public $user_type;
+    protected $user_id;
+
+    //--- 20 Sep 2019
+    public $today;
+    public $today_andTime;
+
+    //-----
+    function __construct(){
+        parent::__construct();
+
+        $this->user_name = $this->getUserName();
+        $this->user_id = $this->getUserId();
+
+        $this->user_type = $this->getUserType();
+        $this->is_login = $this->user_is_login();
+        $this->is_admin = $this->user_is_admin();
+        $this->moderate = $this->user_is_mod();
+
+        $this->today = date("Y-m-d",time());
+        $this->today_andTime = date("Y-m-d H:i:s",time());
+
+    }//end of construct
+
+    /*edit this part on the Tue-13-June-2017
+        Add getTB saveTB delTB method
+
+        */
+        //---this method has create on Fri 20 Apr.2018
+    //--getIP
+    function getIP(){
+        $this->ip = $this->input->ip_address();
+        return $this->ip;
+    }
+
+    //--getOS
+    function getOS(){
+        $this->os = $this->agent->platform();
+        return $this->os;
+    }
+
+    //--getBrowser
+    function getBrowser(){
+        $browser = $this->agent->browser();
+        $version = $this->agent->version();
+        $data = "Browser {$browser} version {$version}";
+        $this->browser = $data;
+        return $this->browser;
+    }
+
+    function getUserName(){
+        return $this->session->userdata("user_name");
+    }
+    //-------------
+    //---- 29-july-2019
+    function user_is_login(){
+      return $this->session->userdata("is_login");
+    }
+
+    function user_is_admin(){
+       return $this->session->userdata("is_admin");
+    }
+
+    //----------Add this on Sat 1 Sep 2018 Start-------
+    function user_is_mod(){
+        return $this->session->userdata("moderate");
+    }
+    //----------------------------
+
+    //---getUserEmail
+    function getUserEmail(){
+      return $this->session->userdata("user_email");
+    }
+    //----------
+    //--getUserType
+    function getUserType(){
+      $type = $this->session->userdata("user_type");
+      $user_type = "anonymous";
+      if($type):
+        $user_type = $type;
+      endif;
+      return $user_type;
+
+    }
+
+    //-----------
+
+    function getUserId(){
+        return $this->session->userdata("user_id");
+    }
+
+    //-----------
+    //--------- 2-Aug-2019
+    function make_hash($pw){
+      $hash_key = "./!223&&3$#***LVM*&";
+      return hash("sha512",$pw.$hash_key);
+    }
+    //------------------
+
+
+        
+//----randomChar 12-july-2019
+    function randomChar($length=false){
+        if(!$length):
+            $length = 10;
+        endif;
+        $permitted_chars = '123456789ABCAAAYYIIITTTJHDYGFBEKJMCJJDJJD9987746539494005987645322HHIYEBJKDSPOLATDRSDEFGHJMNPQRSTUVWXYZ';
+        // Output: 54DBBFGTE7
+        $random = substr(str_shuffle($permitted_chars), 0, $length);
+        return $random;
+    }
+
+  //--------------------------------
+
+function getTB($tb,$id=false,$limit=false,$offset=false)
+{
+
+    //$get = 0;
+    if($id):
+        $get = $this->db
+                    ->where($id)
+                    ->get($tb,$limit,$offset);
+    else:
+        $get = $this->db
+                    ->get($tb,$limit,$offset);
+    endif;
+    return $get;
+}
+
+
+function saveTB($tb,$data,$id=false)
+{
+    $save = 0;
+    $a_id = 0;
+    if($id):
+        $save = $this->db
+                    ->where($id)
+                    ->set($data)
+                    ->update($tb);
+        $a_id = $id;
+    else:
+        $save = $this->db
+                    ->set($data)
+                    ->insert($tb);
+        $a_id = $this->db->insert_id();
+    endif;
+
+    return $a_id;
+}
+function delTB($tb,$id=false,$del_table=false)
+{
+    $del = 0;
+    if($del_table && $id == false):
+        $del = $this->db->empty_table($tb);
+        $del = 1;
+    else:
+        $del = $this->db
+                ->where($id)
+                ->delete($tb);
+        $del = 1;
+    endif;
+
+    return $del;
+}
+///////////////////////////////////
+////////////////    end of method getTB saveTB delTB
+////////////////////////
+
+  /* Start Global method  20-Sep-2019 */
+    function SAVE($data,$tb,$where=false){
+      $save = "";
+
+      $save_id = 0;
+      if($where):
+        $save = $this->db
+                    ->where($where)
+                    ->set($data)
+                    ->update($tb);
+      else:
+       $save = $this->db
+                    ->set($data)
+                    ->insert($tb);
+      $save_id = $this->db->insert_id();
+     
+      endif;
+      return $save_id;
+    }
+
+
+    /**
+        * getEl 21-Sep-2019 
+        * will return the input post
+     */
+function getEl($el,$option=false){
+    return $this->input->post($el,$option);
+}
+
+
+
+  /* End of global method */
+
+}//end of MY_Model class

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-118269307-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-118269307-1');
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta charset="UTF-8">
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="<?php echo site_url();?>"/>
+<meta name="description" content="Love to share mine and get your share knowledge so will can share this to other as well." />
+<link rel="icon" 
+      type="image/ico" 
+      href="<?php echo site_url('public/img/farICON.ico');?>" />    
+<title>
+<?php
+
+$url = site_url();
+$title = "Welcome to {$url}";
+if($meta_title):
+   $title = $meta_title;
+endif;
+echo $title;
+?>
+</title>
+<script src="<?php echo site_url("public/js/jquery.js");?>"></script>
+<link rel="stylesheet" href="<?php echo site_url("public/css/bootstrap.min.css");?>" />
+<link rel="stylesheet" href="<?php echo site_url("public/css/bootstrap-theme.min.css");?>" />
+<link rel="stylesheet" href="<?php echo site_url("public/css/bootstrap-editable.css");?>" />
+
+
+<link rel="stylesheet" href="<?php echo site_url("public/css/custom_theme.css");?>" />
+<link rel="stylesheet" href="<?php echo site_url("public/css/jumbotron.css");?>" />
+
+<!--jquery-ui--> 
+<link rel="stylesheet" href="<?php echo site_url("public/js/jquery-ui/jquery-ui.css");?>" />
+<script src="<?php echo site_url("public/js/jquery-ui/jquery-ui.js");?>"></script>
+<!--End of jQuery-ui-->
+
+<script src="<?php echo site_url("public/js/bootstrap.min.js");?>"></script>
+<script src="<?php echo site_url("public/js/bootstrap-editable.js");?>"></script>
+
+<!--
+<script src="<?php echo site_url("public/js/customJS.js");?>"></script>
+##comment out on thu 31 may 2018 as no longer use
+-->
+<script src="<?php echo site_url("public/js/tinymce/tinymce.min.js");?>"></script>
+
+
+
+<script type="text/javascript">
+//tinymce.remove();
+tinymce.init({
+    selector: "textarea.tinymce",
+    height : 350,
+    setup: function(editor){
+        editor.on('change',function(){
+            tinymce.triggerSave();
+        });
+    },
+readonly : 1,
+    plugins: [
+        "advlist autolink lists link image charmap print preview anchor",
+        "searchreplace visualblocks code fullscreen",
+        "insertdatetime media table contextmenu paste"
+    ],
+    toolbar: "insertfile undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image"
+});
+</script>
+
+</head>

@@ -1,0 +1,77 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Home extends MY_Controller {
+
+
+ /*
+New edit with the MY_Model class on Thu-25-Aug-2016
+
+*/
+        protected $is_login;
+        protected $is_admin;
+
+        protected $_tb_q = "tbl_getMessage";
+        protected $_tb_a = "tbl_answer";
+
+        protected $_tb_user = "users";
+        protected $_tb_cat = "tbl_cat";
+        protected $_tb_ar = "tbl_article";
+
+        //--public variable
+        public $u_data;
+        public $get_app;
+        public $today;
+        public $ip;
+        public $os;
+        public $browser;
+function __construct() {
+   parent::__construct();
+   $this->is_login = $this->session->userdata("is_login");
+    $this->load->model("Mdl_home");
+    $this->load->model("Mdl_article");
+
+    //$this->today = date("d-m-Y h:i a",time());
+    //$this->u_data = $this->get_user_info();||comment two line out as no use
+    $this->ip = $this->Mdl_home->getIP();
+    $this->os = $this->Mdl_home->getOS();
+    $this->browser = $this->Mdl_home->getBrowser();
+
+
+
+}
+public function index()
+{
+
+    $url = site_url();
+    $this->data['subview'] = "home_index";
+    $this->data['meta_title'] = "Welcome  to {$url}";
+
+    //---get article
+    $where_ar = array(
+                "ar_show_public !=" => 0,
+                "ar_is_approve !=" => 0,
+                "ar_show_index !=" => 0
+
+              );
+    $get_ar = $this->Mdl_home->getArticle($where_ar,10)->result();
+    $num_ar = count($get_ar);
+    $this->data["get_ar"] = $get_ar;
+    $this->data["num_ar"] = $num_ar;
+    //---show index
+
+    $this->load->view("_layout_main", $this->data);
+
+
+    //end of index function
+//last edit on Wed-7-Jun-2017
+
+}//end of index function
+//////////////////////////////////
+//---Edit on Sat 21/4/2018
+
+
+
+
+
+}//end of Home class

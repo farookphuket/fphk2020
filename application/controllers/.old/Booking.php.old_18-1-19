@@ -1,0 +1,843 @@
+<?php
+/* 
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+class Booking extends MY_Controller{
+    protected $user_id;
+    protected $user_name;
+    protected $is_login;
+    protected $is_admin;
+
+    protected $moderate;
+    /*
+       use table to join
+    */
+
+    //set the table on Sat 22 Jul 2017
+    //field name bk_id bk_name bk_email bk_date_conf
+    protected $_tb_book = "tbl_booking";
+    protected $_payment_info = "tbl_booking_payment_info";
+    protected $_tb_notic = "tbl_notification";
+
+    public $today;
+    public $o_put;
+
+    //------the path for the confirm booking upload
+    public $img_path;
+    public $thumb_path;
+
+    public $ip;
+    public $os;
+    public $browser;
+
+function __construct() {
+        parent::__construct();        
+		//$this->is_admin = $this->session->userdata("is_admin");
+        $this->is_login = $this->user_is_login();
+        $this->user_id = $this->session->userdata("user_id");
+        $this->is_admin = $this->user_is_admin();
+        $this->user_name = $this->session->userdata("user_name");
+        $this->moderate = $this->session->userdata("moderate");
+
+//Load the library..
+        $this->load->model("Mdl_booking");
+        $this->load->model("Mdl_tour");
+        $this->load->model("Mdl_users");
+        $this->load->library("pagination");
+        $this->today = date("Y-m-d",time());
+
+        $this->ip = $this->Mdl_booking->getIP();
+        $this->os = $this->Mdl_booking->getOS();
+        $this->browser = $this->Mdl_booking->getBrowser();
+
+        //---------set the image upload path
+        $this->img_path = realpath(APPPATH."../public/payment_confirm/");
+        $this->thumb_path = $this->img_path."/thumb/";
+}
+function index(){
+    if($this->is_login):
+        $url = site_url("booking/own");
+        if($this->is_admin):
+            $url = site_url("booking/admin");
+        endif;
+        redirect($url);
+    endif;
+
+    //--will show list of tour program in form
+    //---Mon 14 May 2018
+    $get = $this->Mdl_tour->getTour()->result();
+    $this->data["get_tour"] = $get;
+    $this->data["num_tour"] = count($get);
+
+
+    $this->data["today"] = $this->today;
+    $this->data["subview"] = "booking/book_index";
+    $this->load->view("_layout_main",$this->data);
+}//end of index
+
+function ajaxGetTour(){
+    //--set value for the book ticket
+    //--mon 14 may 2018
+    $t_id = $this->input->post("t_id");
+    $where = array("t_id" => $t_id);
+    $get = $this->Mdl_tour->getTour($where)->result();
+    $this->o_put["get"] = $get;
+    $this->output->set_output(json_encode($this->o_put));
+}
+
+//--------checkTick mon 28 May 2018
+function checkTicket(){
+    //--call by ajax return the result of this input email
+    $t_email = $this->input->post("tk_email",true);
+
+    $where = array("bk_email" => $t_email);
+    $get = $this->Mdl_booking->getBooking($where)->result();
+    $num = count($get);
+
+    //--set output
+    $this->o_put["num_book"] = $num;
+    $this->o_put["get_book"] = $get;
+
+    //--sent it to render
+    $this->output->set_output(json_encode($this->o_put));
+
+}
+
+//---end checkTick
+
+//check valid mon 19 mar 2018
+    function check_booking(){
+        $cmd = $this->input->post("cmd");
+        $bk_email = $this->input->post("bk_email",true);
+        $go_day =  $this->input->post("go_day");
+        $go_day = date("Y-m-d",strtotime($go_day));
+        
+        $msg = "";
+        $err = 0;
+        switch($cmd):
+            case"check_email":
+                if(!$this->is_valid_email($bk_email)):
+                    $msg = "Error : {$bk_email} is invalid!";
+                    $err = 1;
+                endif;
+                $this->o_put["err"] = $err;
+                $this->o_put["msg"] = $msg;
+                $this->output->set_output(json_encode($this->o_put));
+            break;
+            case"pick_date":
+                if($go_day <= $this->today):
+                    $err = 1;
+                    $msg = "Error : you have to do booking one day in advance!";
+                endif;
+                $this->o_put["err"] = $err;
+                $this->o_put["msg"] = $msg;
+                $this->output->set_output(json_encode($this->o_put));
+            break;
+        endswitch;
+
+    }
+
+//----------------
+    function save_booking(){
+        //echo"booking is save";
+        $err = 0;
+        $msg = "";
+        
+        $go_day = $this->input->post("go_day");
+        $bk_ip = $this->input->post("bk_ip");
+        $bk_name = $this->input->post("bk_name");
+        $bk_email = $this->input->post("bk_email");
+        $bk_num = $this->input->post("bk_num");
+        $bk_more = $this->input->post("bk_more");
+        
+        //--choose tour program
+        $choose_tour = $this->input->post("sel_tour");
+        
+        //--get the input hidden from post
+        $h_full_price = $this->input->post("h_full_price");
+        $h_min_price = $this->input->post("h_min_price");
+        $tour_name = $this->input->post("tour_name");
+        
+        //--calculate price
+        $price_per_person = $h_full_price;
+        $pay_full_price = $h_full_price*$bk_num;
+        $pay_min_price = $h_min_price*$bk_num;
+        $collect_more = ($h_full_price*$bk_num)-$h_min_price;
+        
+
+        $go_day = date("Y-m-d",strtotime($go_day));
+        if($go_day <= $this->today):
+            $err = 1;
+            $msg = "Error : you have to choose at least one day in advance!";
+        endif;
+
+        $cur_day = date("Y-m-d",time());
+        $start_day = $cur_day;
+        $end_day = $go_day;
+
+        //$days = (strtotime($endDate) - strtotime($cur_day)) / (60 * 60 * 24);
+        $day_remain = (strtotime($end_day) - strtotime($cur_day)) / (60 * 60 * 24) - 2;
+        
+        
+        //--check if this userIP do the same name or email on booking
+        //--name and e-mail have to be unique
+        $where_book = array(
+            "bk_ip" => $bk_ip,
+            "bk_date" => $this->today,
+            "bk_email" => $bk_email
+        );
+        
+       /* 
+       //comment this out Sat 2 Jun 2018 as the same user can booking more than one time
+       //--as long as they not pay so it doesn't really matter
+        $get_book = $this->Mdl_booking->getBooking($where_book)->result();
+        if(count($get_book) != 0):
+            $err = 1;
+            $msg = "Error : we are apologize ,but your email {$bk_email} has been used.";
+        endif;
+        */
+
+        //--prepare data to save
+        //--need a moderate from admin to change booking status
+       
+
+        $paypal_full_price = "
+        <a href='https://www.paypal.me/farookphuket/{$pay_full_price}' target='_blank'>{$pay_full_price}</a>";
+        $paypal_min_price = "
+        <a href='https://www.paypal.me/farookphuket/{$pay_min_price}' target='_blank'>{$pay_min_price}</a>";
+
+        $im_scb = site_url("public/image/promptpaySCB.jpg");
+
+        $im_ks = site_url("public/image/promtpayKBank.jpg");
+
+        $im_true = site_url("public/image/TrueWallet996520237.jpg");
+
+        $total_price = $price_per_person*$bk_num;//sum the full price
+
+        $book_data = array(
+            "bk_ip" => $bk_ip,
+            //"price_of_deposite" => $pay_min_price,
+            //"bk_more" => $bk_more,
+           // "bk_num" => $bk_num,
+            //"bk_name" => $bk_name,
+            "bk_email" => $bk_email,
+            "tour_id" => $choose_tour,
+            "tour_name" => $tour_name,
+            "going_date" => $go_day,
+            "bk_date" => $this->today,
+            "bk_datetime" => $this->today_andTime,
+           // "price_per_one" => $price_per_person,
+           // "price_total" => $pay_full_price
+        );
+
+        
+        if($err != 1):
+            $save =   $this->Mdl_booking->save_booking($book_data);
+            $bk_id = $save;
+            $msg = "
+                <div class='row'>
+                    <div class='panel panel-primary'>
+                        <div class='panel-heading'>
+                            <h2>Booking is success!</h2>
+                        </div>
+                        <div class='panel-body'>
+                            <h3>Congratulation! <span class='label label-success'>{$bk_name}</span>&nbsp; your booking has been save</h3>
+                            <h4>
+                                please note that your booking will be flag as 
+                                &nbsp;<span class='label label-danger'>
+                                    NOT CONFIRM 
+                                </span>&nbsp;
+                                until you make payment with one of the below method. 
+                            </h4>
+                            <p>
+                            Please make a payment 2 days in advance to confirm your booking.
+                            </p>
+                        </div>
+                    </div>
+                    <div class='table-responsive'>
+                        <table class='table table-striped'>
+                            <tr>
+                            <th>Paypal</th>
+                            <td>
+                                <h4>
+                                Pay Full Price 
+                                <span class='label label-warning'>
+                                {$paypal_full_price}
+                                </span>&nbsp; to paypal.
+                                </h4>
+                                <h4>
+                                Pay Deposite 
+                                <span class='label label-warning'>
+                                {$paypal_min_price}
+                                </span>&nbsp; to paypal.
+                                </h4>
+                            </td>
+                            </tr>
+                            <tr>
+                                <th>SCB Bank</th>
+                                <td> 
+                                    <h4>pay {$pay_full_price} or Deposite {$pay_min_price}</h4>
+                                    <img src='$im_scb'>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>K Bank</th>
+                                <td>
+                                    <h4>pay {$pay_full_price} or Deposite {$pay_min_price}</h4>
+                                    <img src='$im_ks'>
+                                </td>
+                            </tr>
+                            
+                        </table>
+                    </div>
+
+                </div>
+
+            ";
+
+            //--save notification for admin
+            $note_title = "New booking from {$bk_ip} on {$this->today}";
+            $note_body = "
+            <div class='row'>
+                <div class='col-md-9'>
+                    <h2>The user name {$bk_name} has made new booking! {$this->today_andTime}.</h2>
+                    <p>
+                        The user IP {$this->Mdl_booking->ip} email {$bk_email} has make booking for {$tour_name}  on {$this->today_andTime} using OS {$this->Mdl_booking->os} {$this->Mdl_booking->browser}.
+                    </p>
+                </div>
+            </div>
+            
+            ";
+            $notic_data = array(
+                "notice_title" => $note_title,
+                "notice_body" => $note_body,
+                "notice_ip" => $bk_ip,
+                "by_user_name" => $bk_name,
+                "notice_date" => date("Y-m-d h:i:s",time())
+            );
+           $this->Mdl_booking->saveTB($this->_tb_notic,$notic_data);
+           //--booking success send notification to admin
+            //--end notification
+
+            //-------payment info
+           $b_data2 = array(
+                "bk_id" => $bk_id,
+                "pay_full_price" => $pay_full_price,
+                "pay_deposite" => $pay_min_price,
+                "must_pay_deposite" => $pay_min_price,
+                "collect_more" => $collect_more,
+                "must_collect_more" => $collect_more,
+                "user_pay_as" => "NEVER PAY YET",
+                "user_payment_img" => "NOT_PAY_YET_1.png"
+           );
+           $this->Mdl_booking->savePaymentInfo($b_data2);
+
+           //-------user info
+           $u_info = array(
+               "bk_id" => $bk_id,
+               "bk_user_email" => $bk_email,
+               "bk_user_name" => $bk_name,
+               "bk_user_more" => $bk_more,
+               "bk_num_people" => $bk_num,
+               "bk_user_ip" => $this->Mdl_booking->ip,
+               "bk_date_going" => $go_day,
+               "bk_date_booking" => $this->today,
+               "bk_date_remain" => $day_remain
+           );
+
+           $this->Mdl_booking->saveUserInfo($u_info);
+            
+        endif;
+        
+        
+        //the total
+
+
+        $this->o_put["err"] = $err;
+        $this->o_put["msg"] = $msg;
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+
+//---------------------
+//----Wed 12 Sep 2018 sendConfBooking
+function userSendConfBooking($bk_id){
+    //--wed 12 sep 2018
+    $where = array("{$this->_tb_book}.bk_id" => $bk_id);
+    $get = $this->Mdl_booking->modGetAllBooking($where)->result();
+    
+    $this->o_put["get_booking"] = $get;
+
+    $this->output->set_output(json_encode($this->o_put));
+}
+
+//------------------------------
+function userReqPayment(){
+    //---wed 12 sep 2018
+    /*
+        //--prepare to upload
+        $conf = array(
+            "upload_path" => $this->img_path,
+            "allowed_types" => "JPG|jpeg|jpg|gif|x-png|png"
+        );
+        $this->load->library("upload");
+        $this->upload->initialize($conf);
+        //    $this->upload->do_upload();
+        
+        if(!$this->upload->do_upload("userfile")):
+            var_dump($this->upload->display_errors());//show error if upload is false
+        endif;
+
+        //---get the image info
+        $img_data = $this->upload->data();
+
+        //   var_dump($img_data);
+        $thumb_name = "_Thumb_".$img_data["file_name"];
+        $thumb_conf = array(
+        "source_image" => $img_data["full_path"],
+        "new_image" => $this->thumb_path.$thumb_name,
+        "maintain_ratio" => true,
+        "width" => 250,
+        "height" => 250
+        );
+        $this->load->library("image_lib");
+        $this->image_lib->initialize($thumb_conf);
+        $this->image_lib->resize();
+        if(!$this->image_lib->resize()):
+            $this->image_lib->display_errors();
+        //error resize image
+        var_dump($this->image_lib->display_errors());
+    
+        endif;
+    
+        /*
+        Upload and resize is ready
+    */
+
+        $msg = "";
+
+        $conf_id = $this->input->post("bk_conf_id");
+        $conf_email = $this->input->post("bk_conf_email"); //not in use
+        
+        //----user data to admin notice
+        $bk_ip = $this->Mdl_booking->ip;
+        $bk_name = "";
+        $bk_os = $this->Mdl_booking->os;
+        $bk_browser = $this->Mdl_booking->browser;
+
+        $where_booking = array(
+            "{$this->_tb_book}.bk_id" => $conf_id
+        );
+        $get = $this->Mdl_booking->modGetAllBooking($where_booking)->result();
+        $num = count($get);
+        foreach($get as $row):
+            $bk_name = $row->bk_user_name;
+            
+        endforeach;
+
+        if($num == 0):
+            //---no result show error on screen 
+            $msg = "Error : Operation has been fail!";
+        else:
+            $msg = "Success : Your request has been send.";
+            //---found the record then do upload and get the info of the image
+            //--prepare to upload
+            $conf = array(
+                "upload_path" => $this->img_path,
+                "allowed_types" => "JPG|jpeg|jpg|gif|x-png|png"
+            );
+            $this->load->library("upload");
+            $this->upload->initialize($conf);
+            //    $this->upload->do_upload();
+        
+            if(!$this->upload->do_upload("userfile")):
+                var_dump($this->upload->display_errors());//show error if upload is false
+            endif;
+
+            //---get the image info
+            $img_data = $this->upload->data();
+
+            //   var_dump($img_data);
+            $thumb_name = "_Thumb_".$img_data["file_name"];
+            $thumb_conf = array(
+            "source_image" => $img_data["full_path"],
+            "new_image" => $this->thumb_path.$thumb_name,
+            "maintain_ratio" => true,
+            "width" => 250,
+            "height" => 250
+            );
+            $this->load->library("image_lib");
+            $this->image_lib->initialize($thumb_conf);
+            $this->image_lib->resize();
+            if(!$this->image_lib->resize()):
+                $this->image_lib->display_errors();
+            //error resize image
+            var_dump($this->image_lib->display_errors());
+        
+            endif;
+
+            $conf_pic_name = $img_data["file_name"];
+            $thumb_name = "_Thumb_".$img_data["file_name"];
+
+            //---update table payment info
+            $payment_data = array(
+                "user_payment_img" => $conf_pic_name,
+                "payment_img_thumb" => $thumb_name
+            );
+            $this->Mdl_booking->savePaymentInfo($payment_data,array("bk_id" => $conf_id));
+
+            //---send admin notice
+            $note_title = "New Request Payment from {$bk_ip} on {$this->today}";
+            $note_body = "
+            <div class='row'>
+                <div class='col-md-9'>
+                    <h2>The user IP {$bk_ip} has send payment request!</h2>
+                    <p>The user name {$bk_name} email {$conf_email} has send the request payment on {$this->today_andTime}
+                    using IP {$bk_ip} OS {$bk_os}  {$bk_browser}.
+                    </p>
+                    
+                </div>
+            </div>
+            ";
+            $notic_data = array(
+                "notice_title" => $note_title,
+                "notice_body" => $note_body,
+                "notice_ip" => $bk_ip,
+                "by_user_name" => $bk_name,
+                "notice_date" => date("Y-m-d h:i:s",time())
+            );
+           $this->Mdl_booking->saveTB($this->_tb_notic,$notic_data);
+           //--booking success send notification to admin
+
+        endif;
+        //var_dump($get);
+        
+        $this->o_put["msg"] = $msg;
+
+        $this->output->set_output(json_encode($this->o_put));
+        
+
+}
+
+//-----------------------------------------
+//----------userPrintReceipt---------
+function userPrintReceipt($id){
+    //echo"{$id} will be print to the page fromm server";
+    $where = array(
+        "{$this->_tb_book}.bk_id" => $id,
+        "{$this->_tb_book}.bk_confirm !=" => 0
+    );
+    $get = $this->Mdl_booking->modGetAllBooking($where)->result();
+    $this->o_put["get_book"] = $get;
+    $this->output->set_output(json_encode($this->o_put));
+}
+
+function printMyReceipt($id){
+    
+    $where = array(
+        "{$this->_tb_book}.bk_id" => $id
+    );
+    $get = $this->Mdl_booking->modGetAllBooking($where)->result();
+
+    $this->data["get_booking"] = $get;
+    
+    $this->data["subview"] = "booking/print_my_receipt";
+    
+    $this->load->view("_layout_print",$this->data);
+}
+
+
+//-------------------------------------
+
+function user_ticket_summary(){
+
+    //--this method will return the ticket to user 
+    //---select user by email via ajax
+    $data = array();
+    $email = $this->input->post("tk_email");
+    $get_all = $this->Mdl_booking->getBooking(array("bk_email" => $tk_email))->result();
+    $num_all = count($get_all);
+    $this->o_put["num_all"] = $num_all;
+
+
+}
+
+function own(){
+    if(!$this->is_login):
+        redirect(site_url("users/logout"));
+    endif;
+    if($this->moderate):
+        redirect(site_url("booking/moderate"));
+    endif;
+
+    $u_email = "NO email";
+    $get_who = $this->Mdl_users->getUsers(array("id" => $this->user_id))->result();
+    foreach($get_who as $row):
+        $u_email = $row->email;
+    endforeach;
+    $cmd = $this->input->post("cmd");
+    $u_name = $this->user_name;
+    $u_id = $this->user_id;
+    
+    
+    switch($cmd):
+        case"chk_ticket":
+            
+        break;
+        default:
+            
+            
+            $this->data["meta_title"] = "{$u_email}'s ticket summary";
+            $this->data["subview"] = "booking/own_booking";
+            $get_all_booking = $this->Mdl_booking->getBooking(array("bk_email" => $u_email))->result();
+            $num_all = count($get_all_booking);
+            $this->data["get_all_booking"] = $get_all_booking;
+            $this->data["num_all"] = $num_all;
+        
+            $this->load->view("_layout_main",$this->data);
+        break;
+    endswitch;
+    
+    
+    
+}
+
+function summary(){
+    $data = array();
+
+    //--all booking
+    $all_book = $this->Mdl_booking->getBooking()->result();
+    $data["book_all"] = count($all_book);
+
+    //--confirm booking
+    $b_conf = $this->Mdl_booking->getBooking(array("bk_confirm !=" => 0))->result();
+    $data["confirm"] = count($b_conf);
+
+    //--not confirm
+    $not_conf = $this->Mdl_booking->getBooking(array("bk_confirm" =>0))->result();
+    $data["not_confirm"] = count($not_conf);
+
+    //---booking has complete
+    $comp = $this->Mdl_booking->getBooking(array("mark_as_done !=" => 0))->result();
+    $data["complete"] = count($comp);
+
+    $not_comp = $this->Mdl_booking->getBooking(array("mark_as_done " => 0))->result();
+    $data["not_complete"] = count($not_comp);
+
+    //--sent data call by ajax
+    $this->output->set_output(json_encode($data));
+    
+    
+    return $data;
+}
+
+
+//--Moderate section
+function moderate(){
+    if(!$this->moderate):
+        redirect(site_url("users/logout"));
+    endif;
+    $cmd = $this->input->post("cmd");
+    $bk_id = $this->input->post("bk_id");
+
+    //-try short hand sat 12 may 2018
+    //if $bk_conf not equal to $_POST['bk_conf'] then $bk_conf equal to 0
+    $bk_conf=($bk_conf = $this->input->post("bk_confirm"))?true:0;
+    //($bk_conf == $this->input->post("bk_confirm"))?1:0;
+    
+    //$on_tour = $this->input->post("has_done");
+    $on_tour = ($on_tour =$this->input->post("has_done"))?2:0;
+    $conf_day = date("Y-m-d h:i:s",time());
+    
+    $book_data = array(
+        "bk_confirm" => $bk_conf,
+        "mark_as_done" => $on_tour,
+        "bk_date_conf" => $conf_day,
+        "conf_ip" => $this->ip,
+        "conf_id" => $this->user_id,
+        "conf_name" => $this->user_name
+    );
+
+    //--switch
+    switch($cmd):
+        case"edit":
+            $get = $this->Mdl_booking->getBooking(array("bk_id" => $bk_id))->result();
+            $this->o_put["get"] = $get;
+            $this->output->set_output(json_encode($this->o_put));
+        break;
+        case"save":
+            $save = $this->Mdl_booking->save_booking($book_data,array("bk_id" => $bk_id));
+            
+            
+            
+            
+            $this->o_put["msg"] = "<h4>
+            <span class='label-success'>
+            Success : data has been save
+            </span></h4>
+            ";
+
+            $this->output->set_output(json_encode($this->o_put));
+
+        break;
+        default:
+            $this->data["subview"] = "booking/book_moderate";
+            $this->data["meta_title"] = "Moderator {$this->user_name}";
+            $get_all = $this->Mdl_booking->getBooking()->result();
+            $num_book = count($get_all);
+
+            //--pagination
+            $per_page = 4;
+            $page = $this->input->get("page");
+            if(!$page):
+                $page = $per_page;
+            else:
+                $page = $page;
+            endif;
+
+            $conf = array();
+            $conf["base_url"] = site_url("booking/moderate");
+            $conf["per_page"] = $per_page;
+            $conf["total_rows"] = $num_book;
+            $conf["full_tag_open"] = "<ul class='pagination'><li>";
+            $conf["full_tag_close"] = "</li></ul>";
+            $this->pagination->initialize($conf);
+            $get_book = $this->Mdl_booking->getBooking(null,$conf["per_page"],$this->uri->segment(3))->result();
+
+            $this->data["get_booking"] = $get_book;
+            $this->data["num_book"] = $num_book;
+            $this->data["per_page"] = $per_page;
+
+            
+
+            $this->load->view("_layout_moderate",$this->data);
+        break;
+    endswitch;
+
+    //--end switch
+}
+
+//---end of moderate
+//--------Admin section-------
+
+function adminGetAllBooking($seg = 1){
+    $get = $this->Mdl_booking->modGetAllBooking()->result();
+    $num = count($get);
+
+    $this->o_put["get_book"] = $get;
+    $this->o_put["num_book"] = $num;
+    $this->output->set_output(json_encode($this->o_put));
+    /*
+    $get_booking = $this->Mdl_booking->getBooking()->result();
+    $num_book = count($get_booking);
+
+    $this->o_put["get_all_booking"] = $get_booking;
+
+    $this->o_put["num_book"] = $num_book;
+    $this->output->set_output(json_encode($this->o_put));
+
+    */
+}
+//-------------------------------------------------------------
+//---------adminEditBooking--------Thu 6 Sep 2018------------------
+function adminEditBooking($bk_id){
+    $where_bk = array("{$this->_tb_book}.bk_id" => $bk_id);
+    $get_bk = $this->Mdl_booking->modGetAllBooking($where_bk)->result();
+    $this->o_put["get_booking"] = $get_bk;
+
+    $this->output->set_output(json_encode($this->o_put));
+
+}
+
+//---------------------------------------
+//--------------adminSaveBooking
+function adminSaveBooking(){
+    $bk_id = $this->input->post("bk_id");
+    $pay_st = $this->input->post("pay_status");
+    $user_has_paid = $this->input->post("user_has_paid");
+    $collect = $this->input->post("user_must_pay");
+    //$mark_done = $this->input->post("mark_as_done");
+    //$booking_cancle = $this->input->post("booking_is_cancle");
+
+    $bk_confirm = 2;
+    $user_is_pay = 2;
+    if($pay_st == "bk_wait_pay"):
+        $bk_confirm = 0;
+        $user_is_pay = 0;//---not pay status flag
+    endif;
+
+    //---checkbox mark as done
+    $mark_done = ($mark_done=$this->input->post("mark_as_done"))?$mark_done=2:$mark_done=0;
+
+    //----checkbox cancle
+    $booking_cancle = ($booking_cancle = $this->input->post("booking_is_cancle"))?$booking_cancle=2:$booking_cancle=0;
+
+    /*
+    //for debugging purpose Sat 15 Sep 2018
+    $show_data = array(
+        "bk_id" => $bk_id,
+        "bk_status" => $pay_st,
+        "done" => $mark_done,
+        "cancle" => $booking_cancle,
+        "user_has_pay" => $user_has_paid,
+        "collect_more" => $collect
+    );
+    var_dump($show_data);
+    
+    */
+   
+    //----data to update on tbl_booking
+    $booking_data = array(
+        "mark_as_done" => $mark_done,
+        "booking_cancle" => $booking_cancle,
+        "bk_pay_status" => $pay_st,
+        "bk_confirm" => $bk_confirm,
+        "conf_ip" => $this->Mdl_booking->ip,
+        "conf_id" => $this->user_id,
+        "conf_name" => $this->user_name,
+        "bk_date_conf" => $this->today_andTime
+    );
+    $this->Mdl_booking->save_booking($booking_data,array("bk_id" => $bk_id));
+
+    //---------update tbl_booking 
+    //---------------------------------
+    //--------data to update tbl_booking_payment_info
+    $payment_info = array(
+        "must_pay_deposite" => $user_has_paid,
+        "must_collect_more" => $collect,
+        "day_pay_record" => $this->today_andTime,
+        "user_has_pay" => $user_is_pay,
+        "user_pay_as" => $pay_st
+    );
+
+    $this->Mdl_booking->savePaymentInfo($payment_info,array("bk_id" => $bk_id));
+    //---------update tbl_booking_payment_info
+    //----------show result message
+    $this->o_put["msg"] = "Success : report has been save";
+    $this->o_put["bk_id"] = $bk_id;
+    $this->output->set_output(json_encode($this->o_put));
+    
+}
+
+
+
+//----------------------------------------------------------------------------
+function admin(){
+    if(!$this->is_admin):
+        redirect(site_url("users/logout"));
+    endif;
+
+    $this->data["meta_title"] = "{$this->user_type} | {$this->user_name} | Booking system Admin 1.12";
+    $this->data["subview"] = "admin/booking/book_index";
+    $this->load->view("_layout_admin",$this->data);
+
+    
+
+}
+
+
+//-------End of admin section------
+
+}//end of file

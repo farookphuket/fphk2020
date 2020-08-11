@@ -1,0 +1,163 @@
+<script>
+
+
+$(function(){
+    var $el = $(".container");
+    var page_status = $el.find(".status");
+
+
+    var photo = (function(){
+        var url = "<?php echo site_url("gallery/own");?>";
+
+        //---photo list and pagination
+        var photo_list = $el.find(".photo_list");
+        var pagin_div = $el.find(".pagin_div");
+        var showpic_div = $el.find("#show_pic");
+        var pic_count = $el.find(".pic_count");
+
+
+        //--form upload
+        var frmUpload = $el.find("#frmUpload");
+        var pic_title = $el.find(".txtPicTitle");
+        var pub = $el.find("pic_pub");
+        var btnSave = $el.find(".btnUpload");
+
+
+        //---upload imgae
+        function uploadPic(){
+            frmUpload.submit(function(ev){
+                ev.preventDefault();
+                var url = $(this).attr("action");
+                var data = new FormData(this);
+                $.ajax({
+                    type : "post",
+                    url : url,
+                    data : data,
+                    processData:false,
+                    contentType:false,
+                    cache:false,
+                    async:false,
+                    success : function(e){
+                        var rs = $.parseJSON(e);
+                        page_status.html(rs.thumb).show();
+
+                        setTimeout(function(){
+                            page_status.fadeOut("slow");
+                            showPic(rs.pic_id);
+                            getPhotos();
+                        },2000);
+                        
+                        
+                    }
+                });
+            });
+        }
+        //----------
+
+        function getPhotos(page=1){
+            photo_list.html("");
+            //---get all with pagination
+            var url = "<?php echo site_url("gallery/ajaxOwnGetPic/");?>";
+            $.ajax({
+                url : url+page,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    //console.log(rs.get_pic);
+                    $.each(rs.get_pic,function(i,v){
+
+                        var thumb = "<?php echo site_url("public/image/thumb/");?>"+v.thumb_name;
+                        var full_pic = "<?php echo site_url("public/image/");?>"+v.pic_name;
+                        
+                        var tmp = `
+                        <div class="img_thumb">
+                            <a href="${full_pic}" title="show full image" target="_blank">
+                                <img src="${thumb}" class="responsive" title="click to view full image">
+                            </a>
+                            
+                            <span>
+                                <a href="#" class="showPic" data-pic_id="${v.pic_id}" alt="view the image option" title="view image option">
+                                    ${v.pic_title}
+                                </a>
+                            
+                            </span>
+                        </div>
+                        `;
+                        photo_list.append(tmp);
+                    });
+                    pagin_div.html(rs.pagination);
+                    pic_count.html(rs.num_pic);
+                }
+            });
+        }
+        //-------------------
+        //-------show full image
+        function showPic(id){
+            var data = {cmd : "getPic",pic_id : id};
+            $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    //console.log(rs.get);
+                    
+                    
+                    showpic_div.html(rs.get);
+                }
+            });
+        }
+
+        function setPublic(val,id){
+            //alert("the set is "+val+" pic id "+id);
+            var data = {cmd : "chPub",pic_id:id,public:val};
+            $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    page_status.html(`data has been save!`).show();
+                    setTimeout(function(){
+                        page_status.fadeOut("slow");
+                        showPic(rs.pic_id);
+                    },2000);
+                }
+            });
+        }
+
+        //-----------
+        function getEvent(){
+            getPhotos();
+
+            //--upload button
+            btnSave.on("click",function(){
+                uploadPic();
+            });
+
+            pagin_div.delegate(".pagination a","click",function(ev){
+                ev.preventDefault();
+                var cur_page = $(this).attr("data-ci-pagination-page");
+                getPhotos(cur_page);
+            });
+
+            photo_list.delegate(".showPic","click",function(evt){
+                evt.preventDefault();
+                var id = $(this).attr("data-pic_id");
+                showPic(id);
+            });
+
+            showpic_div.delegate(".pic_code","click",function(){
+                $(this).select();
+            });
+
+            showpic_div.delegate(".pic_pub","change",function(){
+                var id = $(this).attr("data-pic_id");
+                setPublic($(this).val(),id);
+            });
+        }
+        return{getEvent:getEvent}
+    })();
+    photo.getEvent();
+});
+
+</script>

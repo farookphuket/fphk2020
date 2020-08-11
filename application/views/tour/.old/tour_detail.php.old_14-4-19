@@ -1,0 +1,95 @@
+<?php 
+
+foreach($get as $row):
+    ?>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8">
+                <div class="container">
+                    <h1 class="section-heading text-center">
+                        <?php echo $row->t_name;?>
+                    </h1>
+                    <hr class="my-4" />
+                    <p class="text-body">
+                    <?php echo $row->t_summary;?>
+                    </p>
+                </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="container">
+                <h1 class="section-heading text-center">
+                    Table content
+                </h1>
+                    <hr class="my-4" />
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Trip location</th>
+                            <td>
+                            <?php echo $row->t_destination; ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Program Duration</th>
+                            <td>
+                            <?php echo $row->t_duration; ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Price per person</th>
+                            <td>
+                            <?php echo $row->full_price."  THB."; ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>Booking</th>
+                            <td>
+                                <a class="btn btn-dark btn-xs js-scroll-trigger" href="#booking">Get Started with us!</a>
+                            </td>
+                        </tr>
+
+
+
+                        
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-12">
+            <div class="container">
+                <?php echo $row->t_program;?>
+            </div>
+            
+        </div>
+    </div>
+    <hr class="my-4" />
+    <!--call the booking form--> 
+    <div class="row">
+        <div class="col-md-12">
+        <?php
+            $this->load->view("booking/book_index.php");
+        ?>
+        </div>
+    </div>
+    
+
+
+    <!--comment module call by ajax-->
+    <?php 
+        $this->load->view("payment_method/pay_index.php");
+        $this->load->view("comment/comment_index.php");
+    ?>
+    <!--end of comment module-->
+
+</div>
+
+<?php
+        endforeach;
+
+
+
+

@@ -1,0 +1,43 @@
+<div class="row">
+    
+    <!--notification start-->
+    <div class="col-md-10">
+        <!--notification--> 
+        <div class="page-header">
+            <h2>Notification &nbsp;
+                <span class="label label-warning notice_num">
+                    0
+                </span>&nbsp; item(s).
+            </h2>&nbsp;
+            <span class="pull-right">
+                <input type="checkbox" class="mark_all" name="mark_all" />&nbsp; <b>
+                    Mark all as read
+                </b>
+            </span>
+        </div>
+        <div class="show-list">
+            <ul class="notice_list">
+            
+            </ul>
+            <div class="notice_pagin">
+                <!--dynamic pagination-->
+            </div>
+        </div>
+
+    </div>
+    <!--notification End-->
+
+
+
+
+
+
+
+
+</div>
+
+
+
+<?php 
+
+    require("adminJS.php");

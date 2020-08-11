@@ -1,0 +1,189 @@
+
+  <div class="jumbotron">
+    <h1>Gallery of <?php echo $user_name; ?></h1>
+
+  </div>
+
+<!--Modal start-->
+<div class="modal-dialog">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h1>Add new Picture | เพิ่มรูปภาพ</h1>
+    </div>
+
+    <!--modal body start-->
+    <div class="modal-body">
+
+      <form class="form-horizontal" action="<?php echo site_url("gallery/ajaxOwnUpload");?>" id="frmUpload" enctype="multipart/form-data">
+          <div class="form-group">
+              <label class="label-control col-sm-4">Pic Name | ชื่อรูป</label>
+                    <div class="col-sm-6">
+                          <input type="text" class="form-control txtPicTitle" name="txtPicTitle" required oninvalid="this.setCustomValidity('Please Enter valid title | ใส่หัวข้อให้สักนิดเหอะ')" oninput="setCustomValidity('')">
+                      </div>
+            </div>
+
+          <div class="form-group">
+              <label class="label-control col-sm-4">Show Public | ตั้งเป็นสาธารณะ</label>
+            <div class="col-sm-6">
+                <select required class="form-control pic_pub" name="pic_pub">
+                    <option value=''>Select</option>
+                    <option value='0'>NO</option>
+                    <option value=1>Yes</option>
+                </select>
+            </div>
+          </div>
+
+
+      <div class="form-group">
+          <label class="label-control col-sm-4">&nbsp;</label>
+          <div class="col-sm-6">
+              <input type="file" name="userfile" class="userfile" hidden required>
+        </div>
+      </div>
+  
+
+    <div class="form-group">
+      <label class="label-control col-sm-4">&nbsp;</label>
+      <div class="col-sm-6">
+          <div class="preview"><!--dynamic preview the image before upload-->
+          </div>
+                        
+      </div>
+    </div>
+
+                <div class="form-group">
+                    <label class="label-control col-sm-4">&nbsp;</label>
+                    <div class="col-sm-6">
+                        <div class="show_result"></div>
+                        <div class="progress progress-striped active">
+                            <div class="progress-bar" style="width:0%"></div>
+                        </div>
+                        <p class="show_prog"></p>
+                    </div>
+                    
+                </div>
+    </form>
+  </div>
+  <!--end div.modal-body-->
+
+  <div class="modal-footer">
+    <button class="btn btn-info btnUpload" type="submit" form="frmUpload">
+    Upload
+    </button>
+  </div>
+
+
+</div>
+</div><!--end of modal-dialog-->
+  
+  
+  <div id="show_pic" class="cf">
+
+  </div>
+
+
+
+  <div class="page-header">
+    <h1>Photo Gallery Tab</h1>
+  </div>
+  
+  
+  <!--menu tab-->
+  <ul class="nav nav-tabs">
+		<li class="active">
+            <a  href="#1" id="tab_pri_pic" data-toggle="tab">
+            <h3>
+              My Gallery
+              <span class="label label-primary pic_count">0</span>
+            </h3>
+            </a>
+            
+		</li>
+		<li>
+          
+            <a href="#2" id="tab_approve_pic" data-toggle="tab">    
+                <h3>
+                  Not Approve
+                  <span class="label label-danger approve_count">0</span>
+                </h3>
+            </a>
+            
+		</li>
+    <li>
+            <a href="#3" id="tab_pub_pic" data-toggle="tab">
+            <h3>
+              Public Gallery
+              <span class="label label-info pub_count">0</span>
+            </h3>
+            </a>
+		</li>
+		
+	</ul>
+  
+  <div class="tab-content">
+    <!--the tab content show gallery--> 
+    <div class="tab-pane active" id="1">
+      <!--tab 1-->
+      <div class="content-wrap">
+      <h2>
+          My Gallery | คลังภาพของฉัน
+        </h2>
+        <p>
+           Title of it image will only show 10 letters.| หัวข้อของรูปจะโชว์แค่ 10 ตัวอักษรเท่านั้น
+        </p>
+        <p>
+           you can click on the image to edit title or set share to public.| ท่านสามารถคลิกที่หัวข้อใต้ภาพ เพื่อแก้ไข หัวข้อของภาพ และ สามารถกำหนดสถานะของรูปให้แสดงหรือ ไม่แสดงต่อสาธารณะได้
+        </p>
+      </div>
+        
+        <div class="gallery cf photo_list">
+
+        </div>
+        <div class="pagination pagin_div">
+
+        </div>
+      <!--end of tab 1-->
+    </div>
+
+    <!--tab 2-->
+    <div class="tab-pane" id="2">
+      <!--tab 2--> 
+      <h2>
+          Not Approve | ไม่ได้รับอนุญาตจากแอดมิน
+        </h2>
+        <p>
+           All this image has not approve by admin.| รูปภาพเหล่านี้ไม่ได้รับอนุญาติจากแอดมินให้แสดงต่อสาธารณะ อาจจะเป็นภาพล่อแหลม ลามกอนาจาร 18+
+        </p>
+        <p>
+           only you can see this image.| ท่านสามารถเห็นรูปภาพเหล่านี้ได้เพียงคนเดียว
+        </p>
+        <div class="gallery cf approve_list">
+
+        </div>
+        <div class="pagination approve_pagin">
+
+        </div>
+      <!--end of tab 2-->
+    </div>
+
+    <!--tab 3-->
+    <div class="tab-pane" id="3">
+      <!--tab 2--> 
+        <div class="gallery cf pub_list">
+
+        </div>
+        <div class="pagination pub_pagin">
+
+        </div>
+      <!--end of tab 3-->
+    </div>
+  <!--end of tab-content-->
+  </div>
+  <!--end of menu tab and div.tab-content-->
+
+
+
+
+
+<?php 
+    require("ownJS.php");

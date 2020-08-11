@@ -1,0 +1,58 @@
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-3">
+            <h2 class="text-center">Menu</h2>
+            <ul class="list-group">
+                <li class="list-group-item">
+                    <a href="" class="btnAddNewPost">Write New Post</a>
+                </li>
+                <li class="list-group-item">
+                    <a href="#" class="ln_pubPost">See Public Post</a>
+                </li>
+                <li class="list-group-item">
+                    <a href="">My own Post</a>
+                </li>
+            </ul>
+        </div>
+        <div class="col-lg-9 mx-auto">
+            <h2 class="post_head">Recent Post 
+            <span class="badge badge-info post_num">0</span>&nbsp;item(s).
+            </h2>
+            <div class="post_list">
+                <!--dynamic content-->
+            </div>
+            <div class="post_pagin">
+                <!--dynamic content-->
+            </div>
+
+
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade mdPost">
+    <div class="modal-dialog">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h1 class="modal-title frmHead">Add new post</h1>
+            </div>
+            <div class="modal-body">
+
+                <form class="form-horizontal" id="frmPost" action="<?php echo site_url("article/uSavePost");?> ?>">
+                
+                
+                </form>
+
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary btnSavePost" type="submit" form="frmPost">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php 
+
+        require("user_arJS.php");

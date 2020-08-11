@@ -1,0 +1,380 @@
+<!--last edit on 11/4/19-->
+<div  class="masthead text-center  d-flex">
+  <div class="container my-auto">
+    <div class="row">
+      <div class="col-lg-10 mx-auto">
+        <h1 style="color:green;" class="text-uppercase">Admin</h1>
+        <a href="<?php echo site_url("admin/profile");?>" class="btn btn-primary lnEditProfile">Edit Profile</a>
+      </div>
+    </div>
+  </div>
+</div>
+<section id="booking">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-12">
+          <h1 class='text-center'>Booking</h1>
+          <p class="text-center">Notification</p>
+          <hr class="my-4">
+          <p>&nbsp;</p>
+        </div>
+        <div class="col-lg-4">
+          <div class="alert alert-info">
+            <h1 class="numAllBooking" style="text-align:center">0</h1>
+
+          </div>
+          <p class="text-center">All Booking</p>
+        </div>
+        <div class="col-lg-4">
+          <div class="alert alert-success">
+            <h1 class="numConfirm" style="text-align:center">0</h1>
+          </div>
+          <p class="text-center">Has Confirmed</p>
+        </div>
+        <div class="col-lg-4">
+          <div class="alert alert-danger">
+            <h1 class="numNoneConfirm" style="text-align:center">0</h1>
+          </div>
+          <p class="text-center">Not Confirm</p>
+        </div>
+      </div>
+    </div>
+</section>
+
+<!--end of booking-->
+<!--tour program start 6-7-2019 -->
+<section id="tour_program">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-12">
+          <h1 class="text-center">Tour Program</h1>
+          <p>&nbsp;</p>
+        </div>
+        <div class="col-lg-3">
+          <div class="alert alert-info">
+            <h1 class="numAllTour" style="text-align:right;">0</h1>
+
+          </div>
+          <p>All tour program.</p>
+        </div>
+
+        <div class="col-lg-3">
+          <div class="alert alert-warning">
+            <h1 class="numNotOnSale" style="text-align:right;">0</h1>
+
+          </div>
+          <p>Save as Draft.</p>
+        </div>
+
+        <div class="col-lg-3">
+          <div class="alert alert-success">
+            <h1 class="numOnSale" style="text-align:right;">0</h1>
+
+          </div>
+          <p>On Sale.</p>
+        </div>
+
+
+      </div>
+    </div>
+</section>
+<!--end of tour program-->
+<!--Post start 6/7/2019 -->
+<section id="post">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <h1 class="text-center">Post</h1>
+        <hr class="my-4">
+        <p>&nbsp;</p>
+      </div>
+      <div class="col-lg-2">
+        <div class="alert alert-info">
+          <h1 class="numAllPost" style="text-align:right">0</h1>
+        </div>
+        <p>All post</p>
+      </div>
+      <div class="col-lg-2">
+        <div class="alert alert-success">
+          <h1 class="numPubPost" style="text-align:right">0</h1>
+        </div>
+        <p>Public post</p>
+      </div>
+      <div class="col-lg-2">
+        <div class="alert alert-info">
+          <h1 class="numIndexPost" style="text-align:right">0</h1>
+        </div>
+        <p>Public Index post</p>
+      </div>
+
+      <div class="col-lg-3">
+        <div class="alert alert-warning">
+          <h1 class="numPriPost" style="text-align:right">0</h1>
+        </div>
+        <p>Private post</p>
+      </div>
+      <div class="col-lg-3">
+        <div class="alert alert-danger">
+          <h1 class="numNoneApprovePost" style="text-align:right">0</h1>
+        </div>
+        <p>Not Approve post</p>
+      </div>
+    </div>
+  </div>
+
+
+</section>
+
+<!--End of post -->
+<!--User Start -->
+<section id="user">
+
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-12">
+          <h1 class="text-center">User</h1>
+        </div>
+        <div class="col-lg-3">
+          <div class="alert alert-info">
+            <h1 class="numAllUser" style="text-align:right;">0</h1>
+          </div>
+          <p>All users</p>
+        </div>
+        <div class="col-lg-3">
+          <div class="alert alert-success">
+            <h1 class="numActiveUser" style="text-align:right;">0</h1>
+          </div>
+          <p>Activated User</p>
+        </div>
+        <div class="col-lg-3">
+          <div class="alert alert-danger">
+            <h1 class="numBanUser" style="text-align:right;">0</h1>
+          </div>
+          <p>Ban user</p>
+        </div>
+        <div class="col-lg-3">
+          <div class="alert alert-warning">
+            <h1 class="numModUser" style="text-align:right;">0</h1>
+          </div>
+          <p>Moderator User</p>
+        </div>
+
+      </div>
+    </div>
+
+</section>
+<script>
+  $(function(){
+
+    //----booking start
+    var $b = $("#booking");
+    var booking = (function(){
+      var $numAllBooking = $b.find(".numAllBooking");
+      var $numConfirm = $b.find(".numConfirm");
+      var $numNoneConfirm = $b.find(".numNoneConfirm");
+
+      var allTicket = 0;
+      var ticketConf = 0;
+      var ticketNotConf = 0;
+
+      function getBookingSum(){
+        var url = "<?php echo site_url("booking/adminGetBookingList");?>";
+        $.ajax({
+          url : url,
+          success : function(e){
+            var rs = $.parseJSON(e);
+            allTicket = rs.get_all.length;
+            $.each(rs.get_all,function(i,v){
+              if(parseInt(v.bk_confirm) === 0){
+                ticketNotConf++;
+              }else{
+                ticketConf++;
+              }
+            });
+            $numAllBooking.html(allTicket);
+            $numNoneConfirm.html(ticketNotConf);
+            $numConfirm.html(ticketConf);
+          }
+        });
+      }
+      function getEvent(){
+        getBookingSum();
+      }
+      return{getEvent:getEvent}
+    })();
+    //---Booking End
+
+    //---Tour start
+    var $t = $("#tour_program");
+    var tour = (function(){
+      var $numAllTour = $t.find(".numAllTour");
+      var $numOnSale = $t.find(".numOnSale");
+      var $numNotOnSale = $t.find(".numNotOnSale");
+
+      var sale = 0;
+      var draft = 0;
+      var allTour = 0;
+
+      //----getTourSum
+      function getTourSum(){
+        var url = "<?php echo site_url("tour/modGetTourList");?>";
+        $.ajax({
+          url : url,
+          success : function(e){
+            var rs = $.parseJSON(e);
+            allTour = rs.get_all.length;
+            //console.log(`all tour is ${allTour}`);
+            $.each(rs.get_all,function(i,v){
+              if(parseInt(v.mark_draft) === 0){
+                sale++;
+              }else{
+                draft++;
+              }
+            });
+            $numAllTour.html(allTour);
+            $numOnSale.html(sale);
+            $numNotOnSale.html(draft);
+          }
+        });
+      }
+      function getEvent(){
+        getTourSum();
+      }
+      return{getEvent:getEvent}
+    })();
+    //-----Tour END
+
+    //---post start
+    var $p = $("#post");
+    var post = (function(){
+      var $numAllPost = $p.find(".numAllPost");
+      var $numPubPost = $p.find(".numPubPost");
+      var $numPriPost = $p.find(".numPriPost");
+      var $numNoneApprovePost = $p.find(".numNoneApprovePost");
+      var $numIndexPost = $p.find(".numIndexPost");
+
+      var allPost = 0;
+      var approvePost = 0;
+      var notApprovePost = 0;
+      var indexPost = 0;
+      var pubPost = 0;
+      var priPost = 0;
+
+      function numPost(){
+        var url = "<?php echo site_url("article/adminGet/");?>";
+        $.ajax({
+          url : url,
+          success : function(e){
+            var rs = $.parseJSON(e);
+            allPost = rs.get_all.length;
+            //---
+            $.each(rs.get_all,function(i,v){
+              if(parseInt(v.ar_show_public) !== 0){
+                pubPost++;
+              }else{
+                priPost++;
+              }
+              if(parseInt(v.ar_show_index) !== 0){
+                indexPost++;
+              }
+
+              if(parseInt(v.ar_is_approve) === 0){
+                notApprovePost++;
+              }
+
+            });
+            $numAllPost.html(allPost);
+            $numPubPost.html(pubPost);
+            $numPriPost.html(priPost);
+            $numIndexPost.html(indexPost);
+            $numNoneApprovePost.html(notApprovePost);
+          }
+        });
+      }
+
+      //---getPostSummary
+      function getPostSummary(){
+        numPost();
+      }
+
+      //-----------------
+      //---getEvent
+      function getEvent(){
+        getPostSummary();
+      }
+      return{getEvent:getEvent}
+    })();
+    //--post END
+
+    //---user create on 13-july-2019
+    var $u = $("#user");
+    var users = (function(){
+      var $numAllUser = $u.find(".numAllUser");
+      var $numActiveUser = $u.find(".numActiveUser");
+      var $numBanUser = $u.find(".numBanUser");
+      var $numModUser = $u.find(".numModUser");
+
+      var all = 0;
+      var active = 0;
+      var ban = 0;
+      var mod = 0;
+
+      function numUsers(){
+        var url = "<?php echo site_url("users/adminListUser");?>";
+        $.ajax({
+          url : url,
+          success : function(e){
+            var rs = $.parseJSON(e);
+            //console.log(`the get all is ${rs.get_all.length}`);
+            all = rs.get_all.length;
+            $.each(rs.get_all,function(i,v){
+              //console.log(v);
+              if(parseInt(v.is_activated) !== 0){
+                active++;
+
+              }
+              if(parseInt(v.is_ban) !== 0){
+                ban++;
+              }
+
+              if(parseInt(v.moderate) !== 0){
+                mod++;
+              }
+            });
+
+            //---show result
+            $numAllUser.html(all);
+            $numActiveUser.html(active);
+            $numBanUser.html(ban);
+            $numModUser.html(mod);
+          }
+        });
+
+      }
+      //------------
+      function getEvent(){
+        numUsers();
+      }
+      return{getEvent:getEvent}
+    })();
+
+    //----END of User
+    //----Admin Home JS create on 12-July-2019
+    var aHome = (function(){
+
+
+      function getEvent(){
+        tour.getEvent();
+        booking.getEvent();
+        post.getEvent();
+        users.getEvent();
+      }
+      return{getEvent : getEvent}
+    })();
+    aHome.getEvent();
+
+  });
+</script>
+<?php
+    //$js = "admin/adminJS.php";
+    //$this->load->view($js);

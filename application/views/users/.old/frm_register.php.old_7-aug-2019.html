@@ -1,0 +1,59 @@
+
+<section class="register">
+    <div class="status"></div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="container">
+                <h1 class="text-center">New Register</h1>
+                <hr class="my-4"/>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Dear User</strong>
+                        <p>You do not have to regiser! all data on this website is public.</p>
+                        <p>This is NOT an automatic system your account will not be activate unless the Admin has approve.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>ทุกท่านที่เคารพ</strong>
+                        <p>ท่านไม่จำเป็นต้องเป็นสมาชิก ท่านสามารถเข้าถึงข้อมูลส่วนใหญ่ได้</p>
+                    </div>
+                </div>
+
+                
+            </div>
+            
+            <div class="container">
+                <h2>&nbsp;</h2>
+                <form class="form-horizontal" id="frmRegis" action="<?php echo site_url("register/userRegister");?>">
+                    <div class="form-group">
+                        <label for="user_name">User Name</label>
+                        <input type="text" id="user_name" name="user_name" class="form-control user_name" required/>
+                    </div>
+                    <div class="form-group">
+                        <label for="user_pwd">Password</label>
+                        <input type="password" id="user_pwd" name="user_pwd" class="form-control user_pwd" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="user_email">E-mail</label>
+                        <input type="email" id="user_email" class="form-control user_email" name="user_email" required/>
+                    </div>
+                    <div class="form-group float-right">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-sm btn-primary btnSave" type="submit" form="frmRegis">Register</button>
+                        <a href="<?php echo site_url("home");?>" class="btn btn-danger btn-sm">cancle</a>
+                    </div>
+                </form>
+                <br />
+                <div class="fResult"></div>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+
+<?php 
+
+    //require("registerJS.php");
+    $js = "users/registerJS.php";
+    $this->load->view($js);

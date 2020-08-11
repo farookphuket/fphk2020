@@ -1,0 +1,28 @@
+
+
+
+
+<script>
+    
+    
+
+    $(function(){
+        
+        
+        var $el = $("#man_tour");
+
+        var tour = (function(){
+            function showForm(){
+                
+            }
+
+            function getEvent(){
+                showForm();
+            }
+            return{getEvent:getEvent}
+        })();
+        tour.getEvent();
+    });
+
+
+</script>

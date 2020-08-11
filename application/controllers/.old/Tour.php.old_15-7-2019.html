@@ -1,0 +1,341 @@
+<?php
+
+class Tour extends MY_Controller{
+
+    protected $_tb_tour = "tbl_tour";
+    protected $_tb_cat = "tbl_cat";
+    protected $_tb_seo = "seo";
+
+    public $ip;
+    public $browser;
+    public $os;
+    public $user_id;
+    public $user_name;
+   
+
+    protected $moderate;
+
+    
+    function __construct(){
+        parent::__construct();
+
+        //--library
+        $this->load->library("pagination");
+
+        //--model
+        $this->load->model("Mdl_tour");
+        $this->load->model("Mdl_seo");
+
+        //--basic info
+        $this->ip = $this->Mdl_tour->getIP();
+        $this->browser = $this->Mdl_tour->getBrowser();
+        $this->os = $this->Mdl_tour->getOS();
+        $this->user_name = $this->Mdl_tour->getUserName();
+        $this->ip = $this->Mdl_tour->getUserId();
+
+        $this->moderate = $this->session->userdata("moderate");
+    }
+
+    //--List all the tour program
+    function index(){
+
+        if($this->is_login):
+            $url = site_url("tour/own");
+            if($this->is_admin):
+                $url = site_url("tour/admin");
+            endif;
+            if($this->moderate):
+                $url = site_url("tour/moderate");
+            endif;
+            redirect($url);
+        endif;
+        $where = array(
+            "mark_draft " => 0
+        );
+        $this->data["subview"] = "tour/index";
+        $this->data["meta_title"] = "our tour program on the web you can booking online";
+
+        $get = $this->Mdl_tour->getTour($where)->result();
+        $num = count($get);
+        //$page = $this->input->get("page");
+        $per_page = 10;
+        $page = (!$page = $this->input->get("page"))?$page=$per_page:$page=$page;
+        $this->data["get_tour"] = $get;
+        $this->data["num_tour"] = $num;
+        $this->data["page"] = $page;
+
+        $this->load->view("_layout_main",$this->data);
+    }
+    
+
+    //------get tour list in the select list-----------
+    //------ 16 jan 2019
+    function uChooseTour($id=false){
+        //---this method will call from the booking form to list the tour program into the select list box
+        $where = array(
+            "mark_draft" => 0
+        );
+
+        if($id):
+            $where["t_id"] = $id;
+            $get = $this->Mdl_tour->getTour($where)->result();
+        else:
+            $get = $this->Mdl_tour->getTour($where)->result();
+        endif;
+        
+        
+
+        $this->o_put["id"] = $id;
+        $this->o_put["get_tour"] = $get;
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+    //---------------
+
+    //---show detail of the tour program
+    function detail($id){
+
+        $get = $this->Mdl_tour->seoGetTour($id)->result();
+        
+        foreach($get as $row):
+            $this->data["publisher"] = $row->article_publisher;
+            $this->data["meta_title"] = $row->t_name;
+            $this->data["og_url"] = $row->og_url;
+            $this->data["page_description"] = $row->kw_page_des;
+            $this->data["page_keyword"] = $row->kw_page_keyword;
+           
+        endforeach;
+        //$this->data["meta_title"] = "{$title}";
+        $this->data["get"] = $get;
+        $this->data["subview"] = "tour/tour_detail";
+        $this->load->view("_tour_tmp",$this->data);
+    }
+
+    //--
+    
+    //---member section
+    function own($seg=1){
+        
+
+        $get_all_tour = $this->Mdl_tour->getTour()->result();
+        $num_tour = count($get_all_tour);
+
+        //--pagination
+        $url = "tour/own";
+        $per_page = 5;
+        
+        $conf = $this->getConfPagin($per_page,$num_tour,$url);
+        $this->pagination->initialize($conf);
+        $page = $seg;
+        $start = ($page-1)*$conf["per_page"];
+        $get_tour = $this->Mdl_tour->getTour(null,$conf["per_page"],$start)->result();
+
+        $this->data["meta_title"] = "{$this->user_type} | {$this->user_name} | List tour program";
+        
+        $this->data["get_tour"] = $get_tour;
+        $this->data["num_tour"] = $num_tour;
+        $this->data["per_page"] = $per_page;
+
+        $this->data["subview"] = "tour/tour_own";
+        $this->load->view("_layout_main",$this->data);
+    }
+
+
+    //--END OF MEMBER AREA
+//--------------------------------------------------------------------------
+
+    function moderate(){
+        
+    }
+    //---admin section
+
+
+    function admin($seg=1){
+        //this method just show to new page
+        //for admin
+        
+        
+
+        
+        $this->data["subview"] = "admin/tour/list_tour";
+        $this->data["meta_title"] = "admin | {$this->user_name}| manage tour";
+
+        $template = "_ADMIN_TMP";
+        $this->load->view($template,$this->data);
+    }
+
+
+    //-------------
+    //-------create method
+    function create($id=false){
+        $title = "Add new tour program";
+        $this->data["subview"] = "admin/tour/_frm_tour";
+        
+        $tmp = "_ADMIN_TMP";
+        $get = null;
+        if($id):
+            $title = "will edit the content {$id}";
+            
+            $get = $this->Mdl_tour->seoGetTour($id)->result();
+            
+
+
+        endif;
+        
+        $this->data["get"] = $get;
+        $this->data["meta_title"] = $title;
+        
+        $this->load->view($tmp,$this->data);
+
+    }
+
+    //--create on Thu 3 May 2018
+
+    function modGetTourList($seg=1){
+        //--call by ajax
+        $where = "";
+        $get = $this->Mdl_tour->getTour()->result();
+        $num = count($get);
+
+        //---pagination
+        $per_page = 4;
+        $url = "modGetTourList";
+        $conf = $this->getConfPagin($per_page,$num,$url);
+        $this->pagination->initialize($conf);
+        $page = $seg;
+        $start = ($page-1)*$per_page;
+        $get_tour = $this->Mdl_tour->getTour(null,$per_page,$start)->result();
+
+        $pagin = 0;
+        if($num >= $per_page):
+           $pagin = $this->pagination->create_links(); 
+        endif;
+        $this->o_put["pagination"] = $pagin;
+        $this->o_put["get_tour"] = $get_tour;
+        $this->o_put["num_tour"] = $num;
+
+        $this->output->set_output(json_encode($this->o_put));
+
+    }
+
+    //--------------------------
+    //---modEditTour //------13-1-19
+    function modEditTour($id){
+        $get = $this->Mdl_tour->seoGetTour($id)->result();
+        $this->o_put["get_tour"] = $get;
+        $this->output->set_output(json_encode($this->o_put));
+        //$this->data["get_tour"] = $get;
+    }
+
+    //------------------------
+
+    function modSaveTour(){
+        
+        //----seo data
+        $kw_id = $this->input->post("kw_id");
+        $t_id = $this->input->post("tour_id");
+        $se_keyword = $this->input->post("meta_keyword");
+        $se_url = $this->input->post("meta_url");
+        if(!$se_url):
+            $se_url = site_url("tour/detail/{$t_id}");
+        endif;  
+        $se_des = $this->input->post("meta_description");
+        
+        $t_price = $this->input->post("tour_fullprice");
+        $t_duration = $this->input->post("tour_duration");
+        $t_location = $this->input->post("tour_location");
+        $t_title = $this->input->post("tour_title");
+        $t_summary = $this->input->post("tour_summary");
+        $t_detail = $this->input->post("tour_detail");
+        $mark_draft = $this->input->post("mark_draft");
+
+        $seo_data = array(
+            "kw_page_keyword" => $se_keyword,
+            "kw_page_des" => $se_des,
+            "kw_canonical" => $se_url,
+            "og_title" => $t_title,
+            "og_description" => $se_des,
+            "og_url" => $se_url,
+            "og_site_name" => site_url(),
+            "article_publisher" => $this->user_name
+
+        );
+        $seo_key = $this->Mdl_seo->saveTag($seo_data,array("kw_id" => $kw_id));
+        //----save data for seo
+
+        $tour_data = array(
+            "kw_id" => $seo_key,
+            "t_name" => $t_title,
+            "t_summary" => $t_summary,
+            "t_program" => $t_detail,
+            "t_duration" => $t_duration,
+            "t_destination" => $t_location,
+            "full_price" => $t_price,
+            "t_program" => $t_detail,
+            "mark_draft" => $mark_draft
+        );
+
+        $save = $this->Mdl_tour->saveTour($tour_data,array("t_id" => $t_id));
+        $msg = "Success : data has been updated,you can close this window.";
+        $this->o_put["msg"] = $msg;
+        $this->output->set_output(json_encode($this->o_put));
+
+
+    }
+    
+    //---------------seo-----------
+    function seoFirstSave(){
+        $tour_title = $this->input->post("tour_title");
+        $t_data = array(
+            "t_name" => $tour_title
+        );
+        
+        $t_id = $this->Mdl_tour->saveTour($t_data);
+        $read_url = site_url("tour/detail/{$t_id}");
+
+        //---seo data
+        $seo_key = "Default keyword for {$tour_title}";
+        $seo_des = "Default key description for {$tour_title}";
+
+        $seo_data = array(
+            "kw_page_keyword" => $seo_key,
+            "kw_page_des" => $seo_des,
+            "kw_canonical" => $read_url
+        );
+        $kw_id = $this->Mdl_seo->saveTag($seo_data);
+        $this->Mdl_tour->saveTour(
+            array(
+                "kw_id" => $kw_id,
+                "user_id" => $this->user_id
+            ),
+            array("t_id" => $t_id));
+        $get = $this->Mdl_tour->seoGetTour($t_id)->result();
+        $this->o_put["get_tour"] = $get;
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+    //---------------------
+    
+
+    
+    
+    //-------------end of seo--------------
+
+    function modDelTour($id){
+        $get = $this->Mdl_tour->seoGetTour($id)->result();
+        $kw_id = 0;
+        $t_id = 0;
+        foreach($get as $row):
+            $kw_id = $row->kw_id;
+            $t_id = $row->t_id;
+            $this->Mdl_seo->delTag(array("kw_id" => $kw_id));
+        endforeach;
+        $this->Mdl_tour->delTour(array("t_id" => $t_id));
+        $this->o_put["msg"] = "Success data has been deleted!";
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+    //---end of admin section
+
+
+}//end of file

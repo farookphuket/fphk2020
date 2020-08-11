@@ -1,0 +1,44 @@
+<?php 
+    foreach($get_ar as $row):
+?>
+<div class="container">
+          <div class="row">
+              <div class="col-lg-12 text-center">
+                <h2 class="section-heading">
+                <?php echo $row->ar_title;?>
+                </h2>
+                <hr class="my-4">
+              </div>
+          </div>
+        </div>
+        <div class="container" id="container">
+          <div class="row">
+            <div class="col-lg-12 ">
+              
+              <div class="card">
+                <div class="card-body">
+                  <h2 class="card-title">
+                    <?php echo $row->ar_title;?>
+                  </h2>
+                  <p class="card-text">
+                    <?php echo $row->ar_summary;?>
+                  </p>
+                  <p class="card-text">
+                    <?php echo $row->ar_body;?>
+                  </p>
+                </div>
+                
+              </div>
+            <br style="clear:both" />
+            
+                <?php
+                    $this->load->view("comment/comment_index.php");
+                ?>
+              
+            
+                
+            </div>
+          </div>
+        </div>
+
+<?php endforeach;?>

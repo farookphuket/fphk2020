@@ -1,0 +1,59 @@
+<form class="form-horizontal" id="frm_contact" method="post" action="<?php echo site_url("faq/saveFaq");?>">
+            <div class="form-group">
+                <label for="" class="col-sm-4 label-control">Name</label>
+                <div class="col-sm-6">
+                    <input type="text" name="faq_name" class="faq_name form-control" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-4" for="faq_email">E-mail</label>
+                <div class="col-md-6">
+                    <input type="email" class="form-control faq_email" name="faq_email" id="faq_email" required>
+                    
+                    <input type="hidden" class="faq_id" name="faq_id">
+                    
+                    
+                </div>
+                
+
+                
+            </div>
+            <div class="form-group">
+                <label class="label-control col-sm-4">Title</label>
+                <div class="col-sm-6">
+                    <input type="text" class="form-control faq_title" name="faq_title" required>
+                </div>
+            </div>
+             <div class="form-group">
+                <label class="label-control col-sm-4">Message</label>
+                <div class="col-sm-6">
+                    <textarea class="form-control faq_body" name="faq_body" id="faq_body" rows="9" required></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="label-control col-sm-4">&nbsp;</label>
+                <div class="col-sm-6">
+                   <div class="modal_status">
+
+                    </div>
+                    <p>&nbsp;</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="label-control col-sm-4">&nbsp;</label>
+                <div class="col-sm-6">
+                    <button type="submit" class="btn btn-info btnSave">
+                        Sent Message
+                    </button>&nbsp;
+                    
+                    <p>&nbsp;</p>
+                    <h4>
+                    <span class="badge badge-warning">
+                    <?php echo"OS {$os}. {$browser}. IP {$ip}";?>
+                    </span>
+                    </h4>
+                </div>
+            </div>
+
+            
+    </form>

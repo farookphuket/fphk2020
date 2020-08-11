@@ -1,0 +1,163 @@
+<div class="jumbotron">
+    <h1>
+        <?php echo $num_users; ?> users.
+    </h1>
+</div>
+<div class="what_new">
+    <ul>
+        <li class="alert alert-success">
+            Last update on Wed 18 Apr 2018 : @Admin Add,edit,delete,pagination user list | @user reset password in case of forgoten,login,edit profile,change password
+        </li>
+    </ul>   
+</div>
+<div class="table-responsive">
+<button class="btn btn-primary btn-sm pull-right lnAddUser" type="button">
+    Add User
+</button>
+<table class="table table-striped">
+    <thead>
+        <th>
+            #
+        </th>
+        <th>
+            Name <?php echo"show All {$num_users} people"; ?>
+        </th>
+        <th>E mail</th>
+        <th>
+            Date
+        </th>
+        <th>
+            Status
+        </th>
+    </thead>
+    <tbody>
+    <?php
+       if($num_users < 1):
+
+        ?>
+        <tr>
+        <td colspan="5">There is no data</td>
+        </tr>
+
+        <?php
+        else:
+            $num = 0;
+            foreach($get_users as $row):
+                $num++;
+
+                ?>
+            <tr>
+                <td><?php echo $num; ?></td>
+                <td>
+                    <?php 
+                    
+                    echo $row->name;
+                    ?>
+                    <span class="pull-right">
+                        <a href="#" data-u_id="<?php echo $row->id;?>" class="btn btn-info btn-sm lnEditUser">
+                            Edit 
+                        </a>
+                        <a href="#" data-u_id="<?php echo $row->id;?>" class="btn btn-danger btn-sm lnDelUser">
+                            Delete 
+                        </a>        
+                    </span>
+                </td>
+                <td><?php echo $row->email;?></td>
+                <td>
+                    <?php echo $row->date_register;?>
+                </td>
+                <td>
+                    <?php 
+                    
+                    $yes = "<span class='label label-success'>Yes</span>";
+                    $no = "<span class='label label-danger'>No</span>";
+                    $active = $no;
+                    $ban = $no;
+                    $mod = $no;
+                    if($row->is_activated != 0):
+                        $active = $yes;
+                    endif;
+                    if($row->is_ban != 0):
+                        $ban = $yes;
+                    endif;
+                    if($row->moderate != 0):
+                        $mod = $yes;
+                    endif;
+                    echo"Actived {$active} | Ban {$ban} | Mod {$mod}";
+                    ?>
+                </td>
+            </tr>
+                <?php
+            endforeach;
+            if($num_users > $per_page):
+                ?>
+                <tr>
+                    <td colspan="5">
+                        <div class="pagination">
+                        <?php echo $this->pagination->create_links();?>
+                        </div>
+                    </td>
+                </tr>
+                <?php
+            endif;
+       endif;
+    ?>
+    </tbody>
+</table>
+</div>
+<!--dialog box-->
+<div class="modal fade mdManUser">
+    <div class="modal-dialog">
+       <div class="modal-content">
+        <div class="modal-header">
+            <h1 class="modal-title">Edit user</h1>
+        </div>
+        <div class="modal-body">
+            <form action="<?php echo site_url("users/admin");?>" class="form-horizontal" id="editUser">
+                <input type="hidden" name="u_id" class="u_id">
+                <div class="form-group">
+                    <label for="" class="label-control col-sm-4">Name</label>
+                    <div class="col-sm-6">
+                        <input type="text" name="u_name" class="form-control u_name">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="" class="label-control col-sm-4">E mail</label>
+                    <div class="col-sm-6">
+                        <input type="text" name="u_email" class="form-control u_email">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="label-control col-md-2">&nbsp;</label>
+                    <div class="col-md-8 input-group">
+                        <span class="input-group-addon">
+                            <input type="checkbox" name="u_active" id="u_active">
+                        </span>
+                        <input type="text" class="form-control active_txt">
+                        <span class="input-group-addon">
+                            <input type="checkbox" name="u_ban" id="u_ban">
+                        </span>
+                        <input type="text" class="form-control ban_txt">
+                        <span class="input-group-addon">
+                            <input type="checkbox" name="u_mod" id="u_mod">
+                        </span>
+                        <input type="text" class="form-control mod_txt">
+                    </div>
+                    
+                </div>
+            </form>
+            <div class="modal_status pull-right"></div>
+        </div>
+        <div class="modal-footer">
+            
+            <button type="submit" class="btn btn-primary btnSave" form="editUser">
+            Save 
+            </button>
+        </div>
+       </div>
+    </div>
+</div>
+<!--End of dialog-->
+<?php 
+require("userJS.php");

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <?php 
+    $head_tag = "component/_tag_in_head.php";
+    $this->load->view($head_tag);
+  ?>
+</head>
+<body>
+
+<div class="status"></div>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-lg-3 card">
+        <?php 
+            $menu_left = "component/menu_admin.php";
+            $this->load->view($menu_left);
+        ?>
+      </div>
+      <div class="col-lg-9">
+      <?php 
+        $this->load->view($subview);
+      ?>
+      </div>
+    </div>
+  </div>
+
+
+  
+</body>
+</html>

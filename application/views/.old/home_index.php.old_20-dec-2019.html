@@ -1,0 +1,174 @@
+<section id="ustd">
+  <!-- COMMENT THIS ON THE LIVE SEVER -->
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="text-center head">
+                    What's going on <?php echo $today; ?>?
+                </h1>
+                <p>&nbsp;</p>
+            </div>
+            <div class="col-lg-12">
+                <div class="st_list">
+                </div>
+                <div class="st_pagin">
+                </div>
+            </div>
+        </div>
+    </div>
+  </section>
+<script charset="utf-8">
+$(function(){
+    var $ST = $("#ustd");
+
+ 
+    var st = (function(){
+    
+        var st_list = getEl(".st_list");
+        var st_pagin = getEl("st_pagin"); 
+
+        function getWhatNew(page=1){
+            st_list.html("");
+            var url = "<?php echo site_url("ustd/getWhatNewList/"); ?>"+page;
+            $.ajax({
+            url : url,
+                success : function(e){
+                    
+                    console.log(e);
+                    var rs = $.parseJSON(e);
+                    $.each(rs.get_all,function(i,v){
+                        var tmp = `
+                            
+                            ${v.st_body}
+                            
+                            <p>&nbsp;</p>
+                        `;
+                        st_list.append(tmp);
+                    });
+                }
+                                     
+            });
+        }
+        function getEl(el){
+            return $ST.find(el);
+        }
+        function getEvent(){
+           getWhatNew(); 
+        }
+        return{getEvent:getEvent}
+    })();
+    st.getEvent();
+});
+</script>
+
+
+
+
+<!-- END OF HTML ABOUT COMMENT -->
+
+<section id="tour">
+      <div class="container-fluid">
+
+        <div class="row">
+          <div class="col-lg-12 text-center">
+              <h2 class="section-heading">Our tour program
+              <span class="badge badge-secondary num_tour">0</span> item(s).
+              </h2>
+              <p>
+                  <a class="btn btn-primary " href="<?php echo site_url("tour");?>">See all</a> -OR-
+                  <a class="btn btn-info js-scroll-trigger" href="#checkBooking">Check My Booking</a>
+
+              </p>
+
+              <hr class="my-4">
+          </div>
+        </div>
+      </div>
+
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-lg-12">
+            <!--dynamic content-->
+              <div class="tour_list">
+
+                </div>
+                <div class="tour_pagin">
+
+                </div>
+
+            <!--end of dynamic content-->
+
+          </div>
+
+        </div>
+      </div>
+</section>
+<?php
+    $check_booking = "booking/check_booking.php";
+    $this->load->view($check_booking);
+?>
+
+<section id="article">
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-12 text-center">
+              <h2 class="section-heading">Recently Post
+              <span class="badge badge-secondary num_post">0</span> item(s).
+              </h2>
+              <a class="btn btn-primary btnSeeAll" href="<?php echo site_url("article");?>">See All</a>
+              <hr class="my-4">
+            </div>
+          </div>
+        </div>
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-12 ">
+
+                <!--dynamic content start-->
+                <div class="show-list">
+                  <div class="post_recent">
+
+                  </div>
+
+                </div>
+
+                <div class="post_pagin">
+
+                </div>
+                <!--dynamic content end-->
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!--member zone login form-->
+      <?php
+          $member_login = "users/frm_login.php";
+          $this->load->view($member_login);
+      ?>
+      <!-- end of login form -->
+      <script>
+        $(function(){
+
+          var ck = (function(){
+
+            var page_owner_email = Cookies.get("ck_page_owner_email");
+
+            function chkCookie(){
+              if(page_owner_email !== null){
+                Cookies.remove("ck_page_owner_email");
+              }
+            }
+            function getEvent(){
+              //console.log(`Cookies is ${page_owner_email}`);
+              chkCookie();
+            }
+            return{getEvent:getEvent}
+          })();
+          ck.getEvent();
+        });
+      </script>
+
+<?php
+        require("homeJS.php");

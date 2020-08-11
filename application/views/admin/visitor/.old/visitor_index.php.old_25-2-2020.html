@@ -1,0 +1,98 @@
+<section id="visitor">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <h1 class="text-center">
+          <?php
+          $show = "{$sysName} version {$sysVersion} on {$sysDate}";
+          echo $show;
+
+          ?>
+        </h1>
+      </div>
+      <div class="col-lg-12">
+        <h1 class="text-center">
+          All Visitor
+          <span class="badge badge-success numAll">0</span>
+        </h1>
+        <hr class="my-4">
+        <p>&nbsp;</p>
+        <div class="table-responsive">
+          <table class="table table-bordered" id="visitor_list">
+            <tr>
+              <th>Date</th>
+              <th>IP</th>
+              <th>Browser</th>
+              <th>OS</th>
+            </tr>
+            <tbody class="body_list">
+
+            </tbody>
+          </table>
+          <div class="body_pagin">
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+  $(function(){
+    var $v = $("#visitor");
+    var visitor = (function(){
+
+      var $tb_list = $v.find("#visitor_list");
+      var $body_list = $v.find(".body_list");
+      var $body_pagin = $v.find(".body_pagin");
+      var $numAll = $v.find(".numAll");
+
+      var numAll = 0;
+      function getVisitorList(page=1){
+        //$tb_list.html("");
+        $body_list.html("");
+        var url = "<?php echo site_url("visitor/adminGetList/");?>"+page;
+        $.ajax({
+          url : url,
+          success : function(e){
+            var rs = $.parseJSON(e);
+            numAll = parseInt(rs.get_all.length);
+            $numAll.html(numAll);
+            $.each(rs.get_v,function(i,v){
+              var tmp = `<tr>
+              <td>
+              ${v.v_cur_visit_time}
+              </td>
+              <td>
+              ${v.v_ip}
+              </td>
+              <td>
+              ${v.v_browser}
+              </td>
+              <td>
+              ${v.v_os}
+              </td>
+              </tr>`;
+              $body_list.append(tmp);
+            });
+            if(rs.pagination){
+              var pagin = `${rs.pagination}`;
+              $body_pagin.html(pagin);
+            }
+          }
+
+        });
+      }
+      function getEvent(){
+        getVisitorList();
+        $body_pagin.delegate(".pagination a","click",function(e){
+          e.preventDefault();
+          var page = $(this).attr("data-ci-pagination-page");
+          getVisitorList(page);
+        });
+      }
+      return{getEvent: getEvent}
+    })();
+    visitor.getEvent();
+  });
+</script>

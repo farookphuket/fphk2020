@@ -1,0 +1,449 @@
+/*
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+*/
+/*
+    Created on : May 28, 2016, 12:12:13 PM
+    Author     : farook
+*/
+
+/*
+    form css-grid
+
+
+#showcase{
+    min-height:450px;
+    color:#ffffff;
+    text-align: center;
+}
+
+#showcase .bg-image{
+    position: absolute;
+    background: #333 url('../img/bg-test1.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    width: 100%;
+    height: 450px;
+}
+
+
+
+
+    end showcase
+*/
+
+
+.jumbotron{
+    background: #333 url("../img/bg-test1.png");
+    background-repeat: no-repeat;
+    background-size: cover;
+    -webkit-background-size: cover;
+    color: #e3e3e3;
+    
+}
+nav ul,li{
+    font-size:15px;
+    font-weight: bold;
+}
+.wrap{
+
+    padding: 25px;
+}
+
+
+/*
+
+panel confix
+*/
+
+.panel_list{
+    height: 250px;
+    
+}
+/*
+End of panel
+
+*/
+
+
+
+/*-----Make your webpage responsive ---*/
+/*
+
+image responsive
+
+*/
+.responsive{
+    max-width: 100%; 
+    height: auto;
+    border: 2px solid #B98CC3;
+}
+
+/*
+    add this  line Sat 2 Jun 2018 to make an embeded youtube video responsive
+    from  https://avexdesigns.com/responsive-youtube-embed/
+*/
+.video-container {
+    position: relative;
+    padding-bottom: 56.25%;
+    padding-top: 30px; height: 0; overflow: hidden;
+    }
+    
+.video-container iframe,
+.video-container object,
+.video-container embed {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/*
+End of video section
+
+*/
+
+/*----Do Not remove all the above line this will make webpage responsive---*/
+
+/*tour program display start */
+/*add this style to display for the tour program 
+Adding this code on Thu 12 July 2018
+*/
+
+
+
+#showcase .content-wrap,
+#section-c .content-wrap{
+    padding: 0 1.05em;
+}
+#section-b{
+    padding: 2em 1em 1em;
+}
+#section-b ul,
+#section-c ul{
+    list-style: none;
+    padding: 0;
+    margin:0;
+}
+#section-b li{
+margin-bottom: 1em;
+background: #fff;
+color: #333;
+}
+
+.btn-pay{
+display: inline-block;
+background: #333;
+color:#fff;
+border: 1px solid #666;
+text-decoration: none;
+padding: 1em 2em;
+margin: .5em 0;
+
+}
+
+.btn-pay:hover{
+background: #eaeaea;
+color: #333;
+}
+.card-content{
+padding: 1.5em;
+}
+
+/*tour program display start */
+
+.term_of_use{
+
+    padding:25px;
+    background-color: #e3e3e3;
+    font-weight: bold;
+    border: 1px #1b6d85 inset;
+    border-radius: 15px;
+}
+.modal-body >form{
+    padding-top:15px;
+}
+.term_of_use h1{
+    text-align: center;
+    padding:25px;
+    font-weight: bold;
+    color: #E13300;
+}
+.term_of_use > p{
+    text-align: right;
+}
+.form_user{
+    padding: 45px;
+    margin-top:25px;
+}
+.read_more{
+	padding:45px;
+}
+.modal-dialog{
+    width : 85%;
+	position : center;
+}
+.modalWarning{
+    padding : 25px;
+    border : 1px #E13300 outset;
+    border-radius: 15px;
+}
+
+
+.pagination{
+	text-align:center;
+	text-decoration:none;
+	color:green;
+	margin-top:5%;
+	width:100%;
+
+}
+.pagination ul {
+	text-align:center;
+	text-decoration:none;
+	color:green;
+	margin-top:5%;
+	width:100%;
+
+}
+.pagination div {
+	text-align:center;
+	text-decoration:none;
+	color:green;
+	margin-top:5%;
+	width:100%;
+
+}
+
+.status{
+    position:fixed;
+    padding:25px;
+    top:50%;
+    right:50%;
+    background:#000000;
+    z-index:900;
+    color:green;
+    display:none;
+
+}
+.error{
+    position:fixed;
+    padding:25px;
+    top:50%;
+    right:50%;
+    background:white;
+    z-index:900;
+    color:red;
+    display:none;
+    border:4px solid #ff0000;
+
+}
+
+
+
+/*
+This is line edit on Sat-3-Sep-2016
+This will appear to be the link user can click then the javascript will toggle the form on the page
+
+*/
+
+span.showForm{
+cursor:pointer;
+font-weight:bold;
+font-size:1em;
+color:green;
+text-decoration:none;
+}
+h1.showForm{
+cursor:pointer;
+font-weight:bold;
+font-size:2em;
+color:blue;
+text-decoration:none;
+}
+
+
+
+/*
+The Gallery style just edit on the Mon-17-Oct-2016
+*/
+
+.cf:before,.cf:after{
+    content:" ";
+    display:grid;
+}
+.cf:after{
+    clear:both;
+}
+.gallery{
+    background-color:#e7e7e7;
+    border:1px solid #00000b;
+    padding:1px;
+    margin:0 auto;
+
+}
+
+
+.gallery_form{
+    margin-top:55px;
+}
+
+.img_thumb{
+    float:left;
+    background-color:#ffffff;
+    width:200px;
+    margin:1%;
+    padding:2%;
+    padding-bottom:3%;
+    position:relative;
+    display:block;
+
+}
+
+.img_thumb:first-child{
+    margin-left:0;
+}
+
+
+.img_thumb img{
+    width:100%;
+    margin-bottom:5px;
+    
+}
+
+.img_thumb span{
+/*
+Show the name of thumbnail block
+*/
+    width:80%;
+    display :block;
+    margin-top: 5%;
+    
+    padding:2px;
+    background-color:#ffffff;
+    text-align:center;
+    border:1px dotted #ff0000;
+    border-radius:8px;
+
+}
+
+
+
+.confTitle{
+background:red;
+color:white;
+margin:4px;
+padding:2px;
+text-align:center;
+
+}
+
+/*
+This style for show the article
+Fri-13-Jan-2017
+
+*/
+.box_border{
+    border:1px dotted #000000;
+    padding:15px;
+    border-radius:25px;
+
+}
+.article_box{
+    border:1px dotted #B98CC3;
+    background-color:#E6ECDC;
+    padding:25px;
+    color:green;
+}
+
+
+.article_box a:link , a:visited{
+    color:red;
+    float:right;
+    position:absolute;
+    bottom:25px;
+    right:55px;
+}
+.article_box a:hover{
+   color:green;
+    background-color:#000000;
+   border:2px dashed #ff0000;
+   padding:5px;
+   font-weight:bold;
+   font-size:16px;
+
+}
+.box_bottom{
+    float:right;
+    position:absolute;
+    bottom:2px;
+    left:25px;
+    padding:2px;
+
+    background-color:#ECE2E3;
+}
+
+
+/*
+
+set the footer to be fixed at the bottom of page
+Add this line on Fri-11-Aug-2017
+*/
+
+
+/* Sticky footer styles
+-------------------------------------------------- */
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {
+  /* Margin bottom by footer height */
+  margin-bottom: 60px;
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 60px;
+  background-color: #f5f5f5;
+}
+
+
+/* Custom page CSS
+-------------------------------------------------- */
+/* Not required for template or sticky footer method. */
+
+.container.fooetr{
+  width: auto;
+  max-width: 680px;
+  padding: 0 15px;
+margin-bottom: 45px;
+}
+.container .text-muted {
+  margin: 20px 0;
+}
+
+/*
+  The code from JREAM
+*/
+.hide{
+  display: none;
+}
+
+#pd-left{
+    background:#e7e7e7;
+    border:1px solid #ff0000;
+    min-height: 500px;
+    border-radius: 25px;
+}
+#pd-right{
+    background:#e7e7e7;
+    border:1px solid #ff0000;
+    min-height: 500px;
+    border-top-left-radius: 25px;
+}

@@ -1,0 +1,40 @@
+<?php 
+
+foreach($get as $row):
+    ?>
+
+<div class="container">
+    <p>
+        <?php echo $row->t_summary;?>
+    </p>
+    <p>
+    <?php echo $row->t_program;?>
+    </p>
+    <br style="clear:both" />
+    <br />
+    <!--call the booking form--> 
+    <div class="row">
+        <div class="col-md-12">
+        <?php
+            $this->load->view("booking/book_index.php");
+        ?>
+        </div>
+    </div>
+    
+
+
+    <!--comment module call by ajax-->
+    <?php 
+        $this->load->view("payment_method/pay_index.php");
+        $this->load->view("comment/comment_index.php");
+    ?>
+    <!--end of comment module-->
+
+</div>
+
+    <?php
+endforeach;
+
+
+
+

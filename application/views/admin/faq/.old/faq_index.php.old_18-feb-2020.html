@@ -1,0 +1,316 @@
+<div class="col-lg-12">
+    <h1 class="text-center">
+<?php echo"{$sysName} version {$sysVersion}"; ?>
+</h1>
+    <p><?php echo"Date on {$sysDate}"; ?></p>
+    <p>
+        <strong>
+            Last 
+        </strong>
+        update on 14-Dec-2019
+    </p>
+    <ul>
+        <li>Change Javascript to ES6 style(14-Dec-2019)</li>
+        <li>Remove file "_layout_admin.php"</li>
+        <li>Edit admin faq</li>
+        <li>add "send email notice to user" once he have done his post.</li>
+        <li>- user must confirm he is the real user by sent confirmation link into his email 13-Feb-2020</li>
+    </ul>
+</div>
+<p>&nbsp;</p>
+<section id="faq_admin">
+    <div class="container">
+        <div class="row">
+            
+            <!-- faq label start -->
+            <div class="col-lg-4">
+                <div class="alert alert-info">
+                    <h1 style="text-align:right;color:blue;" class="numAll">0</h1>
+                </div>
+                <p class="text-right">All Faq</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="alert alert-success">
+                    <h1 style="text-align:right;color:blue;" class="numShow">0</h1>
+                </div>
+                <p class="text-right">Show on page</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="alert alert-danger">
+                    <h1 style="text-align:right;color:red;" class="numNotShow">0</h1>
+                </div>
+                <p class="text-right">Not show on page</p>
+            </div>
+
+
+            <!-- end of show faq label --> 
+            <div class="col-lg-12">
+                <p>&nbsp;</p>
+                
+            </div>
+            <div class="col-lg-12">
+                <h1 class="text-center">Faq List
+                <span class="badge badge-info numAll">
+                0
+                </span> item(s).
+                </h1>
+                <p class="pt-4">&nbsp;</p>
+                <div class="faq_list">
+                </div>
+                <div class="faq_pagin"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade md">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title mdTitle">
+                        Reply F.A.Q
+                    </h1>
+                </div>
+                <div class="modal-body">
+                    <?php 
+                        $f = "admin/faq/_frm_faq_edit";
+                        $this->load->view($f);
+                    ?>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary btnSave" type="submit" form="replyFaq">Save</button>
+                    <button class="btn btn-danger btnClose" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</section>
+<script>
+
+/*
+    * last edit 14-Dec-2019
+    * Change the js script to ES6 style
+    *
+ */
+
+$(function(){
+    const $PL = $("#faq_admin");
+    const $page_status = $(".status");
+    const $faq = (function(){
+
+        let $numAll = getEl(".numAll");
+        let $numShow = getEl(".numShow");
+        let $numNoShow = getEl(".numNotShow");
+
+
+        //--- show faq list 
+        let $faq_list = getEl(".faq_list");
+        let $faq_pagin = getEl(".faq_pagin");
+        let ip = "<?php echo $ip ?>";
+
+
+        //--- modal
+        let $md = getEl(".md");
+        let $mdTitle = getEl(".mdTitle");
+        $mdTitle.html("Reply F.A.Q");
+        let btnSave = getEl(".btnSave");
+        let $modal_status = getEl(".modal_status");
+
+        //--- form ele
+        let $frm = getEl("#replyFaq");
+        let faq_title = getEl(".faq_title");
+        let faq_id = getEl(".faq_id");
+        let faq_email = getEl(".faq_email");
+        let faq_body = getEl(".faq_body");
+        let faq_show = getEl(".is_show");
+
+
+        function showFaqLabel(){
+            let url = "<?php echo site_url("faq/adminGetAll"); ?>";
+            $.ajax({
+                url : url,
+                    success : (e)=>{
+                    let rs = $.parseJSON(e);
+                    let noShow = 0;
+                    let show = 0;
+                    let all = 0;
+                    //console.log(rs);
+                    all = rs.get_all.length;
+                    $.each(rs.get_all,(i,v)=>{
+                    if(parseInt(v.faq_is_show) !== 0){
+                        show++;
+                    }
+                    $numShow.html(show);
+                    noShow = all-show;
+                    $numNoShow.html(noShow);
+                    $numAll.html(all);
+                    });
+
+            }
+            });
+        }
+
+        function getFaqList(page=1){
+            $faq_list.html("");
+            let url = "<?php echo site_url("faq/adminGetAll/"); ?>"+page;
+            $.ajax({
+                url : url,
+                    success : (e)=>{
+                    let rs = $.parseJSON(e);
+
+                
+                    $.each(rs.get,(i,v)=>{
+                    let show_label = `<p class="badge badge-danger">No</p>`;
+                    if(parseInt(v.faq_is_show) !== 0){
+                        show_label = `<p class="badge badge-success">Yes</p>`;
+
+                    }
+
+                    
+                    let tmp = `<div class="card">
+    <div class="card-header">
+        <h1>${v.faq_title}</h1>
+        <p>By <strong>${v.faq_name}</strong> > IP : <strong> ${v.faq_ip}</strong> > date : <strong>${v.faq_date}</strong></p>
+    </div>    
+    <div class="card-body">
+        ${v.faq_body}
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <tr>
+                    <th>Show on page</th>
+                    <td>${show_label}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer">
+        <div class="float-right">
+            <a href="#" class="btn btn-danger lnDel" data-faq_id="${v.faq_id}">Delete</a>
+
+            <a href="#" class="btn btn-info lnEdit" data-faq_id="${v.faq_id}">Reply</a>
+        </div>
+    </div>
+</div><p>&nbsp;</p>`;
+                    $faq_list.append(tmp);
+                    });
+
+
+                    if(rs.pagination){
+                        $faq_pagin.html(rs.pagination);
+                    }
+
+            }
+            });
+        }
+
+        //--- showReplyFaq
+        function showReplyFaq(id){
+            //--- get the item to show in reply form
+            //tinymce.activeEditor.setMode("design");
+
+            let url = "<?php echo site_url("faq/adminEdit/"); ?>"+id;
+            $.ajax({
+                url : url,
+                    success : (e)=>{
+                    let rs = $.parseJSON(e);
+                    $.each(rs.get,(i,v)=>{
+                    if(parseInt(v.faq_is_show) !== 0){
+                        faq_show.prop("checked",true);
+                    }else{
+                        
+                        faq_show.prop("checked",false);
+                    }
+                        faq_id.val(v.faq_id);
+                        faq_title.val(v.faq_title);
+
+                        tinymce.activeEditor.setContent(v.faq_body);
+                        $($md).modal("show");
+                        $mdTitle.html(`Reply to ${v.faq_title}`);
+                    });
+
+            }
+            });
+            
+        }
+
+        //--------sendReply
+        function sendReply(){
+            btnSave.unbind();
+            $frm.submit(function(e){
+                e.preventDefault();
+                let url = $(this).attr("action");
+                let data = $(this).serialize();
+                $.post(url,data,function(e){
+                    let rs = $.parseJSON(e);
+                    $modal_status.html(rs.msg).show();
+                    setTimeout(()=>{
+                        $modal_status.html("loading..").fadeOut("slow");
+                       showReplyFaq(rs.faq_id); 
+                        getSummary();
+                    },2000);
+                });
+            });
+        }
+        //---------------
+        //---   DELETE
+        function delFaq(id){
+            let url = "<?php echo site_url("faq/adminDel/"); ?>"+id;
+            $.ajax({
+            url : url,
+                success : (e)=>{
+                let rs = $.parseJSON(e);
+                $page_status.html(rs.msg).show();
+                setTimeout(()=>{
+                    $page_status.html("loading...").fadeOut("slow");
+                    getSummary();
+                },2000);
+            }
+            });
+        }
+        //---------------
+        function getSummary(){
+            getFaqList();
+            showFaqLabel();
+        }
+
+        function getEl(el){
+            return $PL.find(el);
+        }
+        function getEvent(){
+            getSummary();
+
+            btnSave.on("click",function(){
+                sendReply();
+            });
+
+
+            //---   reply to FAQ
+            $faq_list.delegate(".lnEdit","click",function(e){
+                e.preventDefault();
+                let id = $(this).attr("data-faq_id");
+                showReplyFaq(id);
+            });
+
+
+            //---   delete  FAQ
+            $faq_list.delegate(".lnDel","click",function(e){
+                e.preventDefault();
+                let id = $(this).attr("data-faq_id");
+                delFaq(id);
+            });
+
+
+            //---pagination click
+            $faq_pagin.delegate(".pagination a","click",function(e){
+                e.preventDefault();
+                let page = $(this).attr("data-ci-pagination-page");
+                getFaqList(page);
+            });
+        }
+        return{getEvent:getEvent}
+    })();
+    $faq.getEvent();
+});
+
+
+</script>

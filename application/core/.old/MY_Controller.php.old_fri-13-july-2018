@@ -1,0 +1,187 @@
+<?php
+
+/* 
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+class MY_Controller extends CI_Controller{
+    /*
+last change on Sun-23-Oct-2016
+    */
+    protected $is_login;
+    protected $is_admin;
+    protected $user_id;
+    protected $user_name;
+
+    //add this line on Mon-19-Jun-2017
+    public $u_data;
+    public $a_info;
+    public $admin_email = "farookphuket@gmail.com";
+    public $today;
+
+function __construct() {
+    parent::__construct();
+    $this->output->set_header("Access-Control-Allow-Origin:*");
+    $this->is_login = $this->session->userdata("is_login");
+    $this->is_admin = $this->session->userdata("is_admin");
+    $this->user_id =  $this->session->userdata("user_id");
+    $this->user_name =  $this->session->userdata("user_name");
+ 
+    //load the agent library
+    $this->load->library("user_agent");
+
+    //get the basic information from the user
+    $this->u_data = $this->get_user_info();
+    $this->data["ip"] = $this->u_data["ip"];
+    $this->data["browser"] = $this->u_data["browser"];
+    $this->data["version"] = $this->u_data["version"];
+    $this->data["os"] = $this->u_data["os"];
+    $this->data["admin_email"] = "farookphuket@gmail.com";
+    
+    $this->data["user_name"] = "Anonymous";
+    if($this->is_login):
+        $this->data["user_name"] = $this->user_name;
+        $this->data["user_id"] = $this->user_id;
+    endif;
+
+    $this->a_info = $this->get_app_info();
+    $this->data["a_name"] = $this->a_info["a_name"];
+    $this->data["a_version"] = $this->a_info["a_version"];
+    $this->data["meta_title"] = "Welcome to using {$this->data['a_name']}";
+    $this->today = $this->get_today(); 
+    $this->data["time"] = $this->today["time"];
+    $this->data["day"] = $this->today["day"];
+    $this->data["date_time"] = $this->today["date_time"];
+    $this->data["today"] = date("Y-m-d h:i:s",time());
+}
+function make_hash($pw){
+  $hash_key = "./!223&&3$#***LVM*&";
+  return hash("sha512",$pw.$hash_key);
+}
+
+//show app_name app_version
+function get_app_info(){
+    $a_name = "Ornnicha [อรณิชา]";
+    $a_version = "1.10";
+    $app_data = array(
+        "a_name" => $a_name." version ".$a_version,
+        "a_version" => $a_version
+    );
+
+    return $app_data;
+}
+
+function is_valid_email($email){
+
+    if(filter_var($email,FILTER_VALIDATE_EMAIL)):
+
+        return true;
+    else:
+        return false;
+    endif;
+}
+
+//Adding on Mon 19 June 2017
+function get_user_info(){
+
+    $u_data = array();
+
+    $ip = $this->input->ip_address();
+    $os = $this->agent->platform();
+    $version = $this->agent->version();
+    $browser = $this->agent->browser();
+
+   $u_data["ip"] = $ip; 
+   $u_data["browser"] = $browser." browser version ".$version; 
+   $u_data["version"] = $version; 
+   $u_data["os"] = $os; 
+
+
+
+    return $u_data;
+}
+
+function get_browser(){
+    $u = array();
+
+    $browser = $this->agent->browser();
+    $version = $this->agent->version();
+    $os = $this->agent->platform();
+    $u["show_full"] = $this->agent->agent_string();
+    $u["browser"] = $browser;
+    $u["version"] = $version;
+    $u["os"] = $os; 
+    return $u;
+}
+
+
+
+/////this will return the day
+    function get_today(){
+        $day = date("D-M-Y",time());
+        $time = date("h:i a.",time());
+
+        $today = $day;
+        $now = $time;
+
+        $t = array();
+
+        $t["day"] = $today;
+        $t["time"] = $now;
+        $t["date_time"] = "{$today} {$now}";
+
+        return $t;
+    
+    }//end of today
+
+/*
+function cut_tag($tag){
+$html_tag = array(
+	'<!DOCTYPE html>','<html>','<script>',
+	'<!','<pre id="line1">','<pre>'
+);
+			
+$replace = array(
+	'&lt;!DOCTYPE html&gt;','&lt;html&gt;','&lt;script&gt;',
+	'&lt;!','&lt;pre&gt;','&lt;pre id="line1"&gt;'
+);
+	return str_replace($html_tag,$replace,$tag);
+}
+    function getToday($type=null){
+        switch ($type):
+            case"date_time" :
+                $today = date("d-m-Y h:i a",time());
+            break;
+            default :
+                $today = date("d-m-Y",time());
+                break;
+        endswitch;
+        
+        return $today;
+    }
+
+
+ */
+
+    function user_is_login(){
+
+        if(!$this->is_login):
+            //echo"This user is not login!";
+           // redirect(site_url("users/logout"));
+            return false;
+        endif;
+        return true;
+    }
+    function user_is_admin(){
+        //$is_login = $this->is_login;
+        //$is_admin = $this->is_admin;
+       if(!$this->is_admin):
+          // redirect(site_url("users/logout"));
+//           var_dump("The admin status is ",$is_admin);
+        return false;
+       endif;
+    return true;
+    }
+}
+

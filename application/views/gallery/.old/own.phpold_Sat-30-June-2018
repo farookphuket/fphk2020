@@ -1,0 +1,96 @@
+<div class="container">
+  <div class="jumbotron">
+    <h1>Gallery of <?php echo $user_name; ?></h1>
+
+  </div>
+
+<!--Modal start-->
+<div class="modal-dialog">
+<div class="modal-content">
+<div class="modal-header">
+<h1>Add new Picture | เพิ่มรูปภาพ</h1>
+</div>
+<div class="modal-body">
+
+<form class="form-horizontal" action="<?php echo site_url("gallery/ajaxOwnUpload");?>" id="frmUpload" enctype="multipart/form-data">
+    <div class="form-group">
+      <label class="label-control col-sm-4">Pic Name | ชื่อรูป</label>
+      <div class="col-sm-6">
+        <input type="text" class="form-control txtPicTitle" name="txtPicTitle" required oninvalid="this.setCustomValidity('Please Enter valid title | ใส่หัวข้อให้สักนิดเหอะ')" oninput="setCustomValidity('')">
+      </div>
+    </div>
+
+<div class="form-group">
+  <label class="label-control col-sm-4">Show Public | ตั้งเป็นสาธารณะ</label>
+  <div class="col-sm-6">
+    <select required class="form-control pic_pub" name="pic_pub">
+      <option value=''>Select</option>
+      <option value='0'>NO</option>
+      <option value=1>Yes</option>
+    </select>
+  </div>
+</div>
+
+
+<div class="form-group">
+<label class="label-control col-sm-4">&nbsp;</label>
+<div class="col-sm-6">
+<input type="file" name="userfile" class="userfile" hidden required>
+</div>
+</div>
+
+  <div class="form-group">
+    <label class="label-control col-sm-4">&nbsp;</label>
+    <div class="col-sm-6">
+      <div class="preview"><!--dynamic preview the image before upload--></div>
+                        
+    </div>
+                    
+  </div>
+                <div class="form-group">
+                    <label class="label-control col-sm-4">&nbsp;</label>
+                    <div class="col-sm-6">
+                        <div class="show_result"></div>
+                        <div class="progress progress-striped active">
+                            <div class="progress-bar" style="width:0%"></div>
+                        </div>
+                        <p class="show_prog"></p>
+                    </div>
+                    
+                </div>
+
+
+</div>
+  <div class="modal-footer">
+    <button class="btn btn-info btnUpload" type="submit">
+    Upload
+    </button>
+  </div>
+</form>
+
+</div>
+
+  
+  
+  <div id="show_pic" class="cf">
+
+  </div>
+<div class="page-header">
+  <h2>Photo Gallery 1.02</h2>
+  <h3>You have คุณมี
+  <span class="label label-info pic_count">0</span> photo(s) รูป
+  </h3>
+</div>
+<div class="gallery cf photo_list">
+
+</div>
+<div class="pagination pagin_div">
+
+</div>
+</div>
+</div><!--end of div.container-->
+
+
+
+<?php 
+    require("ownJS.php");

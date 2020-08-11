@@ -1,0 +1,71 @@
+<?php
+
+  $ar_title = "";
+  $ar_sum = "";
+  $ar_body = "";
+  $own_name = "";
+  $own_email = "";
+  $date_create = "";
+  $approve = 0;
+  $public = 0;
+  //$own_name = "";
+  foreach($get_ar as $row):
+    $ar_title = $row->ar_title;
+    $ar_sum = $row->ar_summary;
+    $ar_body = $row->ar_body;
+    $own_name = $row->name;
+    $own_email = $row->email;
+    $date_create = $row->date_add;
+    $public = $row->ar_show_public;
+    $approve = $row->ar_is_approve;
+  endforeach;
+
+?>
+<section id="article">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <h1 class="text-center">
+          <?php echo $ar_title;?>
+        </h1>
+        <p>
+        Post By : <strong><?php echo $own_name;?></strong> |  date create  <?php echo $date_create; ?>
+          <input type="hidden" class="page_owner_email" name="page_owner_email" value="<?php echo $own_email;?>"/>
+          <input type="hidden" class="page_owner_name" name="page_owner_name" value="<?php echo $own_name;?>" />
+        </p>
+        <p>&nbsp;</p>
+      </div>
+      <div class="col-lg-12">
+        <?php echo $ar_sum;?>
+        <p>&nbsp;</p>
+      </div>
+      <div class="col-lg-12">
+        <?php
+
+    if($approve == 0 || $public == 0):
+        $show = "<div class='alert alert-danger'><h1>Sorry : This content has a problem</h1><p>
+Dear friends we are apologize but this content is cannot be shown!
+</p>
+<p>
+ต้องกราบขอโทษด้วยครับ ข้อมูลเหล่านี้ไม่สามารถเผยแพร่ได้ เพราะอาจมีเนื้อหาที่ 'ละเมิดลิขสิทธิ์' หรือข้อมูลได้ถูกลบไปแล้ว หรือไม่ได้รับการยินยอมจากผู้นำเข้าข้อมูลให้นำมาเผยแพร่ ทางเราต้องขออภัยเป็นอย่างยิ่งครับ
+</p>
+<img src='https://lh3.googleusercontent.com/-rWfK9cAuGh8rI-19acWJ-XqBZ02DfKzqqAk9eWYGmDYSKacsumHhlDU20WMl1o4lopfcdm1FrRe0u0OkknaC7OTdPcOxoADaToexVOXYU17-ZmmYvS7NutxKPg-Ey0TF-sr318nadg=w1920-h1080' class='responsive'>
+</div>";
+        else:
+
+            $show = $ar_body;
+        endif;
+        echo $show;
+
+?>
+        <p>&nbsp;</p>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+  $(function(){
+    var owner_email = "<?php echo $own_email;?>";
+    Cookies.set("ck_page_owner_email",owner_email);
+  });
+</script>

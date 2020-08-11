@@ -1,0 +1,131 @@
+<section id="noShow">
+  <!-- COMMENT THIS ON THE LIVE SEVER -->
+  <div class="container">
+  <h1 class="text-center">Last update 26-july-2019</h1>
+  <p class="text-center">
+  <b>DO NOT FORGET TO COMMENT THIS OUT!</b>
+  </p>
+  <p>Just update on the live server and github with this code</p>
+  <ul>
+    <li class="alert alert-success">
+      update visitor : admin can view now is name <?php echo $user_name;?>
+    </li>
+    <li class="alert alert-success">
+      update faq : admin can reply and set to show it on page.
+    </li>
+    <li class="alert alert-success">
+      update contact : the way user can be contact.
+    </li>
+
+  </ul>
+  </div>
+</section>
+
+<!-- END OF HTML ABOUT COMMENT -->
+
+<section id="tour">
+      <div class="container-fluid">
+
+        <div class="row">
+          <div class="col-lg-12 text-center">
+              <h2 class="section-heading">Our tour program
+              <span class="badge badge-secondary num_tour">0</span> item(s).
+              </h2>
+              <p>
+                  <a class="btn btn-primary " href="<?php echo site_url("tour");?>">See all</a> -OR-
+                  <a class="btn btn-info js-scroll-trigger" href="#checkBooking">Check My Booking</a>
+
+              </p>
+
+              <hr class="my-4">
+          </div>
+        </div>
+      </div>
+
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-lg-12">
+            <!--dynamic content-->
+              <div class="tour_list">
+
+                </div>
+                <div class="tour_pagin">
+
+                </div>
+
+            <!--end of dynamic content-->
+
+          </div>
+
+        </div>
+      </div>
+</section>
+<?php
+    $check_booking = "booking/check_booking.php";
+    $this->load->view($check_booking);
+?>
+
+<section id="article">
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-12 text-center">
+              <h2 class="section-heading">Recently Post
+              <span class="badge badge-secondary num_post">0</span> item(s).
+              </h2>
+              <a class="btn btn-primary btnSeeAll" href="<?php echo site_url("article");?>">See All</a>
+              <hr class="my-4">
+            </div>
+          </div>
+        </div>
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-12 ">
+
+                <!--dynamic content start-->
+                <div class="show-list">
+                  <div class="post_recent">
+
+                  </div>
+
+                </div>
+
+                <div class="post_pagin">
+
+                </div>
+                <!--dynamic content end-->
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!--member zone login form-->
+      <?php
+          $member_login = "users/frm_login.php";
+          $this->load->view($member_login);
+      ?>
+      <!-- end of login form -->
+      <script>
+        $(function(){
+
+          var ck = (function(){
+
+            var page_owner_email = Cookies.get("ck_page_owner_email");
+
+            function chkCookie(){
+              if(page_owner_email !== null){
+                Cookies.remove("ck_page_owner_email");
+              }
+            }
+            function getEvent(){
+              //console.log(`Cookies is ${page_owner_email}`);
+              chkCookie();
+            }
+            return{getEvent:getEvent}
+          })();
+          ck.getEvent();
+        });
+      </script>
+
+<?php
+        require("homeJS.php");

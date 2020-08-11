@@ -1,0 +1,20 @@
+<?php 
+
+foreach($get as $row):
+    ?>
+<div class="jumbotron">
+    <h1>
+        <?php echo $row->t_name;?>
+    </h1>
+    <p>
+        <?php echo $row->t_summary;?>
+    </p>
+</div>
+<div class="container">
+    <p>
+    <?php echo $row->t_program;?>
+    </p>
+</div>
+
+    <?php
+endforeach;

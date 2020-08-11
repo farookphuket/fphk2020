@@ -1,0 +1,59 @@
+<?php
+/*
+* class Users last edit on Sat-3-Sep-2016
+*
+*/
+class Mdl_login extends MY_Model{
+    protected $_tb_user = "users";
+    protected $_order_by;
+
+    //add $_tb_user on Thu 15 June 2017
+
+    public $ip;
+    public $browser;
+    public $os;
+
+    function __construct() {
+        parent::__construct();
+
+        $this->ip = $this->getIP();
+        $this->os = $this->getOS();
+        $this->browser = $this->getBrowser();
+   }
+
+
+    //--getUser will return all user if no id
+   function get($where_u){
+      $get = $this->db
+                  ->where($where_u)
+                  ->get($this->_tb_user);
+      return $get;
+   }
+   //---------
+   //--getStatus
+   function getStatus($u){
+     $data = "";
+     $ban = 0;
+     $active = 0;
+     $get = $this->get($u)->result();
+     foreach($get as $row):
+       if($row->is_ban != 0):
+         $ban++;
+       endif;
+       if($row->is_activated != 0):
+         $active++;
+       endif;
+     endforeach;
+     $data = array(
+       "ban_user" => $ban,
+       "active_user" => $active
+     );
+     return $data;
+   }
+
+   //------------
+
+
+
+
+}//end class

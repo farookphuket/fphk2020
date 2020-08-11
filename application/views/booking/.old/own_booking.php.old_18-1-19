@@ -1,0 +1,81 @@
+<div class="jumbotron">
+    <h1>My ticket <?php echo $num_all;?> item(s).</h1>
+</div>
+<?php 
+    if($num_all != 0):
+        $num = 0;
+
+        foreach($get_all_booking as $row):
+            $num++;
+
+            $yes = "<h4>
+            <span class='label label-success'>Yes</span>
+            </h4>";
+            $no = "<h4>
+            <span class='label label-danger'>No</span>
+            </h4>";
+            $confirm = ($row->bk_confirm != 0)?$confirm = $yes:$confirm = $no;
+            ?> 
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h2><?php echo"#{$num}.{$row->tour_name}";?></h2>
+            </div>
+            <div class="panel-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <tr>
+                            <th>
+                                Date Departure | วันเดินทาง
+                            </th>
+                            <td>
+                                <?php echo $row->going_date;?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                Booking Date | วันที่จอง
+                            </th>
+                            <td>
+                                <?php echo $row->bk_date;?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                Price/Person | รายจ่าย/คน
+                            </th>
+                            <td>
+                                <?php echo $row->price_per_one;?> THB.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                Total Price | รายจ่ายทั้งสิ้น
+                            </th>
+                            <td>
+                                <?php echo $row->price_total;?> THB.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                Confirmed | ยืนยันแล้ว
+                            </th>
+                            <td>
+                                <?php echo $confirm;?>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+            <?php
+        endforeach;
+    else:
+        ?> 
+<div class="panel panel-warning">
+    <div class="panel-heading">
+        <h2>you don't have any ticket yet!</h2>
+    </div>
+</div>
+    <?php
+    endif;
+    

@@ -1,0 +1,188 @@
+<?php 
+
+
+class Category extends MY_Controller{
+
+
+    protected $_tb_cat = "tbl_cat";
+    
+    //---user status
+    protected $is_login;
+    protected $user_name;
+    protected $user_id;
+    protected $is_admin;
+    protected $moderate;
+    
+    public $os;
+    public $browser;
+    public $ip;
+    public $o_put;
+
+    function __construct(){
+        parent::__construct();
+        $this->load->model("Mdl_cat");
+        $this->load->library("pagination");
+    }
+
+    function index(){
+        $this->data["subview"] = "category/category_index";
+
+        $this->load->view("_layout_admin",$this->data);
+    }
+
+    function getCategoryList($seg=1,$option=false){
+        //--get the list of category base on who call
+
+        $who = $this->input->post("who");
+        $section = $this->input->post("section");
+        $where = "";
+
+        $where_own = "";
+
+        $where_pub = "";
+        switch($option):
+            case"admin":
+                $where = "";
+            break;
+            case"moderate":
+                $where = "";
+            break;
+            case"own":
+                $where_own = array(
+                    "cat_user_id" => $this->user_id,
+                    "cat_section" => $section
+
+                );
+
+                $where_pub = array(
+                    "cat_show_public !=" => 0,
+                    "admin_allow_show !=" => 0,
+                    "cat_section" => $section
+                );
+            break;
+            default:
+                
+            break;
+        endswitch;
+
+        $get_cat = $this->Mdl_cat->getCat($where_pub)->result();
+        $num_cat = count($get_cat);
+
+
+        //--pagination conf
+        $url = "getCategoryList";
+        $per_page = 4;
+        $conf = $this->getConfPagin($per_page,$num_cat,$url);
+        $this->pagination->initialize($conf);
+        $page = $seg;
+        $start = ($page-1)*$conf["per_page"];
+
+        $get_cat_page = $this->Mdl_cat->getCat($where_pub,$conf["per_page"],$start)->result();
+        if($num_cat >= $per_page):
+            $this->o_put["pagination"] = $this->pagination->create_links();
+        endif;
+
+        $this->o_put["num_cat"] = $num_cat;
+        $this->o_put["get_all_cat"] = $get_cat_page;
+
+        $this->output->set_output(json_encode($this->o_put));
+        
+    }
+
+    function getCategory($cat_id){
+        //--get just one row for edit
+        $get = $this->Mdl_cat->getCat(array("cat_id" => $cat_id))->result();
+        $this->o_put["get_cat"] = $get;
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+    function saveCat(){
+        //---save or create category
+        
+        //--user type came with form submit
+        $u_type = $this->input->post("user_type");
+
+
+        $where = "";
+
+        
+        
+        //---input text
+        $cat_section = $this->input->post("cat_section",true);
+        $uri_section = $this->input->post("uri_section");
+        
+        if(!$cat_section || $cat_section == ""):
+            $cat_section = $uri_section;
+        endif;
+
+
+        $cat_title = $this->input->post("cat_title",true);
+        $cat_des = $this->input->post("cat_des",true);
+
+        //--input hidden
+        $cat_id = $this->input->post("cat_id");
+        
+        //---checkbox
+        //$allow_pub = $this->input->post("allow_pub");
+        //$admin_allow = $this->input->post("admin_allow");
+        //$allow_change = $this->input->post("allow_change");
+
+        //--checkbox
+        $allow_pub = ($allow_pub = $this->input->post("allow_pub") )?true:0;
+
+        $allow_change = ($allow_change= $this->input->post("allow_change") )?true:0;
+
+        $admin_allow = ($admin_allow= $this->input->post("admin_allow") )?true:0;
+        
+        $cat_data = array(
+            "cat_title" => $cat_title,
+            "cat_section" => $cat_section,
+            "cat_des" => $cat_des,
+            "cat_show_public" => $allow_pub,
+            "allow_user_change" => $allow_change,
+            "admin_allow_show" => $admin_allow,
+            "cat_user_id" => $this->user_id,
+            "cat_user_type" => $u_type,
+            "date_create" => $this->today,
+            "last_update" => $this->today_andTime
+        );
+
+
+        switch($u_type):
+            case"own":
+               unset($cat_data["admin_allow_show"]);
+            break;
+
+        endswitch;
+        
+        $msg_label = "Created";
+        if(!$cat_id):
+            //--create new category
+            $save = $this->Mdl_cat->saveCat($cat_data);
+        else:
+            //--update category
+            $save = $this->Mdl_cat->saveCat($cat_data,array("cat_id" => $cat_id));
+            $msg_label = "Updated!";
+        endif;
+       $this->o_put["msg"] = "Success ! your category has been {$msg_label}";
+
+       $this->output->set_output(json_encode($this->o_put));
+    }
+
+    function delCat($id){
+        
+        //$u_type = $this->input->post("user_type");
+
+        
+        $del = $this->Mdl_cat->delCat(array("cat_id" => $id));
+        $msg = "Error | cannot delete item.";
+        if($del):
+            $msg = "Success | item has been deleted!";
+        endif;
+        $this->o_put["msg"] = $msg;
+        $this->output->set_output(json_encode($this->o_put));
+        
+    }
+
+}
+//---end of file

@@ -1,0 +1,86 @@
+<form id="fTour" class="form-horizontal" action="<?php echo site_url("tour/modSaveTour");?>">
+  <div class="form-group">
+      <label for="meta_url">Meta URL</label>
+      <input type="text" class="form-control meta_url" name="meta_url" id="meta_url">
+  </div>
+  <div class="form-group">
+      <label for="meta_keyword">Keyword</label>
+      <input type="text" class="form-control meta_keyword" name="meta_keyword" id="meta_keyword"required>
+  </div>
+
+  <div class="form-group">
+    <label for="meta_description">Description Key</label>
+    <input type="text" class="form-control meta_description" name="meta_description" id="meta_description">
+  </div>
+  <h2>&nbsp;</h2>
+  <div class="form-group">
+      <label for="tour_title">
+        Tour Title
+      </label>
+      <input type="text" name="tour_title" id="tour_title" class="form-control tour_title" required/>
+
+      <input type="hidden" class="kw_id" name="kw_id" />
+      <input type="hidden" class="tour_id" name="tour_id"/>
+    </div>
+
+    <!--duration location price-->
+    <div class="form-group">
+        <div class="row">
+            <div class="col-md-4">
+                <label for="tour_duration">
+                    Tour Duration
+                </label>
+                <input type="text" name="tour_duration" id="tour_duration" class="form-control tour_duration col-sm-8" required>
+            </div>
+
+            <div class="col-md-4">
+                <label for="tour_location">
+                    Tour Location
+                </label>
+                <input type="text" name="tour_location" id="tour_location" class="form-control tour_location col-sm-8">
+            </div>
+
+            <div class="col-md-4">
+                <label for="tour_fullprice">
+                  Tour Price
+                </label>
+                <input type="number" name="tour_fullprice" id="tour_fullprice" class="form-control tour_fullprice col-sm-4">
+            </div>
+
+        </div>
+
+    </div>
+
+    <!--summary-->
+    <div class="form-group">
+      <div class="float-right">
+        <input type="checkbox" name="sum_tmp" class="sum_tmp" /> Need the template?
+      </div>
+      <label for="tour_summary">Tour summary
+      </label>
+      <textarea class="form-control tour_summary" name="tour_summary" id="tour_summary"  rows=10></textarea>
+      <p>&nbsp;</p>
+      <div class="sumResult">
+
+      </div>
+    </div>
+
+    <!--detail-->
+    <div class="form-group">
+      <label for="tour_detail">Tour Detail
+      </label>
+      <textarea class="form-control tour_detail tinymce" name="tour_detail" id="tour_detail"  rows=25></textarea>
+    </div>
+    <p>&nbsp;</p>
+    <div class="res_sum"></div>
+    <div class="res_body"></div>
+    <p>&nbsp;</p>
+    <div class="form-check-inline">
+      <label class="form-check-label">
+        <input type="checkbox" class="form-check-input mark_draft" name="mark_draft" id="mark_draft">
+                    Save As Draft | Please uncheck this to public your program
+      </label>
+    </div>
+
+
+</form>

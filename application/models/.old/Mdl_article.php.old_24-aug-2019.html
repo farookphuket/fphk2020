@@ -1,0 +1,567 @@
+<?php
+
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+class Mdl_article extends MY_Model{
+
+    //--- table
+    protected $_tb_ar = "tbl_article";
+    protected $_tb_seo = "seo";
+    protected $_tb_user = "users";
+
+    public $ip;
+    public $os;
+    public $browser;
+
+    //---visiter info
+    public $user_name;
+    public $user_id;
+    public $user_ip;
+
+
+
+    //---protected
+    protected $is_login;
+    protected $is_admin;
+    protected $moderate;
+
+
+    function __construct() {
+        parent::__construct();
+
+        $this->load->library("pagination");
+
+        $this->user_name = $this->getUserName();
+        $this->user_id = $this->getUserId();
+        //$this->is_admin = $this->user_is_admin();
+        $this->is_login = $this->user_is_login();
+        //$this->moderate = $this->user_is_mod();
+
+        $this->ip = $this->getIP();
+        $this->os = $this->getOS();
+        $this->browser = $this->getBrowser();
+    }
+
+
+    /*
+      test to use the GLOBAL method
+      Start on 5 Aug 2019
+      //--- the post will be contain with who own ,when create and the seo tag
+    */
+    function GET_ARTICLE($where=false,$limit=false,$offset=false){
+      $get = "";
+      $j1 = "{$this->_tb_user}.id={$this->_tb_ar}.ar_user_id";
+      $j2 = "{$this->_tb_seo}.kw_id = {$this->_tb_ar}.kw_id";
+      if($where):
+        $get = $this->db
+                    ->join($this->_tb_user,$j1)
+                    ->join($this->_tb_seo,$j2)
+                    ->where($where)
+                    ->order_by("{$this->_tb_ar}.date_add","DESC")
+                    ->get($this->_tb_ar,$limit,$offset);
+      else:
+        $get = $this->db
+                    ->join($this->_tb_user,$j1)
+                    ->join($this->_tb_seo,$j2)
+
+                    ->order_by("{$this->_tb_ar}.date_add","DESC")
+                    ->get($this->_tb_ar,$limit,$offset);
+      endif;
+      return $get;
+    }
+
+
+    function GET_PUBPOST(){
+      $where = array(
+        "{$this->_tb_ar}.ar_is_approve != " => 0,
+        "{$this->_tb_ar}.ar_show_public != " => 0
+      );
+      $get = $this->GET_ARTICLE($where)->result();
+      return $get;
+    }
+    //-----------------------
+    //------- SAVE_ARTICLE
+    function SAVE_ARTICLE($data,$where=false){
+      $save = "";
+      $ar_id = 0;
+      if($where):
+        $save = $this->db
+                      ->where($where)
+                      ->set($data)
+                      ->update($this->_tb_ar);
+        $ar_id = $where["{$this->_tb_ar}.ar_id"];
+        else:
+        $save = $this->db
+                        ->set($data)
+                        ->insert($this->_tb_ar);
+        $ar_id = $this->db->insert_id();
+      endif;
+      return $ar_id;
+    }
+    //--------------------------
+    //------- DEL_ARTICLE
+    function DEL_ARTICLE($id){
+      $kw_id = 0;
+      $get = $this->GET_ARTICLE(array("{$this->_tb_ar}.ar_id" => $id))->result();
+      foreach($get as $row):
+        $kw_id = $row->kw_id;
+        $this->Mdl_seo->delTag(array("kw_id" => $kw_id));
+
+      endforeach;
+      $this->db
+            ->where(array("{$this->_tb_ar}.ar_id" => $id))
+            ->delete($this->_tb_ar);
+    }
+    //--------------------------
+    //------- GET_PUBPOST ------
+    function GET_EL($el){
+      //--just don't have to type in this->input
+      return $this->input->post($el);
+    }
+    /*
+      End of GLOBAL method
+    */
+    //---------------------------
+    //------Last edit 6 Aug 2019 -----
+    //---------------------------
+    /*  USER login as MEMBER */
+    function uEditPost($id){
+      $where = array(
+        "{$this->_tb_ar}.ar_id" => $id,
+        "{$this->_tb_user}.id" => $this->user_id
+      );
+      $get = $this->GET_ARTICLE($where)->result();
+
+      $data = array("get" => $get);
+      return $data;
+    }
+    //----------------------------
+    //------  uFirstSave
+    function uFirstSave(){
+      $ar_id = 0;
+      $title = $this->GET_EL("ar_title");
+
+      //---add article
+      $ar1 = array(
+        "ar_title" => $title,
+        "date_add" => $this->today_andTime,
+        "ar_post_by" => $this->user_name,
+        "ar_user_id" => $this->user_id
+      );
+      $ar_id = $this->SAVE_ARTICLE($ar1);
+
+      //--read url
+      $read_url = site_url("article/read/{$ar_id}");
+      //---add seo tag
+      $se1 = array(
+        "kw_canonical" => $read_url,
+        "kw_page_keyword" => "Default keyword for {$title}",
+        "kw_page_des" => "Default page description for {$title}"
+      );
+      $kw_id = $this->Mdl_seo->saveTag($se1);
+
+      //---update the post put the seo key
+      $up_ar = array(
+        "kw_id" => $kw_id
+      );
+      $this->SAVE_ARTICLE($up_ar,array("{$this->_tb_ar}.ar_id" => $ar_id));
+
+
+      //---return data
+      $data = array(
+        "ar_id" => $ar_id,
+        "kw_id" => $kw_id
+        );
+      return $data;
+    }
+    //-----------------------------
+    //------  uSavePost
+    function uSavePost(){
+      //--- input form
+      $save = 0;
+      $ar_id = $this->GET_EL("ar_id");
+      $kw_id = $this->GET_EL("key_id");
+      $read_url = site_url("article/read/{$ar_id}");
+
+      $title = $this->GET_EL("ar_title");
+      $sum = $this->GET_EL("ar_sum");
+      $body = $this->GET_EL("ar_body");
+      $pub = ($pub = $this->GET_EL("pub"))?$pub=1:$pub=0;
+      //-------------
+      //----seo table
+      $keyword = $this->GET_EL("keyword");
+      $keydes = $this->GET_EL("key_des");
+      $seo_data = array(
+        "kw_page_keyword" => $keyword,
+        "kw_page_des" => $keydes,
+        "kw_canonical" => $read_url,
+        "og_description" => $keydes,
+        "og_title" => $keyword,
+        "og_url" => $read_url,
+        "og_site_name" => site_url(),
+        "article_publisher" => $this->user_name
+      );
+      $this->Mdl_seo->saveTag($seo_data,array("kw_id" => $kw_id));
+      //----------
+      //---- update table article
+      $ar_data = array(
+        "ar_title" => $title,
+        "ar_body" => $body,
+        "ar_summary" => $sum,
+        "ar_post_ip" => $this->ip,
+        "ar_show_public" => $pub,
+        "date_edit" => $this->today_andTime
+      );
+      $save = $this->SAVE_ARTICLE($ar_data,array("{$this->_tb_ar}.ar_id" => $ar_id));
+      //------------
+      $data = array(
+        "ar_id" => $save,
+        "kw_id" => $kw_id
+      );
+      return $data;
+    }
+
+    //------
+    //------  uDelPost
+    function uDelPost($del_id){
+        $this->DEL_ARTICLE($del_id);
+        $where = array(
+          "{$this->_tb_ar}.ar_user_id" => $this->user_id
+        );
+        $get = $this->GET_ARTICLE($where)->result();
+        $num = count($get);
+        $data = array(
+          "last_num" => $num
+        );
+        return $data;
+    }
+
+    //-------------------------
+    /* End Of Member Section */
+    //--------------------
+    function getArticle($where=false,$limit=false,$offset=false){
+
+        if($where):
+            $get = $this->db
+                    ->where($where)
+                    ->limit($limit,$offset)
+                    ->order_by("date_add","DESC")
+                    ->get($this->_tb_ar);
+
+        else:
+           $get = $this->db
+                    ->order_by("date_add","DESC")
+                    ->get($this->_tb_ar,$limit,$offset);
+        endif;
+        return $get;
+    }
+    //------
+    //-----read_article
+    function read_article($ar_id){
+      //---$j1 join $tb_seo to $tb_ar
+      $j1 = "{$this->_tb_seo}.kw_id = {$this->_tb_ar}.kw_id";
+
+      //---$j2 join tb_ar to $tb_user
+      $j2 = "{$this->_tb_user}.id={$this->_tb_ar}.ar_user_id";
+
+      $where = array(
+        "{$this->_tb_ar}.ar_id" => $ar_id
+      );
+      $get = $this->db
+                  ->join($this->_tb_seo,$j1)
+                  ->join($this->_tb_user,$j2)
+                  ->where($where)
+                  ->get($this->_tb_ar);
+      return $get;
+
+    }
+    //---seoGetAr
+    function seoGetAr($where=false,$limit=false,$offset=false){
+
+        $j1 = "{$this->_tb_ar}.kw_id={$this->_tb_seo}.kw_id";
+        $j2 = "{$this->_tb_ar}.ar_user_id={$this->_tb_user}.id";
+        if(!$where):
+            $get = $this->db
+                        ->join($this->_tb_seo,$j1)
+                        ->join($this->_tb_user,$j2)
+                        ->order_by("{$this->_tb_ar}.date_add","DESC")
+                        ->get($this->_tb_ar,$limit,$offset);
+        else:
+            $get = $this->db
+                        ->where($where)
+                        ->join($this->_tb_seo,$j1)
+                        ->join($this->_tb_user,$j2)
+                        ->order_by("{$this->_tb_ar}.date_add","DESC")
+                        ->get($this->_tb_ar,$limit,$offset);
+        endif;
+        return $get;
+    }
+    //---------------
+    function saveArticle($data,$where=false){
+
+        //$cat_id = $data["cat_id"];
+        $ar_id = "";
+        if($where):
+            $ar_id = $where["ar_id"];
+            $save = $this->saveTB($this->_tb_ar,$data,$where);
+        else:
+            $save = $this->saveTB($this->_tb_ar,$data);
+            $ar_id = $save;
+        endif;
+       // $this->num_cat_content(array("cat_id" => $cat_id));
+        return $ar_id;
+
+    }
+    //--------
+    //--- new Delete function creta eon 31-july-2019
+    //-- will check where it id come from or belong to
+    function delPost($where){
+      //--get who belong to
+      $get = $this->seoGetAr($where)->result();
+      $ar_id = 0;
+      $cat_id = 0;
+      $kw_id = 0;
+      $user_id = 0;
+      foreach($get as $row):
+        $ar_id = $row->ar_id;
+        $kw_id = $row->kw_id;
+        $user_id = $row->id;
+        $this->Mdl_seo->delTag(array("kw_id" => $kw_id));
+        $this->db
+              ->where($where)
+              ->delete($this->_tb_ar);
+      endforeach;
+      $get = $this->seoGetAr()->result();
+      $num = count($get);
+      $data = array(
+        "last_num" => $num,
+        "last_get" => $get
+      );
+      return $data;
+    }
+
+
+    //----------
+    function delArticle($where){
+        $ar_id = $where["ar_id"];
+        $cat_id = "";
+        $where_ar = array("ar_id" => $ar_id);
+        $get_ar = $this->getTB($this->_tb_ar,$where_ar)->result();
+        foreach($get_ar as $row):
+            $cat_id = $row->cat_id;
+        endforeach;
+        $this->delTB($this->_tb_ar,$where_ar);
+        $this->num_cat_content(array("cat_id" => $cat_id));
+    }
+    //---
+    function num_ar_view($where){
+        //this method will update the count
+        //--working good on fri 11 may 2018
+        //only if the user is uniq session or null session
+        $ar_id = $where["ar_id"];
+        $cur_ip = $this->ip;
+        $cur_day = date("Y-m-d",time());
+
+        $last_ip = "";
+        $last_view_day = "";
+        $last_count = 0;
+
+
+        $data = array();
+
+        $where = array("ar_id" => $ar_id);
+        $get_ar = $this->db
+                        ->where($where)
+                        ->get($this->_tb_ar)->result();
+        foreach($get_ar as $row):
+            $last_ip = $row->last_view_ip;
+            $last_view_day = $row->last_view_date;
+            $last_count = $row->ar_read_count;
+
+        endforeach;
+
+        $update = 0;
+        if($last_ip != $cur_ip || $last_view_day != $cur_day):
+            $update = 1;
+            //--set update and history will add here
+            $last_count = $last_count+1;
+
+
+            //-----Fri 11 May 2018
+            //--set new count for this article item
+            $a_data = array(
+                "last_view_ip" => $cur_ip,
+                "last_view_date" => $cur_day,
+                "ar_read_count" => $last_count
+            );
+            $this->saveTB($this->_tb_ar,$a_data,array("ar_id" => $ar_id));
+            //--end set count
+
+
+        endif;
+
+
+        $data["update"] = $update;
+        return $data;
+
+
+
+    }
+    //----------------------------------------
+
+
+
+
+
+    //-------------------------------
+    //-----------send admin notice
+    function sendAdminNotice($no_title,$no_body){
+        $u_id = $this->user_id;
+        $u_name = $this->user_name;
+        $label = "";
+        $today = date("Y-m-d h:i:s a.",time());
+        $note_title = $no_title;
+        $note_body = "<div class='row'>
+        <div class='col-sm-6'>
+        <p>
+            {$no_body}
+        </p>
+        <br style='clear:both' />
+        <p>&nbsp;</p>
+        <p>IP : {$this->ip}&nbsp;  {$this->browser}&nbsp;  OS : {$this->os}&nbsp; </p>
+        <p>Date : {$today}</p>
+        </div>
+        </div>";
+
+        $note_array = array(
+            "notice_title" => $note_title,
+            "notice_body" => $note_body,
+            "notice_ip" => $this->ip,
+            "by_user_name" => $this->user_name,
+            "notice_date" => $today,
+        );
+        //var_dump($note_array);
+        $this->saveTB($this->_tb_notice,$note_array);
+
+    }
+
+    //----- moderate section
+    /* moderate section create on 30-july-2019 */
+
+    //-----modFirstSave
+    function modFirstSave(){
+
+      $read_url = "";
+      $title = $this->_modGetField("ar_title");
+      //--seo
+      $seo_data = array(
+        "kw_page_keyword" => "Edit this {$title}"
+      );
+      $kw_id = $this->Mdl_seo->saveTag($seo_data);
+
+      $ar_data = array(
+        "ar_title" => $title,
+        "kw_id" => $kw_id,
+        "ar_user_id" => $this->user_id,
+        "date_add" => $this->today_andTime
+      );
+      $ar_id = $this->saveArticle($ar_data);
+      $read_url = site_url("article/read/{$ar_id}");
+      if($ar_id != 0):
+        $seo_update = array(
+          "kw_page_des" => "seo description for {$title}",
+          "og_url" => $read_url
+        );
+        $this->Mdl_seo->saveTag($seo_update,array("kw_id" => $kw_id));
+      endif;
+
+
+
+
+      $data = array(
+        "ar_id" => $ar_id,
+        "kw_id" => $kw_id
+      );
+      return $data;
+    }
+    //------------
+    function modSavePost(){
+      $title = $this->_modGetField("ar_title");
+      $body = $this->_modGetField("ar_body");
+      $keyword = $this->_modGetField("keyword");
+      $keydes = $this->_modGetField("keydes");
+      $sum = $this->_modGetField("ar_sum");
+      $ar_id = $this->_modGetField("ar_id");
+      $ar_user_id = $this->_modGetField("ar_user_id");
+      $kw_id = $this->_modGetField("kw_id");
+
+      $chIndex = $this->_modGetField("chIndex");
+      $chApprove = $this->_modGetField("chApprove");
+      $chPublic = $this->_modGetField("chPublic");
+
+      if($chPublic):
+        $chPublic = 2;
+      endif;
+      if($chIndex):
+        $chIndex = 2;
+      endif;
+
+      if($chApprove):
+        $chApprove = 2;
+      endif;
+
+      $read_url = site_url("article/read/{$ar_id}");
+      $seo_data = array(
+        "kw_page_keyword" => $keyword,
+        "kw_page_des" => $keydes,
+        "kw_canonical" => $read_url
+      );
+      $this->Mdl_seo->saveTag($seo_data,array("kw_id" => $kw_id));
+
+      $ar_data = array(
+        "ar_show_public" => $chPublic,
+        "ar_is_approve" => $chApprove,
+        "ar_show_index" => $chIndex,
+        "ar_title" => $title,
+        "ar_summary" => $sum,
+        "ar_body" => $body,
+        "ar_user_id" => $this->user_id,
+        "ar_post_by" => $this->user_name,
+        "ar_post_ip" => $this->ip,
+        "date_edit" => $this->today_andTime
+      );
+
+      //---unset post name if the user id not match
+      if($this->user_id != $ar_user_id):
+        unset($ar_data["ar_user_id"]);
+        unset($ar_data["ar_post_by"]);
+        unset($ar_data["ar_user_ip"]);
+
+      endif;
+
+      $this->saveArticle($ar_data,array("ar_id" => $ar_id));
+
+      $data = array(
+        "ar_id" => $ar_id,
+        "kw_id" => $kw_id
+      );
+      return $data;
+
+    }
+    //----------
+    //----- modDelPost 31-july-2019
+    function modDelPost($where){
+      $del = $this->delPost($where);
+      return $del;
+    }
+    //---_modGetField
+    function _modGetField($f){
+      return $this->input->post($f);
+    }
+
+    //--- end of moderate section
+
+}//end of Mdl_article

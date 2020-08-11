@@ -1,0 +1,34 @@
+<?php 
+
+foreach($get as $row):
+    ?>
+<div class="jumbotron">
+    <h1>
+        <?php echo $row->t_name;?>
+    </h1>
+    
+</div>
+<div class="container">
+    <p>
+        <?php echo $row->t_summary;?>
+    </p>
+    <br style="clear:both" />
+    <p>
+    <?php echo $row->t_program;?>
+    </p>
+    
+    <!--comment module call by ajax-->
+    <?php 
+        $this->load->view("payment_method/pay_index.php");
+        $this->load->view("comment/comment_index.php");
+    ?>
+    <!--end of comment module-->
+
+</div>
+
+    <?php
+endforeach;
+
+
+
+

@@ -1,0 +1,1289 @@
+<?php
+
+class Article extends MY_Controller{
+
+
+
+    protected $user_id;
+    protected $user_ip;
+    protected $user_name;
+    protected $is_login;
+    protected $moderate;//---moderate
+    protected $is_admin;
+
+    //---table
+    protected $_tb_ar = "tbl_article";
+    protected $_tb_cat = "tbl_cat";
+    protected $_tb_seo = "seo";
+    protected $tb_his;
+    protected $_tb_user = "users";
+
+    protected $_post_ip;
+
+    //----owner ID
+    protected $_owner_ip;
+    protected $_owner_name;
+    protected $_owner_email;
+    protected $_owner_id;
+
+    //---public
+    public $sysName = "";
+    public $sysVersion = "";
+    public $sysDate = "";
+
+    function __construct(){
+        parent::__construct();
+
+        $this->load->model("Mdl_users");
+        $this->load->model("Mdl_article");
+        $this->load->model("Mdl_seo");
+        $this->load->model("Mdl_mod");
+
+        //---cookie 7-7-2019
+        $this->load->helper("cookie");
+
+        $this->load->library("pagination");
+
+        $this->user_id = $this->Mdl_article->getUserId();
+
+        //---add this line 23-july-2019
+        $this->data["user_id"] = $this->user_id;
+
+        $this->user_name = $this->getUserName();
+        $this->is_login = $this->user_is_login();
+        $this->is_admin = $this->user_is_admin();
+        $this->moderate = $this->moderate;
+        $this->_post_ip = $this->Mdl_article->ip;
+
+        // show this app info
+        $this->sysName = "Article";
+        $this->sysVersion = "1.20";
+        $this->sysDate = "26-Jan-2019";
+        $this->data["sysName"] = $this->sysName;
+        $this->data["sysVersion"] = $this->sysVersion;
+        $this->data["sysDate"] = $this->sysDate;
+
+    }
+
+    function index($seg=1){
+
+        //--redirect to specific url if user has login
+        $url = site_url("article/index");
+        $rd_url = 0;
+        if($this->is_login):
+            $rd_url = 1;
+            $url = site_url("article/u");
+            if($this->is_admin):
+                $url = site_url("article/admin");
+                $rd_url = 1;
+            endif;
+            if($this->moderate):
+                $url = site_url("article/mod");
+                $rd_url = 1;
+            endif;
+
+        endif;
+
+        if($rd_url == 1):
+            redirect($url);
+        endif;
+
+        //---get the list of article and pagination them
+
+        $where = array(
+            "{$this->_tb_ar}.ar_show_public !=" => 0,
+            "{$this->_tb_ar}.ar_is_approve !=" => 0
+
+        );
+        $get = $this->Mdl_article->seoGetAr($where)->result();
+        //---default for seo head first page list page
+        $cur_url = current_url();
+        $this->data["og_url"] = "{$cur_url}";
+        $this->data["page_keyword"] = "{$this->sysName} version {$this->sysVersion}";
+        $this->data["page_description"] = "{$this->sysName} version {$this->sysVersion} | {$this->user_type}";
+        $this->data["meta_title"] = "{$this->sysName} version {$this->sysVersion} | welcome  {$this->user_name} {$this->user_type} ";
+
+
+        $num = count($get);
+        //---pagination
+        $per_page = 4;
+        $url = "article/index";
+        $conf = $this->getConfPagin($per_page,$num,$url);
+        $this->pagination->initialize($conf);
+        $page = $seg;
+        $start = ($page-1)*$conf["per_page"];
+        $get_post = $this->Mdl_article->seoGetAr($where,$conf["per_page"],$start)->result();
+
+        $this->data["per_page"] = $per_page;
+        $this->data["num_ar"] = $num;
+        $this->data["get_ar"] = $get_post;
+        $this->data["pagination"] = 0;
+        if($num >= $per_page):
+            $this->data["pagination"] = $this->pagination->create_links();
+        endif;
+
+
+        $this->data["subview"] = "article/ar_index";
+        $tmp = "_layout_main";
+        $this->load->view($tmp,$this->data);
+
+    }
+
+
+
+
+
+    //--------start not login user
+
+    function read($id){
+        //---read article as public
+        //--seo key
+        $publish = "";
+        $keyword = "";
+        $keydes = "";
+        $og_url = site_url("article/read/{$id}");
+        $owner_email = "";
+        $meta_title = "";
+
+        //---count the number of view
+        $ar_id = $id;
+        $this->Mdl_article->num_ar_view(array("ar_id" => $ar_id));
+
+        $get = $this->Mdl_article->read_article($id)->result();
+        //var_dump($get);
+        //---fetch this info data
+        foreach($get as $row):
+          $this->_owner_name = $row->name;
+          $this->_owner_id = $row->id;
+          $this->_owner_email = $row->email;
+          $owner_email = $row->email;
+
+          //$this->data["owner_name"] = $row->name;
+
+          $publish = $row->name;
+          $keyword = $row->kw_page_keyword;
+          $keydes = $row->kw_page_des;
+          $meta_title = $row->ar_title;
+
+
+        endforeach;
+
+        //---seo key
+        $this->data["publisher"] = $publish;
+        $this->data["page_description"] = $keydes;
+        $this->data["page_keyword"] = $keyword;
+        $this->data["og_url"] = $og_url;
+        $this->data["meta_title"] = $meta_title;
+        $this->data["owner_email"] = $owner_email;
+        $this->data["owner_name"] = $publish;
+        //---data on screen
+        $where = array(
+          "{$this->_tb_ar}.ar_id" => $id
+        );
+        $get_ar = $this->Mdl_article->seoGetAr($where)->result();
+        $this->data["get_ar"] = $get_ar;
+      //  $this->data["owner_name"] = $this->_owner_name;
+      //  $this->data["owner_email"] = $this->_owner_email;
+
+        $this->data["subview"] = "article/read_article";
+        $tmp = "_DETAIL_TMP";
+        $this->load->view($tmp,$this->data);
+
+    }
+    //----End of read_article
+
+
+
+    //---End not login user
+
+    /* User login as a member */
+    function u(){
+        if(!$this->is_login):
+          redirect(site_url("users/logout"));
+          exit();
+        endif;
+        $this->data["subview"] = "article/user_ar";
+        $this->data["meta_title"] = "{$this->sysName} version {$this->sysVersion} | {$this->user_name} |{$this->user_type}";
+        $tmp = "_MEMBER_TMP";
+        $this->load->view($tmp,$this->data);
+    }
+    /////---------------------------
+    //---- list the public post
+    function uListPubPost($page=1){
+      //--list the public post but not this user id
+      $where = array(
+        "{$this->_tb_ar}.ar_is_approve !=" => 0,
+        "{$this->_tb_ar}.ar_show_public !=" => 0,
+        "{$this->_tb_ar}.ar_user_id !=" => $this->user_id
+      );
+      $get = $this->Mdl_article->GET_ARTICLE($where)->result();
+
+      //---pagination
+      $num = count($get);
+      $url = "uListPubPost";
+      $per_page = 15;
+      $conf = $this->getConfPagin($per_page,$num,$url);
+      $this->pagination->initialize($conf);
+      $start = ($page-1)*$per_page;
+      $get_pub = $this->Mdl_article->GET_ARTICLE($where,$per_page,$start)->result();
+      if($num > $per_page):
+        $this->o_put["pagination"] = $this->pagination->create_links();
+      endif;
+      $this->o_put["get_pub"] = $get_pub;
+      $this->o_put["get_all"] = $get;
+      $this->output->set_output(json_encode($this->o_put));
+    }
+    //----------
+    //---- uListPost
+    function uList($page=1){
+      $where = array(
+        "{$this->_tb_ar}.ar_user_id" => $this->user_id
+      );
+      $get = $this->Mdl_article->GET_ARTICLE($where)->result();
+      $num = count($get);
+       //---pagination
+       $url = "uList";
+       $per_page = 15;
+       $conf = $this->getConfPagin($per_page,$num,$url);
+       $this->pagination->initialize($conf);
+       $start = ($page-1)*$per_page;
+       $get_my = $this->Mdl_article->GET_ARTICLE($where,$per_page,$start)->result();
+
+       if($num > $per_page):
+         $this->o_put["pagination"] = $this->pagination->create_links();
+       endif;
+       $this->o_put["get_my"] = $get_my;
+       $this->o_put["get_all"] = $get;
+       $this->output->set_output(json_encode($this->o_put));
+
+    }
+    //------------------------
+    //------- uEdit 6-aug-2019
+    function uEditPost($post_id){
+      $edit = $this->Mdl_article->uEditPost($post_id);
+
+      $this->o_put["get"] = $edit["get"];
+      $this->output->set_output(json_encode($this->o_put));
+    }
+    //----------------------------
+    //------ uFirstSave
+    function uFirstSave(){
+      $save = $this->Mdl_article->uFirstSave();
+      $kw_id = $save["kw_id"];
+      $ar_id = $save["ar_id"];
+
+      $this->o_put["kw_id"] = $kw_id;
+      $this->o_put["ar_id"] = $ar_id;
+      $this->output->set_output(json_encode($this->o_put));
+    }
+
+    //----------------------------
+    //------ uSavePost 6 Aug 2019
+    function uSavePost(){
+      $save = $this->Mdl_article->uSavePost();
+
+
+      //$this->o_put["pub"] = $save["pub"];
+      $this->o_put["ar_id"] = $save["ar_id"];
+      $this->o_put["kw_id"] = $save["kw_id"];
+      $this->output->set_output(json_encode($this->o_put));
+    }
+    //---------------------
+    //-------- uDelPost
+    function uDelPost($del_id){
+      $del = $this->Mdl_article->uDelPost($del_id);
+      $last_num = $del["last_num"];
+      $this->o_put["last_num"] = $last_num;
+      $this->output->set_output(json_encode($this->o_put));
+    }
+
+    /* End of user member section */
+    //---- Comment out as no longer use
+    //-----owner_info
+    /*
+    function _getOwnerEmail($u_id){
+      //---will get the owner email for sent the notify when another user has post the comment on his post
+      $own_email = "";
+      $where = array(
+        "id" => $u_id
+      );
+      $get = $this->Mdl_users->getUsers($where)->result();
+
+      foreach ($get as $row):
+        $own_email = $row->email;
+      endforeach;
+      return $own_email;
+    }
+    */
+    ///--------------------------------------
+    //---------------------------------
+
+    /*
+    //----Move the operation to let model work
+    //---change to method u on Mar 26 2019
+    //---uCreate
+    function uCreatePost(){
+        $this->data["subview"] = "article/user_createPost";
+        $this->data["meta_title"] = "create new post";
+        $tmp = "_article_default";
+        $this->load->view($tmp,$this->data);
+    }
+
+    //---uFirstSave
+    function uFirstSave(){
+        //--will get the  seo tag
+        $site_name = site_url();
+        $seo_data = array(
+            "kw_page_keyword" => "you can edit Default keyword for this post ",
+            "kw_page_des" => "you can edit Default post description for the seo ",
+            "og_site_name" => $site_name,
+            "article_publisher" => $this->user_name
+
+        );
+
+        $kw_id = $this->Mdl_seo->saveTag($seo_data);
+
+
+        $title = $this->input->post("ar_title");
+        $ar_data = array();
+        $ar_data["ar_user_id"] = $this->user_id;
+        $ar_data["ar_post_by"] = $this->user_name;
+        $ar_data["ar_post_ip"] = $this->Mdl_article->ip;
+        $ar_data["ar_title"] = $title;
+        $ar_data["date_add"] = $this->today_andTime;
+        $ar_data["kw_id"] = $kw_id;
+
+
+
+        $a_key = $this->Mdl_article->saveArticle($ar_data);
+        //--after save data will return key
+        $read_url = site_url("article/read/$a_key");
+
+        $get_ar = $this->Mdl_article->getArticle(array("ar_id" => $a_key))->result();
+        $s_keyword = "";
+        $s_des = "Please edit the key description for the seo search engine!";
+        foreach($get_ar as $row):
+            $s_keyword = $row->ar_title;
+        endforeach;
+
+        //---update seo data
+        $up_seo = array(
+            "kw_page_keyword" => $s_keyword,
+            "kw_page_des" => $s_des,
+            "og_url" => $read_url,
+            "og_title" => $s_keyword,
+            "kw_canonical" => $read_url
+        );
+        $this->Mdl_seo->saveTag($up_seo,array("kw_id" => $kw_id));
+
+
+        $ar = $this->Mdl_article->seoGetAr(array(
+            "{$this->_tb_ar}.ar_id" => $a_key
+        ))->result();
+
+
+        $this->o_put["ar_id"] = $a_key;
+        $this->o_put["kw_id"] = $kw_id;
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+    //------------------
+
+    //----uGetMyPost
+    function uGetMyPost($seg=1){
+        $where = array("{$this->_tb_ar}.ar_user_id" => $this->user_id);
+        $get = $this->Mdl_article->seoGetAr($where)->result();
+        $num = count($get);
+
+        //---pagination
+        $url = "uGetMyPost";
+        $per_page = 4;
+        $page = $seg;
+        $conf = $this->getConfPagin($per_page,$num,$url);
+        $this->pagination->initialize($conf);
+        $start = ($page-1)*$per_page;
+
+        if($seg == 0):
+          $get_post = $this->Mdl_article->seoGetAr($where)->result();
+        else:
+          $get_post = $this->Mdl_article->seoGetAr($where,$per_page,$start)->result();
+        endif;
+
+        if($num >= $per_page):
+          $this->o_put["pagination"] = $this->pagination->create_links();
+        endif;
+
+        $this->o_put["get_ar"] = $get_post;
+        $this->o_put["num_ar"] = $num;
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+    //--------------
+    //----uViewPost
+    function uViewPost($id){
+      if(!$this->is_login):
+        //---redirect
+        redirect(site_url("users/logout"));
+        exit();
+
+      endif;
+      $title_url = current_url();
+      $where = array(
+        "{$this->_tb_ar}.ar_user_id" => $this->user_id,
+        "{$this->_tb_ar}.ar_id" => $id
+      );
+      $get = $this->Mdl_article->seoGetAr($where)->result();
+
+      foreach($get as $row):
+          $ar_title = $row->ar_title;
+          $ar_id = $row->ar_id;
+          $approve = $row->ar_is_approve;
+          $this->data["meta_title"] = "{$title_url}/{$ar_title}";
+          $this->data["og_url"]  = current_url();
+          $this->data["og_title"] = "{$title_url}/{$ar_title}";
+          $this->data["page_description"] = $row->kw_page_des;
+          $this->data["page_keyword"] = $row->kw_page_keyword;
+      endforeach;
+
+      $this->data["get_ar"] = $get;
+      $this->data["subview"] = "article/uViewPost";
+      $tmp = "_DETAIL_TMP";
+      $this->load->view($tmp,$this->data);
+    }
+    //----uEditAr
+    function uEditAr($id){
+        $get = $this->Mdl_article->seoGetAr(array("{$this->_tb_ar}.ar_id" => $id))->result();
+        $this->o_put["get_ar"] = $get;
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+    //-------uGetFormData
+    function uGetFormData(){
+        $title = $this->input->post("ar_title");
+        $sum = $this->input->post("ar_sum");
+        $body = $this->input->post("ar_body");
+        $data = array(
+            "ar_title" => $title,
+            "ar_summary" => $sum,
+            "ar_body" => $body,
+            "ar_post_by" => $this->user_name,
+            "ar_post_ip" => $this->Mdl_article->ip,
+            "ar_user_id" => $this->user_id
+        );
+        return $data;
+    }
+
+    //---uGetSeoData
+    function uGetSeoData(){
+
+        $keyword = $this->input->post("keyword");
+        $key_des = $this->input->post("key_des");
+        $og_url = $this->input->post("og_url");
+
+        if(!$keyword):
+            $keyword = "Please edit the keyword for the seo";
+        endif;
+        if(!$key_des):
+            $key_des = "Please edit the description for the page seo";
+        endif;
+        if(!$og_url):
+            $og_url = "Waiting for the og url";
+        endif;
+        $data = array(
+            "kw_page_keyword" => $keyword,
+            "kw_page_des" => $key_des,
+            "og_url" => $og_url,
+            "og_title" => $keyword,
+            "og_description" => $key_des
+
+        );
+
+        return $data;
+    }
+
+
+    //---own save
+    function uSavePost(){
+
+        $ar_id = $this->input->post("ar_id");
+        $kw_id = $this->input->post("key_id");
+
+        $keyword = $this->input->post("keyword");
+        $key_des = $this->input->post("key_des");
+        $read_url = $this->input->post("og_url");
+
+        $seo_data = array(
+            "kw_page_keyword" => $keyword,
+            "kw_page_des" => $key_des,
+            "og_title" => $keyword,
+            "og_description" => $key_des,
+            "og_url" => $read_url
+        );
+        $this->Mdl_seo->saveTag($seo_data,array("kw_id" => $kw_id));
+
+        $pub = $this->input->post("pub")?2:0;
+        $ar_data = $this->uGetFormData();
+        $ar_data["ar_show_public"] = $pub;
+        $ar_data["date_edit"] = $this->today_andTime;
+        $this->Mdl_article->saveArticle($ar_data,array("ar_id" => $ar_id));
+        $this->o_put["ar_id"] = $ar_id;
+        $this->o_put["msg"] = "Success : data has been save";
+        $this->output->set_output(json_encode($this->o_put));
+
+    }
+    //------------
+
+    //-----uDelPost
+    function uDelPost($id){
+        $get = $this->Mdl_article->seoGetAr(array("{$this->_tb_ar}.ar_id" => $id))->result();
+        $key_id = 0;
+        foreach($get as $row):
+            $key_id = $row->kw_id;
+        endforeach;
+
+        $this->Mdl_seo->delTag(array("kw_id" => $key_id));
+
+        $this->Mdl_article->delArticle(array("ar_id" => $id));
+        $this->o_put["msg"] = "Success : item has been deleted!";
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+
+    //-------End of u method set
+    //------------------------------------
+    //---------delPost
+    function own_delPost(){
+        $ar_id = $this->input->post("ar_id");
+
+        if(!$this->user_id):
+            return false;
+        endif;
+        $where = array("ar_id" => $ar_id,"ar_user_id" => $this->user_id);
+        $this->Mdl_article->delArticle($where);
+
+        $this->o_put["msg"] = "Success | your post has been deleted";
+        $this->output->set_output(json_encode($this->o_put));
+    }
+    //----Comment on the 5 Aug 2019
+    */
+    //---------------------------
+    //----------getPublicPost
+    /*
+    function getPublicPost($seg=1){
+        //--this method can show on the index page call by ajax
+        $where = array(
+            "ar_is_approve !=" => 0,
+            "ar_show_public !=" => 0,
+            "ar_user_id !=" => $this->user_id
+        );
+        $get = $this->Mdl_article->getArticle($where)->result();
+        $num = count($get);
+
+        //---pagination
+        $url = "getPublicPost";
+        $per_page = 10;
+        $page = $seg;
+        $conf_pagin = $this->getConfPagin($per_page,$num,$url);
+        $this->pagination->initialize($conf_pagin);
+        $start = ($page-1)*$per_page;
+        $get_ar = $this->Mdl_article->getArticle($where,$per_page,$start)->result();
+        if($num >= $per_page):
+            $this->o_put["pagination"] = $this->pagination->create_links();
+        endif;
+        $this->o_put["num_ar"] = $num;
+        $this->o_put["get_ar"] = $get_ar;
+        $this->output->set_output(json_encode($this->o_put));
+    }
+    */
+    //---- Comment out on 6 Aug 2019
+    //---------------------
+    /* comment out on 6 Aug 2019
+    function uGetPostList($seg=1){
+        $where = array(
+            "ar_user_id" => $this->user_id
+        );
+        $u_id = false;
+        if($this->is_admin):
+            $u_id = $this->input->post("u_id");
+            $where = array(
+                "ar_user_id" => $u_id
+            );
+        endif;
+        $get = $this->Mdl_article->getArticle($where)->result();
+        $num = count($get);
+
+        $this->o_put["get_ar"] = $get;
+        $this->o_put["num_ar"] = $num;
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+    */
+    //------------End of member area
+
+    //-----------------------------------------------//
+    //-----Moderate section----30-july-2019----------//
+    /*
+    |-- Moderation section
+    */
+    function mod(){
+      if(!$this->moderate):
+        redirect(site_url("users/logout"));
+        exit();
+      endif;
+      $this->data["meta_title"] = "{$this->sysName} version {$this->sysVersion} | welcome {$this->user_name} | {$this->user_type}";
+      $this->data["subview"] = "Mod/article/ar_index";
+      $tmp = "_MOD_TMP";
+      $this->load->view($tmp,$this->data);
+    }
+
+    //---mod list the post
+    function modListPost($seg=1){
+      $get = $this->Mdl_article->getArticle()->result();
+      $num = count($get);
+
+      //---pagination
+      $url = "modListPost";
+      $per_page = 5;
+      $page = $seg;
+      $conf = $this->getConfPagin($per_page,$num,$url);
+      $this->pagination->initialize($conf);
+      $start = ($page-1)*$per_page;
+      $get_ar = $this->Mdl_article->getArticle(null,$per_page,$start)->result();
+      if($num >= $per_page):
+        $this->o_put["pagination"] = $this->pagination->create_links();
+      endif;
+
+      $this->o_put["get_ar"] = $get_ar;
+      $this->o_put["get_all"] = $get;
+
+      $this->output->set_output(json_encode($this->o_put));
+    }
+
+    //-- mod edit Post
+    function modEditPost($id){
+      $where = array("{$this->_tb_ar}.ar_id" => $id);
+      $get = $this->Mdl_article->seoGetAr($where)->result();
+      $this->o_put["get"] = $get;
+      $this->output->set_output(json_encode($this->o_put));
+
+    }
+    //------
+    //-----modFirstSave
+    function modFirstSave(){
+      $first = $this->Mdl_article->modFirstSave();
+      $ar_id = $first["ar_id"];
+      $kw_id = $first["kw_id"];
+      $this->o_put["ar_id"] = $ar_id;
+      $this->o_put["kw_id"] = $kw_id;
+      $this->output->set_output(json_encode($this->o_put));
+    }
+    //-------
+    //-----modSavePost
+    function modSavePost(){
+      $save = $this->Mdl_article->modSavePost();
+      $this->o_put["ar_id"] = $save["ar_id"];
+      $this->o_put["kw_id"] = $save["kw_id"];
+
+      $this->output->set_output(json_encode($this->o_put));
+
+
+    }
+    //-------------------
+    //-------modDelPost 31-july-2019
+    function modDelPost($id){
+      $del = $this->Mdl_article->modDelPost(array("{$this->_tb_ar}.ar_id" => $id));
+      $last_num = $del["last_num"];
+      $last_get = $del["last_get"];
+      $this->o_put["get"] = $last_get;
+      $this->o_put["num"] = $last_num;
+      $this->output->set_output(json_encode($this->o_put));
+    }
+    //-----------
+    //----- modGetField
+    function _modGetField($f){
+      //---reutn get the form field
+      return $this->input->post($f);
+    }
+    //-----------End of moderate section------/////
+    //----------------------------------------////
+
+
+    //-----------admin section------------------///
+
+    function admin($seg=1){
+        if(!$this->is_admin):
+            redirect(site_url());
+        endif;
+        $get = $this->Mdl_article->seoGetAr()->result();
+        $num = count($get);
+
+        //---pagination
+        $per_page = 10;
+        $url = "article/admin";
+        $conf = $this->getConfPagin($per_page,$num,$url);
+        $this->pagination->initialize($conf);
+
+        $page = $seg;
+        $start = ($page-1)*$conf["per_page"];
+        $get_ar = $this->Mdl_article->seoGetAr(null,$per_page,$start)->result();
+
+
+        $this->data["per_page"] = $per_page;
+        $this->data["get_ar"] = $get_ar;
+        $this->data["num_ar"] = $num;
+
+        $this->data["subview"] = "admin/article/list_article";
+        $this->data["meta_title"] = "list article";
+
+        $template = "_ADMIN_TMP";
+        $this->load->view($template,$this->data);
+    }
+
+
+
+    function adminListAr($seg=1){
+        $where = "";
+        $get = $this->Mdl_article->getArticle($where)->result();
+        $num = count($get);
+        $this->o_put["num_ar"] = $num;
+
+        //---pagination page
+        $url = "adminListAr";
+        $per_page = 10;
+        $conf = $this->getConfPagin($per_page,$num,$url);
+        $this->pagination->initialize($conf);
+        $page = $seg;
+        $start = ($page-1)*$per_page;
+        $get_ar = $this->Mdl_article->getArticle($where,$per_page,$start)->result();
+
+        if($num >= $per_page):
+            $this->o_put["pagination"] = $this->pagination->create_links();
+        endif;
+
+
+        $this->o_put["get_ar"] = $get_ar;
+        $this->o_put["get_all"] = $get;
+        $this->o_put["num_ar"] = $num;
+        $this->output->set_output(json_encode($this->o_put));
+    }
+    //-----------------
+    //------adminEditAr 24 jan 19
+    function adminEditAr($ar_id){
+        $where = array("{$this->_tb_ar}.ar_id" => $ar_id);
+        $get = $this->Mdl_article->seoGetAr($where)->result();
+        $this->o_put["get_ar"] = $get;
+        $this->output->set_output(json_encode($this->o_put));
+    }
+    //---------adminSaveAr 23 jan 19
+    function adminSaveAr($id=false){
+        $id = $this->input->post("ar_id");
+        $kw_id = $this->input->post("kw_id");
+       // $pub = $this->input->post("ar_pub");
+        //$sh_index = $this->input->post("show_index");
+        $approve = $this->input->post("approve")?1:$approve=0;
+        $sh_index = $this->input->post("show_index")?1:$sh_index=0;
+        $pub = $this->input->post("ar_pub")?1:$pub=0;
+
+        $read_url = $this->input->post("og_url");
+
+        //---update the post by id
+        $ar_data = $this->adminGetArFormData();
+        $ar_data["date_edit"] = $this->today_andTime;
+        $ar_data["ar_is_approve"] = $approve;
+        $ar_data["ar_show_public"] = $pub;
+        $ar_data["ar_show_index"] = $sh_index;
+
+        $get = $this->Mdl_article->getArticle(array("ar_id" => $id))->result();
+        foreach($get as $row):
+          if($row->ar_user_id != $this->user_id):
+            unset($ar_data["ar_post_by"]);
+            unset($ar_data["ar_post_ip"]);
+            unset($ar_data["ar_user_id"]);
+          endif;
+        endforeach;
+
+        //---not be change other post info owner
+
+
+        //---update seo table by this id
+        $meta_des = $this->input->post("meta_des");
+        $seo_data = array(
+            "kw_page_keyword" => $this->input->post("meta_keyword"),
+            "kw_page_des" => $meta_des,
+            "kw_canonical" => $read_url,
+            "og_url" => $read_url,
+            "og_title" => $ar_data["ar_title"],
+            "og_description" => $meta_des
+        );
+        $this->Mdl_seo->saveTag($seo_data,array("kw_id" => $kw_id));
+
+        //---update article
+        $ar_id = $this->Mdl_article->saveArticle($ar_data,array("ar_id" => $id));
+
+        //---get the affected row
+       //$get_ar = $this->Mdl_article->seoGetAr(array("{$this->_tb_ar}.ar_id" => $ar_id))->result();
+       $this->o_put["ar_id"] = $ar_id;
+       $this->o_put["msg"] = "Success : data has been save";
+       $this->output->set_output(json_encode($this->o_put));
+
+    }
+
+    //------------------
+    //-----adminFirstSave
+    function adminFirstSave(){
+        //---create 23 jan 19
+
+        //---create the seo keyword
+        $addSeo = $this->adminGetSeo();
+        $key_id = $this->Mdl_seo->saveTag($addSeo);
+
+        //---create post with the default value instead of show empty form
+        $title_txt = "Please edit title for this article";
+        $a_title = $this->input->post("ar_title");
+        $title_default = "";
+        if(!$a_title):
+            $title_default = $title_txt;
+        else:
+            $title_default = $a_title;
+        endif;
+        //$title_default = $this->input->post("ar_title")?$title_txt:"edit the title";
+
+
+        $sum_default = "Please edit the summary for this post";
+        $body_default = "Please edit the body text for this post";
+        $ar_data = array(
+            "kw_id" => $key_id,
+            "ar_user_id" => $this->user_id,
+            "ar_title" => $title_default,
+            "date_add" => $this->today_andTime,
+            "ar_summary" => $sum_default,
+            "ar_body" => $body_default,
+            "ar_post_by" => $this->user_name,
+            "ar_post_ip" => $this->_post_ip
+        );
+        $ar_id = $this->Mdl_article->saveArticle($ar_data);
+        $read_url = site_url("article/read/{$ar_id}");
+
+        //--update seo table
+        $se_data = array(
+            "og_url" => $read_url
+        );
+        $this->Mdl_seo->saveTag($se_data,array("kw_id" => $key_id));
+
+        //---get the previous data
+        $get = $this->Mdl_article->seoGetAr(array("{$this->_tb_ar}.ar_id" => $ar_id))->result();
+
+
+        $this->o_put["get_ar"] = $get;
+
+        //--show the result and pop up the form in modal
+        $this->output->set_output(json_encode($this->o_put));
+
+    }
+
+    //----
+    //-------adminGetSeo
+    function adminGetSeo(){
+
+        $m_keyword = "new meta keyword for this article";
+        $m_des = "Add new meta-description for this article";
+
+        $post_name = $this->user_name;
+        $post_id = $this->user_id;
+        $post_ip = $this->_post_ip;
+        $post_sitename = site_url();
+        $meta_data = array(
+            "kw_page_keyword" => $m_keyword,
+            "kw_page_des" => $m_des,
+            "article_publisher" => $post_name,
+            "og_site_name" => $post_sitename
+
+        );
+        return $meta_data;
+    }
+    //--------------
+    //------adminGetArFormData
+    function adminGetArFormData(){
+        //---will return the data to save to DB
+
+        $data = array(
+            "kw_id" => $this->input->post("kw_id"),
+            "ar_id" => $this->input->post("ar_id"),
+            "ar_title" => $this->input->post("ar_title"),
+            "ar_summary" => $this->input->post("ar_sum"),
+            "ar_body" => $this->input->post("ar_body"),
+            "ar_user_id" => $this->user_id,
+            "ar_post_ip" => $this->Mdl_article->ip,
+            "ar_post_by" => $this->user_name,
+        );
+
+        return $data;
+    }
+    //-----------
+
+    //---adminDelAr
+    function adminDelAr($id){
+        $getSeo = $this->Mdl_article->seoGetAr(array("{$this->_tb_ar}.ar_id" => $id))->result();
+        $key_id = 0;
+        $ar_id = 0;
+        foreach($getSeo as $row):
+            $key_id = $row->kw_id;
+            $ar_id = $row->ar_id;
+
+            $this->Mdl_seo->delTag(array("kw_id" => $key_id));
+            $this->Mdl_article->delArticle(array("ar_id" => $ar_id));
+        endforeach;
+        $this->o_put["msg"] = "Success : data has been deleted!";
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+    /*
+    //--------comment this out as no longer use
+    //---comment on 23 Jan 2019
+    function getArNotApprove($seg=1){
+
+            $where = array("ar_is_approve " => 0);
+            $get = $this->Mdl_article->getArticle($where)->result();
+            $num = count($get);
+
+            //--pagination
+            $per_page = 4;
+            $url = "getArNotApprove";
+            $conf = $this->getConfPagin($per_page,$num,$url);
+            $this->pagination->initialize($conf);
+            $page = $seg;
+            $start = ($page - 1)*$conf["per_page"];
+            $get_ar = $this->Mdl_article->getArticle($where,$conf["per_page"],$start)->result();
+
+            if($num >= $per_page):
+                $this->o_put["pagination"] = $this->pagination->create_links();
+            endif;
+
+            $this->o_put["get_ar"] = $get_ar;
+            $this->o_put["num_ar"] = $num;
+
+            $this->output->set_output(json_encode($this->o_put));
+    }
+
+    //--------getUserRecentPost
+    function getArUserPost($seg=1){
+
+        $where = array(
+            "ar_user_id !=" => $this->user_id
+        );
+        $get = $this->Mdl_article->getArticle($where)->result();
+        $num = count($get);
+
+        //-pagination
+        $url = "article/getArUserPost";
+        $per_page = 3;
+        $conf = $this->getConfPagin($per_page,$num,$url);
+        $this->pagination->initialize($conf);
+        $page = $seg;
+        $start = ($page-1)*$conf["per_page"];
+        $get_ar = $this->Mdl_article->getArticle($where,$conf["per_page"],$start)->result();
+        if($num >= $per_page):
+            $this->o_put["pagination"] = $this->pagination->create_links();
+        endif;
+
+        $this->o_put["get_ar"] = $get_ar;
+        $this->o_put["num_ar"] = $num;
+
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+    //----------Admin get own post
+    function adminGetPost($seg=1){
+        $where = array(
+            "ar_user_id " => $this->user_id
+        );
+        $get = $this->Mdl_article->getArticle($where)->result();
+        $num = count($get);
+
+        //-pagination
+        $url = "article/adminGetPost";
+        $per_page = 3;
+        $conf = $this->getConfPagin($per_page,$num,$url);
+        $this->pagination->initialize($conf);
+        $page = $seg;
+        $start = ($page-1)*$conf["per_page"];
+        $get_ar = $this->Mdl_article->getArticle($where,$conf["per_page"],$start)->result();
+        if($num >= $per_page):
+            $this->o_put["pagination"] = $this->pagination->create_links();
+        endif;
+
+        $this->o_put["get_ar"] = $get_ar;
+        $this->o_put["num_ar"] = $num;
+
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+
+    //-------admin edit ar-----------
+    function adminEditAr(){
+        $ar_id = $this->input->post("ar_id");
+
+        $where = array("ar_id" => $ar_id);
+        $get = $this->Mdl_article->getArticle($where)->result();
+
+        $this->o_put["get_ar"] = $get;
+
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+    //---admin saveAr
+    function adminSaveAr(){
+
+        $ip = $this->Mdl_article->ip;
+
+        //----Ar-data
+        $ar_id = $this->input->post("ar_id");
+        $cat_id = $this->input->post("cat_id");
+        $ar_title = $this->input->post("ar_title");
+        $ar_sum = $this->input->post("ar_summary");
+        $ar_body = $this->input->post("ar_body");
+
+        $this->Mdl_article->num_cat_content(array("cat_id" => $cat_id));
+
+        //---get post user name and id from the session
+        $ar_post_by = $this->user_name;//---by default will get the session name
+        $ar_user_id = $this->user_id;
+
+        //----check if the session name and id is match with the request
+        //----if not match will keep the original
+        $where = array("ar_id" => $ar_id);
+        $get = $this->Mdl_article->getArticle($where)->result();
+        foreach($get as $row):
+            $ar_post_by = $row->ar_post_by;
+            $ar_user_id = $row->ar_user_id;
+        endforeach;
+
+
+        //---checkbox public
+        $ar_pub = ($ar_pub = $this->input->post("ar_public"))?$ar_pub = 2:$ar_pub=0;
+
+        //---checkbox approve
+        $ar_app = ($ar_app = $this->input->post("ar_approve"))?$ar_app = 2:$ar_app=0;
+
+        //---checkbox index
+        $ar_index = ($ar_index = $this->input->post("ar_index"))?$ar_index = 2:$ar_index=0;
+
+
+        $post_today = $this->today_andTime;
+        $ar_data = array(
+            "ar_title" => $ar_title,
+            "ar_summary" => $ar_sum,
+            "ar_body" => $ar_body,
+            "cat_id" => $cat_id,
+            "ar_show_public" => $ar_pub,
+            "ar_is_approve" => $ar_app,
+            "ar_show_index" => $ar_index,
+            "ar_post_by" => $ar_post_by,
+            "ar_user_id " => $ar_user_id,
+            "ar_post_ip" => $ip,
+            "date_add" => $post_today,
+            "date_edit" => $post_today
+        );
+
+        if($ar_post_by != $this->user_name || $ar_user_id != $this->user_id):
+            unset($ar_data["ar_post_by"]);
+            unset($ar_data["ar_user_id"]);
+        endif;
+
+        if(!$ar_id):
+            //---create
+            unset($ar_data["date_edit"]);
+            $label = "create";
+            $save = $this->Mdl_article->saveArticle($ar_data);
+            $ar_id = $save;
+        else:
+            unset($ar_data["date_add"]);
+            $label = "update";
+            $save = $this->Mdl_article->saveArticle($ar_data,array("ar_id" => $ar_id));
+            $ar_id = $where["ar_id"];
+        endif;
+
+        $this->o_put["msg"] = "Success | Your post has been {$label}ed.";
+        $this->o_put["ar_id"] = $ar_id;
+
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+
+    //---------adminDelAr
+    function adminDelAr(){
+        $cmd = $this->input->post("cmd");
+        $ar_id = $this->input->post("ar_id");
+
+        $ar_title = "";
+        $cat_id = "";
+
+        switch($cmd):
+            case"delete":
+                $this->Mdl_article->delArticle(array("ar_id" => $ar_id));
+                //echo"item {$ar_id} is delete";
+            break;
+            default:
+                //echo"will be delete {$ar_id} now?";
+                //---get the post info
+                $get = $this->Mdl_article->getArticle(array("ar_id" => $ar_id))->result();
+                foreach($get as $row):
+                    $cat_id = $row->cat_id;
+
+                endforeach;
+                $this->o_put["get_ar"] = $get;
+
+                $this->output->set_output(json_encode($this->o_put));
+            break;
+        endswitch;
+
+    }
+    //---------------
+    //--------delete category
+    function adminDelCat(){
+        //--only call by ajax
+        $cat_id = $this->input->post("cat_id");
+        $cmd = $this->input->post("cmd");
+        $where = array("cat_id" => $cat_id);
+        switch($cmd):
+            case"delete":
+                $this->Mdl_article->delCat(array("cat_id" => $cat_id));
+                $this->o_put["msg"] = "Success | Item has been deleted!";
+
+                $this->output->set_output(json_encode($this->o_put));
+            break;
+            default:
+                //---get the total of post in the category
+                $get_ar = $this->Mdl_article->getArticle($where)->result();
+                $num_ar = count($get_ar);
+
+                //---get cat title and id
+                $cat_title = "";
+                $get_cat = $this->Mdl_article->getCat($where)->result();
+                foreach($get_cat as $row):
+                    $cat_title = $row->cat_title;
+                    $cat_id = $row->cat_id;
+                endforeach;
+                $this->o_put["cat_id"] = $cat_id;
+                $this->o_put["cat_title"] = $cat_title;
+                $this->o_put["num_ar"] = $num_ar;
+                $this->o_put["get_ar"] = $get_ar;
+
+                $this->output->set_output(json_encode($this->o_put));
+            break;
+        endswitch;
+    }
+
+
+    //------
+
+    function adminEditCat($cat_id){
+        $where = array("cat_id" => $cat_id);
+
+        $get = $this->Mdl_article->getCat($where)->result();
+        $this->o_put["get_cat"] = $get;
+
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+    function admin($seg=1){
+        //---user name
+        $this->data["user_name"] = $this->user_name;
+
+        //---add,edit ,delete category and post
+        $cat_id = $this->input->post("cat_id");
+        $cat_title = $this->input->post("cat_title");
+        $cmd = $this->input->post("cmd");
+        $ui_seg = $this->uri->segment(1);
+
+        //---cat section
+        $cat_section = ($cat_section = $this->input->post("cat_section"))?$cat_section:$cat_section = $ui_seg;
+
+        $today = $this->today;
+        $today_andTime = $this->today_andTime;
+
+        //--cat description
+        $des_msg_default = "The category {$cat_title} has create on {$today_andTime} by {$this->user_name}.";
+        $cat_des = ($cat_des = $this->input->post("cat_des"))?$cat_des:$cat_des = $des_msg_default;
+
+        //--check box cat show public
+        $cat_show_pub = ($cat_show_pub = $this->input->post("cat_public"))?$cat_show_pub:0;
+
+        //--checkbox cat allow change
+        $cat_allow_change = ($cat_allow_change = $this->input->post("allow_change"))?$cat_allow_change:0;
+
+        //--checkbox cat allow change
+        $cat_admin_allow = ($cat_admin_allow = $this->input->post("allow_show"))?$cat_admin_allow:0;
+
+        $cat_data = array(
+            "cat_title" => $cat_title,
+            "cat_section" => $cat_section,
+            "cat_des" => $cat_des,
+            "cat_user_id" => $this->user_id,
+            "cat_user_type" => "admin",
+            "cat_show_public" => $cat_show_pub,
+            "allow_user_change" => $cat_allow_change,
+            "admin_allow_show" => $cat_admin_allow,
+            "date_create" => $today_andTime,
+            "last_update" => $today_andTime
+        );
+
+
+
+
+        switch($cmd):
+            case"save_cat":
+                $save = "";
+
+                if($cat_id):
+                    $save_label = "Update";
+                    $save = $this->Mdl_article->saveCat($cat_data,array("cat_id" => $cat_id));
+                    $cat_id = $cat_id;
+                else:
+                    $save_label = "Create";
+                    $save = $this->Mdl_article->saveCat($cat_data);
+                    $cat_id = $save;
+                endif;
+                $this->o_put["cat_id"] = $cat_id;
+                $this->o_put["msg"] = "Success | The category {$cat_title} has been {$save_label}. ";
+
+                $this->output->set_output(json_encode($this->o_put));
+            break;
+           default:
+
+
+                //--get and list the category
+                $get_cat = $this->Mdl_article->getCat()->result();
+                $num_cat = count($get_cat);
+                $this->data["get_cat"] = $get_cat;
+
+                //--pagination
+                $url = "article/admin";
+                $per_page = 4;
+                $conf = $this->getConfPagin($per_page,$num_cat,$url);
+                $this->pagination->initialize($conf);
+                $page = $seg;
+                $start = ($page-1)*$conf["per_page"];
+
+                $get_all_cat = $this->Mdl_article->getCat("",$conf["per_page"],$start)->result();
+                $this->data["get_all_cat"] = $get_all_cat;
+
+                $this->data["num_cat"] = $num_cat;
+                $this->data["per_page"] = $per_page;
+
+
+
+
+                $this->data["meta_title"] = "List the category";
+                $this->data["subview"] = "admin/article/article_admin";
+                $this->load->view("_layout_admin",$this->data);
+            break;
+        endswitch;
+    }
+    //--------comment this out as no longer use
+    */
+
+    //--------------end of admin
+
+    //
+}//--end of file

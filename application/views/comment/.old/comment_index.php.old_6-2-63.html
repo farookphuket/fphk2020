@@ -1,0 +1,281 @@
+<section id="comment">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <h1 class="text-center">Comment 2.10 </h1>
+        <p class="text-center">
+          Last update 7-June-2019
+        </p>
+        <hr class="my-4">
+        <div class="row">
+          <div class="col-lg-6">
+            <p>
+              <strong>Dear User :</strong>&nbsp;
+              before you start type in anything in this form please notice.
+            </p>
+            <ul>
+              <li>
+                Do comment with the respectation to other.
+              </li>
+              <li>
+                when you type in your e-mail you are agree that this website will be sent you a notify email to let you know.
+              </li>
+            </ul>
+          </div>
+          <div class="col-lg-6">
+            <p>
+              <strong>เรียนทุกท่านที่เคารพ :</strong>&nbsp;
+              ก่อนที่ท่านจะพิมพ์ข้อความใดๆ นั้นกรุณาทำความเข้าใจ.
+            </p>
+            <ul>
+              <li>
+                กรุณาให้เกียรติบุคคลอื่นหากท่านกล่าวถึง กรุณาใช้ถ้อยคำสุภาพ
+              </li>
+            </ul>
+          </div>
+          <p>&nbsp;</p>
+          <p>&nbsp;</p>
+        </div>
+
+      </div>
+      <div class="col-lg-8 mx-auto">
+        <?php
+          $f = "comment/_u_frmComment.php";
+          $this->load->view($f);
+        ?>
+        <p>&nbsp;</p>
+        <div class="show_warning">
+
+        </div>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+      </div>
+      <p>&nbsp;</p>
+      <!--list the comment-->
+      <div class="col-lg-12" style="margin-top:25px;">
+        <h1 class="text-center">Comment&nbsp;
+          <span class="badge badge-info num_comment">0</span>&nbsp;item(s).
+        </h1>
+        <p>&nbsp;</p>
+      </div>
+      <div class="col-lg-12">
+        <div class="comment_list">
+
+        </div>
+        <div class="comment_pagin">
+
+        </div>
+      </div>
+      <!--END OF Show list-->
+    </div>
+  </div>
+</section>
+<script>
+  $(function(){
+    var $c = $("#comment");
+    var $page_status = $(".status");
+    var page_owner_email = Cookies.get("ck_page_owner_email");
+    var comment = (function(){
+      //---where this module call
+      var now_module = "<?php echo $this->uri->segment(1);?>";
+      //---what is module id
+      var now_id = "<?php echo $this->uri->segment(3);?>";
+
+      var $numComment = $c.find(".num_comment");
+      var $comment_list = $c.find(".comment_list");
+      var $comment_pagin = $c.find(".comment_pagin");
+      var $comment_result = $c.find(".commentResult");
+
+      //--------form
+      var $f = $c.find("#commentForm");
+      var c_name = $c.find(".c_user_name");
+      var c_email = $c.find(".c_user_email");
+      var c_id = $c.find(".c_id");
+      var c_title = $c.find(".c_title");
+      var c_body = $c.find(".c_body");
+      var notice_to_owner = $c.find(".notice_owner");
+
+      var btnSave = $c.find(".btnSave");
+
+      //var ck_email = $c.find(".ck_email");
+      var $show_warning = $c.find(".show_warning");
+
+
+      //---getUri
+      function getUri(){
+        var data = {
+          section_name : now_module,
+          item_id : now_id
+        };
+        return data;
+      }
+      //---------------
+
+      //-------getCommentList
+      function getCommentList(page=1){
+        $comment_list.html("");
+        var url = "<?php echo site_url("comment/getCommentCount/");?>"+page;
+        var data = {
+          section_name : now_module,
+          item_id : now_id
+        };
+        $.ajax({
+          type : "post",
+          url : url,
+          data : data,
+          success : function(e){
+
+            var rs = $.parseJSON(e);
+            var num_c = parseInt(rs.num_comment);
+            $numComment.html(num_c);
+            var tmp = "";
+            if(parseInt(rs.num_comment) === 0){
+              tmp = `
+              <div class="alert alert-danger">
+                <h2 class="text-center">
+                  No Comment yet!
+                </h2>
+                <p class="text-center">
+                <strong>You</strong> can create one now.
+                </p>
+                <p class="text-center">
+                <strong>ท่าน</strong>สามารถเขียนความคิดเห็นได้
+                </p>
+              </div>
+              `;
+            }else{
+              $.each(rs.get_comment,function(i,v){
+                tmp = `<div class="card">
+                  <div class="card-header">
+                    <h1 class="text-center">
+                      ${v.c_comment_title}
+                    </h1>
+                  </div>
+                  <div class="card-body">
+                    ${v.c_comment_body}
+                  </div>
+                  <div class="card-footer">
+                    <p>
+                    By : <strong>${v.c_user_name}</strong>&nbsp;
+                      IP : <strong>${v.c_user_ip}</strong>&nbsp;
+                      Date : <strong>${v.c_date_create} &nbsp;${v.c_comment_time}</strong>
+                    </p>
+
+                  </div>
+
+                </div>
+                <p>&nbsp;</p>
+                `;
+              });
+            }
+            $comment_list.append(tmp);
+
+          }
+        });
+
+      }
+      //----------------
+      //-----getMyComment
+      function getMyComment(){
+        var url = "<?php echo site_url("comment/getMyComment");?>";
+        var data = {
+          section_name:now_module,
+          item_id : now_id
+        };
+        $.ajax({
+          type : "post",
+          url : url,
+          data : data,
+          success : function(e){
+            var rs = $.parseJSON(e);
+            $.each(rs.get_my_comment,function(i,v){
+              c_title.val(v.c_comment_title);
+              c_body.val(v.c_comment_body);
+              c_id.val(v.c_id);
+              c_name.val(v.c_user_name);
+              c_email.val(v.c_user_email);
+            });
+            //ck_email.html(`reply to ${page_owner_email}`);
+          }
+        });
+      }
+      //----------------
+      //----showResult
+      function showResult(){
+        $comment_result.html("");
+        var title = c_title.val();
+        var body = c_body.val();
+        var tmp = `
+        <div class="card">
+          <div class="card-header">
+            <h2 class="text-center">${title}</h2>
+          </div>
+          <div class="card-body">
+            ${body}
+          </div>
+
+          <p>&nbsp;</p>
+        </div>
+        `;
+        $comment_result.append(tmp);
+      }
+      //---------------
+      //---setNoticeOwner --11-july-2019
+      function setNoticeOwner(){
+        var notice = 0;
+        var txt = `<div class="alert alert-danger">
+        <h1 class="text-center">No,Do not sent notification to the owner.</h1>
+        </div>`;
+        if(notice_to_owner.is(":checked")){
+          notice = 1;
+          txt = `<div class="alert alert-success">
+          <h1 class="text-center">Yes, please sent notification to the owner.</h1>
+          </div>`;
+        }
+        $show_warning.html(txt);
+        notice_to_owner.val(notice);
+      }
+      //-----saveComment
+      function saveComment(){
+        btnSave.unbind();
+        $f.submit(function(e){
+          e.preventDefault();
+          var url = $(this).attr("action");
+          var data = $(this).serialize()+"&section_name="+now_module+"&item_id="+now_id+"&page_owner_email="+page_owner_email+"&notice_to_owner="+notice_to_owner.val();
+          $.post(url,data,function(o){
+            var rs = $.parseJSON(o);
+            $page_status.html(rs.msg).show();
+            $show_warning.html(rs.msg_warning).show();
+            setTimeout(function(){
+              $page_status.html("Loading...").fadeOut("slow");
+              getSummary();
+            },4000);
+          });
+        });
+      }
+      //----getSummary
+      function getSummary(){
+        getCommentList();
+        getMyComment();
+        showResult();
+      }
+      function getEvent(){
+        //--reset the form
+        $f.trigger("reset");
+        getSummary();
+
+        //---sent notice to owner
+        notice_to_owner.on("change",function(){
+          setNoticeOwner();
+        });
+        //--btnSave
+        btnSave.on("click",function(){
+          saveComment();
+        });
+
+      }
+      return{getEvent:getEvent}
+    })();
+    comment.getEvent();
+  });
+</script>

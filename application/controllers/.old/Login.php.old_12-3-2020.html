@@ -1,0 +1,56 @@
+<?php
+
+//---create on 20 Nov 2018
+defined('BASEPATH') OR exit('No direct script access allowed');
+class Login extends MY_Controller{
+
+
+    //-- protected string as user info
+    protected $user_email;
+    protected $user_name;
+    protected $user_id;
+
+    //---protect string as google user
+    protected $g_name;
+    protected $g_email;
+
+    //the table name
+    //edit on Thu 8 Jun 2017
+    protected $_tb_user = "users";
+
+
+    public $o_put;
+    public $msg;
+    public $today;
+    public $user_type;
+    public $ip;
+
+        function __construct() {
+            parent::__construct();
+            $this->load->model("Mdl_users");
+            $this->load->model("Mdl_login");
+
+
+            $this->user_email =  $this->getUserEmail();
+
+        }
+
+
+
+    function index(){
+        $this->data["meta_title"] = "{$this->sysName} | {$this->browser}";
+        $this->data["subview"] = "users/login";
+        $tmp = "_layout_main";
+        $this->load->view($tmp,$this->data);
+    }
+
+            
+    function getLogin(){
+        $g = $this->Mdl_login->getLogin();
+        $this->o_put["msg"] = $g["msg"];
+        $this->o_put["url"] = $g["url"];
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+
+}

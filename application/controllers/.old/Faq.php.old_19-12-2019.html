@@ -1,0 +1,228 @@
+<?php 
+
+class Faq extends MY_Controller{
+
+    //------only work on none login user page
+
+    protected $user_id;
+    protected $user_name;
+    protected $is_login;
+    protected $is_admin;
+
+    //table faq and table answer
+    protected $_tb_faq = "tbl_faq";
+    protected $_tb_ans = "tbl_faq_answer";
+
+    public $today;
+    public $time;
+    public $o_put;
+     
+    //--user info
+    public $ip;
+    public $browser;
+    public $os;
+
+    public function __construct(){
+        parent::__construct();
+        $this->today = date("Y-m-d",time());
+        $this->time = date("h:i:s",time());
+
+        //modal
+        $this->load->model("Mdl_faq");
+        $this->ip = $this->Mdl_faq->getIP();
+        $this->browser = $this->Mdl_faq->getBrowser();
+        $this->os = $this->Mdl_faq->getOS();
+        
+        $this->load->library("pagination");
+
+    }
+
+    function index(){
+        if($this->is_login):
+            $url = site_url("faq/u");
+            if($this->is_admin):
+                $url = site_url("faq/admin");
+            endif;
+            if($this->moderate):
+                $url = site_url("faq/mod");
+            endif;
+            redirect($url);
+        endif;
+        $this->data["meta_title"] = "Contact our team or feel free to leave your own question here";
+        
+        $this->data["subview"] = "faq/faq_index";
+        $this->load->view("_layout_main",$this->data);
+
+    }
+
+    //----------
+    //----- getFaqList
+    function getFaqList($seg=1){
+        $where = array(
+            "faq_ip !=" => $this->ip,
+            "faq_is_show !=" => 0
+        );
+        $get = $this->Mdl_faq->getFaq($where)->result();
+        $num = count($get);
+
+        //---pagination
+        $per_page = 12;
+        $page = $seg;
+        $url = "getFaqList";
+        $conf = $this->getConfPagin($per_page,$num,$url);
+        $this->pagination->initialize($conf);
+        $start = ($page-1)*$per_page;
+        $get_faq = $this->Mdl_faq->getFaq($where,$per_page,$start)->result();
+
+        if($num >= $per_page):
+            $this->o_put["pagination"] = $this->pagination->create_links();
+        endif;
+
+        $this->o_put["get_all"] = $get;
+        $this->o_put["get_faq"] = $get_faq;
+        $this->o_put["num"] = $num;
+
+        $this->output->set_output(json_encode($this->o_put));
+    }
+    //------------
+    //----getMyFaq
+    function getMyFaq(){
+        $where = array(
+            "faq_ip" => $this->ip,
+            "faq_date" => $this->today
+        );
+        $get = $this->Mdl_faq->getFaq($where)->result();
+        $this->o_put["get"] = $get;
+        $this->output->set_output(json_encode($this->o_put));
+    } 
+    
+    //----------
+    //---saveFaq
+    function saveFaq(){
+
+        $faq_id = $this->input->post("faq_id");
+        $faq_name = $this->input->post("faq_name");
+        $faq_email = $this->input->post("faq_email");
+        $faq_title = $this->input->post("faq_title");
+        $faq_body = $this->input->post("faq_body");
+
+
+        $faq_data = array(
+            "faq_title" => $faq_title,
+            "faq_body" => $faq_body,
+            "faq_name" => $faq_name,
+            "faq_email" => $faq_email,
+            "faq_ip" => $this->ip,
+            "faq_date" => $this->today,
+            "faq_time" => date("h:i:s",time())
+        );
+        $save = 0;
+        if(!$faq_id):
+            $save = $this->Mdl_faq->saveFaq($faq_data);
+            $faq_id = $save;
+        else:
+            $save = $this->Mdl_faq->saveFaq($faq_data,array("faq_id" => $faq_id));
+        endif;
+        $this->o_put["faq_id"] = $faq_id;
+        $this->o_put["msg"] = "Success : thank you {$faq_name}";
+        $this->output->set_output(json_encode($this->o_put));
+        
+    }
+
+   /*mod section */
+    function mod(){
+        if(!$this->moderate):
+            redirect(site_url("users/logout"));
+            exit();
+        endif;
+        echo"This is the mod section";
+    }
+    
+
+   /*   End of mod section */
+
+    /*
+    //---Admin section
+    //--last update 25-july-2019 11:00 a.m.
+    */
+    function admin(){
+        if(!$this->is_admin):
+            redirect(site_url("users/logout"));
+            exit();
+        endif;
+        $this->data["meta_title"] = "Manage the F.A.Q from the web user";
+        $this->data["subview"] = "admin/faq/faq_index";
+        $tmp = "_ADMIN_TMP";
+
+        $this->load->view($tmp,$this->data);
+    }
+
+    //-------
+    //---adminGetAll 25-july-2019
+    function adminGetAll($seg=1){
+        $where = "";
+        $get = $this->Mdl_faq->getFaq()->result();
+        $num = count($get);
+
+        //---pagination
+        $per_page = 2;
+        $url = "adminGetAll";
+        $page = $seg;
+        $conf = $this->getConfPagin($per_page,$num,$url);
+        $this->pagination->initialize($conf);
+        $start = ($page-1)*$per_page;
+        $get_faq = $this->Mdl_faq->getFaq(null,$per_page,$start)->result();
+        if($num >= $per_page):
+            $this->o_put["pagination"] = $this->pagination->create_links();
+        endif;
+
+        $this->o_put["get_all"] = $get;
+        $this->o_put["get_faq"] = $get_faq;
+        $this->o_put["num_faq"] = $num;
+        $this->output->set_output(json_encode($this->o_put));
+    }
+    //----------
+    //----adminEdit
+    function adminEdit($faq_id){
+        
+        $where = array("faq_id" => $faq_id);
+        $get = $this->Mdl_faq->getFaq($where)->result();
+        $this->o_put["get"] = $get;
+        $this->output->set_output(json_encode($this->o_put));
+
+    }
+    //----adminSave
+    function adminSave(){
+        $is_show = $this->input->post("is_show");
+        $show = 0;
+        if(isset($is_show)):
+            $show = 1;
+        endif;
+        $title = $this->input->post("faq_title");
+        $faq_id = $this->input->post("faq_id");
+        $body = $this->input->post("faq_body");
+        $faq_email = $this->input->post("faq_email");
+        
+        //---prepare faq data
+        $faq_data = array(
+            "faq_title" => $title,
+            "faq_body" => $body,
+            "faq_is_show" => $show
+        );
+
+        $this->Mdl_faq->saveFaq($faq_data,array("faq_id" => $faq_id));
+        $this->o_put["msg"] = "Success : data has been save";
+        $this->output->set_output(json_encode($this->o_put));
+        
+    }
+
+
+    //------------
+
+    /*
+    //End of admin section
+
+    */
+    
+
+}//end of file

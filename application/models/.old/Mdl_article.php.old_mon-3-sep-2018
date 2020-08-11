@@ -1,0 +1,245 @@
+<?php
+
+/* 
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+class Mdl_article extends MY_Model{
+    protected $_tb_ar = "tbl_article";
+    protected $_tb_cat = "tbl_cat";
+    protected $_tb_user = "users";
+    protected $_tb_his = "TBL_ARTICLE_HISTORY";
+    protected $_filed_prefix = "ar";
+    protected $_order_by; 
+
+
+    public $today;
+
+    public $ip;
+    public $os;
+    public $browser;
+
+    public $user_name;
+    public $user_id;
+
+    function __construct() {
+        parent::__construct();
+        $this->today = date("Y-m-d",time());
+
+        $this->user_name = $this->getUserName();
+        $this->user_id = $this->getUserId();
+        $this->ip = $this->getIP();
+        $this->os = $this->getOS();
+        $this->browser = $this->getBrowser();
+    }
+
+
+    function getCat($where=false,$limit=false,$offset=false){
+
+        $get = 0;
+        if($where):
+            $get = $this->getTB($this->_tb_cat,$where,$limit,$offset);
+        else:
+            $get = $this->getTB($this->_tb_cat,"",$limit,$offset);
+        endif;
+        return $get;
+    }
+    //---num_cat_content
+    function num_cat_content($where){
+        //this method will get the article that has the cat_id
+        //then update the tb_cat.has_content to the last count
+        $cat_id = $where["cat_id"];
+
+        //count the article that has the category id then update the category table
+        $where_cat = array("cat_id" => $cat_id);
+
+        $last_count = "";
+
+        $get_cat = $this->getTB($this->_tb_cat,$where_cat)->result();
+        foreach($get_cat as $row):
+            $last_count = $row->has_content;
+        endforeach;
+        $get_ar = $this->getTB($this->_tb_ar,$where_cat)->result();
+        $num_ar = count($get_ar);
+        
+        $cat_data = array(
+            "has_content" => $num_ar
+        );
+        if($last_count != $num_ar):
+            $this->saveTB($this->_tb_cat,$cat_data,$where_cat);
+        endif;
+        
+    }
+
+    //------------saveCat
+    function saveCat($data,$where=false){
+
+        $cat_id = 0;
+        if(!$where):
+            $save = $this->saveTB($this->_tb_cat,$data);
+            $cat_id = $save;
+        else:
+            $save = $this->saveTB($this->_tb_cat,$data,$where);
+            $cat_id = $where["cat_id"];
+        endif;
+        return $cat_id;
+
+    }
+//------------
+    function delCat($where){
+
+        //--find the article in this category then delete them
+        $cat_id = $where["cat_id"];
+        $where = array("cat_id" => $cat_id);
+        $get_ar = $this->getTB($this->_tb_ar,$where)->result();
+        if(count($get_ar) != 0):
+            $this->delTB($this->_tb_ar,$where);
+        endif;
+        $this->delTB($this->_tb_cat,$where);
+
+        
+    }
+//--------------------
+    function getArticle($where=false,$limit=false,$offset=false){
+
+        if($where):
+            $get = $this->db 
+                    ->where($where)
+                    ->limit($limit,$offset)
+                    ->order_by("date_add","DESC")
+                    ->get($this->_tb_ar);
+
+        else:
+            /*
+            $get = $this->getTB($this->_tb_ar,"",$limit,$offset);
+
+            */
+            $get = $this->db
+                    ->order_by("date_add","DESC")
+                    ->get($this->_tb_ar,$limit,$offset);
+        endif;
+        return $get;
+    }
+    //------
+    function saveArticle($data,$where=false){
+        
+        $cat_id = $data["cat_id"];
+        $ar_id = "";
+
+        if($where):
+            $ar_id = $where["ar_id"];
+            $save = $this->saveTB($this->_tb_ar,$data,$where);
+        else:
+            $save = $this->saveTB($this->_tb_ar,$data);
+            $ar_id = $save;
+        endif;
+        $this->num_cat_content(array("cat_id" => $cat_id));
+        return $ar_id;
+
+    }
+    //----------
+    function delArticle($where){
+
+        $ar_id = $where["ar_id"];
+        $cat_id = "";
+        $where_ar = array("ar_id" => $ar_id);
+        $get_ar = $this->getTB($this->_tb_ar,$where_ar)->result();
+        foreach($get_ar as $row):
+            $cat_id = $row->cat_id;
+        endforeach;
+        $this->delTB($this->_tb_ar,$where_ar);
+        $this->num_cat_content(array("cat_id" => $cat_id));
+    }
+    //---
+    function num_ar_view($where){
+        //this method will update the count
+        //--working good on fri 11 may 2018
+        //only if the user is uniq session or null session
+        $ar_id = $where["ar_id"];
+        $cur_ip = $this->ip;
+        $cur_day = date("Y-m-d",time());
+
+        $last_ip = "";
+        $last_view_day = "";
+        $last_count = 0;
+
+
+        $data = array();
+
+        $where = array("ar_id" => $ar_id);
+        $get_ar = $this->db
+                        ->where($where)
+                        ->get($this->_tb_ar)->result();
+        foreach($get_ar as $row):
+            $last_ip = $row->last_view_ip;
+            $last_view_day = $row->last_view_date;
+            $last_count = $row->ar_read_count;
+
+        endforeach;
+
+        $update = 0;
+        if($last_ip != $cur_ip || $last_view_day != $cur_day):
+            $update = 1;
+            //--set update and history will add here
+            $last_count = $last_count+1;
+            
+            //--record history
+            $his_data = array(
+                "his_title" => "New view count for {$ar_id}! on {$cur_day} by IP {$cur_ip}",
+                "his_body" => "The IP {$cur_ip} has view article id {$ar_id} on {$cur_day} using os {$this->os} browser {$this->browser} by user {$this->user_name}",
+                "ar_id" => $ar_id,
+                "view_ip" => $cur_ip,
+                "date_of_view" => $cur_day
+            );
+            $this->saveTB($this->_tb_his,$his_data);
+            //--End record history
+            //-----Fri 11 May 2018
+            //--set new count for this article item
+            $a_data = array(
+                "last_view_ip" => $cur_ip,
+                "last_view_date" => $cur_day,
+                "ar_read_count" => $last_count
+            );
+            $this->saveTB($this->_tb_ar,$a_data,array("ar_id" => $ar_id));
+            //--end set count
+
+        
+        endif;
+        
+        
+        $data["update"] = $update;
+        return $data;
+        
+        
+        
+    }
+
+    //--save history
+    function save_history($data,$where=false){
+        $save = 0;
+        if(!$where):
+            $save = $this->saveTB($this->_tb_his,$data);
+        else:
+            $save = $this->saveTB($this->_tb_his,$data,$where);
+        endif;
+        
+        
+    }
+    //---get history
+    function get_history($where){
+        
+        $ip = $where["ip"];
+        $ar_id = $where["ar_id"];
+        $where_his = array(
+            "last_view_ip" => $ip,
+            "date_of_view" => $this->today,
+            "ar_id" => $ar_id
+        );
+        $get_his = $this->getTB($this->_tb_his,$where_his)->result();
+        $num_his = count($get_his);
+        return $num_his;
+    }
+
+}//end of Mdl_article
+

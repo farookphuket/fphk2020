@@ -1,0 +1,361 @@
+<section id="tour">
+<!--Last edit on 12-July-2019-->
+<div class="container">
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="float-right">
+        <a class="btn btn-primary lnCreate">Create New</a>
+      </div>
+      <h1 class="text-center">Tour Program</h1>
+      <hr class="my-4">
+      <p>&nbsp;</p>
+    </div>
+    <div class="col-lg-12">
+      <div class="tour_list"></div>
+
+      <div class="tour_pagin"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade mdTour" id="mdTour">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title mdTitle">Create New Tour Program</h1>
+        <button class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <?php
+          $f = "admin/tour/_frm_tour";
+          $this->load->view($f);
+        ?>
+        <div class="modal_status">
+
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary btn-sm btnSave" type="submit" form="fTour">Save
+        </button>
+        <button type="button" class="btn btn-danger btn-sm" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!--End 12-July-2019-->
+
+</section>
+<script>
+
+$(function(){
+    var $t = $("#tour");
+
+    var $page_status = $(".status");
+
+    var vTour = (function(){
+
+        var $tour_list = $t.find(".tour_list");
+        var $tour_pagin = $t.find(".tour_pagin");
+        var $tourHead = $t.find(".tourHead");
+        var $lnCreate = $t.find(".lnCreate");
+
+        //----modal
+        var $md = $t.find("#mdTour");
+        var $mdTitle = $t.find(".mdTitle");
+        var $mdStatus = $t.find(".modal_status");
+        //----sum_tmp
+        var sum_tmp = $t.find(".sum_tmp");
+        var $sumResult = $t.find(".sumResult");
+        //---seo
+        var meta_url = $t.find(".meta_url");
+        var keyword = $t.find(".meta_keyword");
+        var keydes = $t.find(".meta_description");
+        //---form
+        var $f = $t.find("#fTour");
+        var t_id = $t.find(".tour_id");
+        var kw_id = $t.find(".kw_id");
+        var t_title = $t.find(".tour_title");
+        var duration = $t.find(".tour_duration");
+        var location = $t.find(".tour_location");
+        var full_price = $t.find(".tour_fullprice");
+        var t_sum = $t.find(".tour_summary");
+        var t_body = $t.find(".tour_detail");
+        var t_draft = $t.find(".mark_draft");
+        var mark = 0;
+        var btnSave = $t.find(".btnSave");
+
+        function getTourList(page=1){
+            $tour_list.html("");
+            var url = "<?php echo site_url("tour/modGetTourList/");?>"+page;
+            $.ajax({
+                url : url,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    var num = parseInt(rs.get_tour.length);
+                    //console.log(rs);
+                    $.each(rs.get_tour,function(i,v){
+                        var onsale = `<span class="badge badge-success">Yes</span>`;
+                        if(parseInt(v.mark_draft) !== 0){
+                            onsale = `<span class="badge badge-danger">No</span>`;
+                        }
+                        //---edit url
+                        var editUrl = `
+                        <a class="btn btn-primary btn-sm lnEdit" data-t_id="${v.t_id}">Edit</a>
+                        `;
+                        //---view url
+                        var viewUrl = "<?php echo site_url("tour/detail/");?>"+v.t_id;
+
+
+
+                        var tmp = `
+                        <div class="card">
+                          <div class="card-header">
+                            <div class="float-right">
+                              ${editUrl}
+                            </div>
+                            <h2 class="text-center">
+                              ${v.t_name}
+                            </h2>
+
+                          </div>
+                          <div class="card-body">
+
+                            <div class="row">
+                              <div class="col-lg-8">
+                                  ${v.t_summary}
+                              </div>
+                              <div class="col-lg-4">
+                                <div class="table-responsive">
+                                  <table class="table table-bordered">
+                                    <tr>
+                                      <th>Price</th>
+                                      <td>${v.full_price}</td>
+                                    </tr>
+                                    <tr>
+                                      <th>Location</th>
+                                      <td>${v.t_destination}</td>
+                                    </tr>
+                                    <tr>
+                                      <th>Duration</th>
+                                      <td>${v.t_duration}</td>
+                                    </tr>
+                                  </table>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="card-footer">
+                            <div class="float-right">
+                              <a class="btn btn-sm btn-info  lnDetail" href="${viewUrl}" target="_blank">View</a>
+                              <a class="btn btn-sm btn-danger btnDel" data-t_id="${v.t_id}">Delete</a>
+                            </div>
+                          </div>
+                        </div>
+                        <p>&nbsp;</p>
+                        `;
+                        $tour_list.append(tmp);
+                    });
+                    $tour_pagin.html(rs.pagination);
+                }
+            });
+        }
+        //----
+        //---sumTmp
+        function sumTmp(){
+          var show = 0;
+          var txt = `It is way more easier to create new program using Template`;
+          var img_url = "https://lh3.googleusercontent.com/ihPgPq91EGnl7Yy0EFAb8Z2Q8iZPlmZbv8SLz562lnVA1qBPnjOerN_dDDAUT3kzP9lOBb7u9CF7SDGFAtuynpTqNUizSZW9eQaOxrd8FHLVTa0G2tEpaGJ2v4XUaLHTo3GzVjkq_1c=w1920-h1080";
+          if(sum_tmp.is(":checked")){
+            show = 1;
+            txt = `<div class="row">
+            <div class="col-lg-4">
+              <img src="${img_url}" class="responsive" />
+              <p class="text-center">Your picture name goes here.</p>
+            </div>
+            <div class="col-lg-8">
+              <p>This is your new tour program on paraghrap.</p>
+            </div>
+            </div>
+            `;
+          }
+          t_sum.val(txt);
+        }
+        //--------
+        //---showSumRes
+        function showSumRes(){
+          $sumResult.html(t_sum.val());
+        }
+        //---frmTour
+        function frmTour(cmd,id){
+          $f.trigger("reset");
+          tinymce.activeEditor.setMode("design");
+          switch(cmd){
+            case"edit":
+              var url = "<?php echo site_url("tour/modEditTour/");?>"+id;
+              $.ajax({
+                url : url,
+                success : function(e){
+                  //$f.trigger("reset");
+                  var rs = $.parseJSON(e);
+                  $.each(rs.get_tour,function(i,v){
+                    console.log(v);
+                    t_id.val(v.t_id);
+                    kw_id.val(v.kw_id);
+                    meta_url.val(v.kw_canonical);
+                    keyword.val(v.kw_page_keyword);
+                    keydes.val(v.kw_page_des);
+                    //---mark draft
+                    if(parseInt(v.mark_draft) !== 0){
+                      t_draft.prop("checked",true);
+                      mark = 2;
+                    }
+                    t_title.val(v.t_name);
+                    duration.val(v.t_duration);
+                    location.val(v.t_destination);
+                    full_price.val(v.full_price);
+                    t_sum.val(v.t_summary);
+                    tinymce.activeEditor.setContent(v.t_program);
+                    $mdTitle.html(`Editing ${v.t_name}...`);
+                  });
+                  $($md).modal("show");
+                }
+              });
+
+            break;
+            default:
+              //$f.trigger("reset");
+              $mdTitle.html(`Create New Program`);
+              $($md).modal("show");
+            break;
+          }
+        }
+        //----------------
+        //-----runFirstSave
+        function runFirstSave(){
+          if(!t_title.val() || t_title.val().length < 25){
+            return false;
+          }else{
+            var url = "<?php echo site_url("tour/seoFirstSave");?>";
+            var data = {tour_title : t_title.val()};
+            $.ajax({
+              type : "post",
+              url : url,
+              data : data,
+              success : function(e){
+                var rs = $.parseJSON(e);
+                $.each(rs.get_tour,function(i,v){
+                  t_id.val(v.t_id);
+                  kw_id.val(v.kw_id);
+                  frmTour("edit",v.t_id);
+                });
+              }
+            });
+          }
+        }
+
+        //----setDraft
+        function setDraft(){
+          if(t_draft.is(":checked")){
+            mark = 2;
+          }else{
+            mark = 0;
+          }
+          t_draft.val(mark);
+          return mark;
+        }
+        //----saveTour
+        function saveTour(){
+          btnSave.unbind();
+          $f.submit(function(e){
+            e.preventDefault();
+            var url = $(this).attr("action");
+            var data = $(this).serialize()+"&mark_draft="+mark;
+            $.post(url,data,function(e){
+              var rs = $.parseJSON(e);
+              $mdStatus.html(rs.msg).show();
+              setTimeout(function(){
+                $mdStatus.html(`Loading...`).fadeOut("slow");
+                $($md).modal("hide");
+                getTourList();
+              },4000);
+            });
+          });
+        }
+        //-------delTour
+        function delTour(cmd,id){
+            switch(cmd){
+                case"delete":
+                    var url = "<?php echo site_url("tour/modDelTour/");?>"+id;
+                    $.ajax({
+                        url : url,
+                        success : function(e){
+                            var rs = $.parseJSON(e);
+                            $page_status.html(rs.msg).show();
+                            setTimeout(function(){
+                                $page_status.html("Loading...").fadeOut("slow");
+                                getTourList();
+                            },2000);
+                        }
+                    });
+                break;
+                default:
+                    var msg = `This will delete item id ${id} this operation cannot be undo \nAre you sure you want to delete?`;
+                    if(confirm(msg) === true){
+                        delTour("delete",id);
+                    }else{
+                        return false;
+                    }
+                break;
+            }
+        }
+
+        //----
+        function getEvent(){
+            getTourList();
+
+            $lnCreate.on("click",function(){
+              frmTour();
+            });
+            //----//checkbox
+            t_draft.on("change",function(){
+              setDraft();
+            });
+            //---sum_tmp need template
+            sum_tmp.on("change",function(){
+              sumTmp();
+            });
+            t_title.on("blur",function(){
+              runFirstSave();
+            });
+            t_sum.on("blur",function(){
+              showSumRes();
+            });
+            $tour_pagin.delegate(".pagination a","click",function(e){
+                e.preventDefault();
+                var cur_page = $(this).attr("data-ci-pagination-page");
+                getTourList(cur_page);
+            });
+
+            $tour_list.delegate(".btnDel","click",function(e){
+                e.preventDefault();
+                var id = $(this).attr("data-t_id");
+                delTour(null,id);
+            });
+
+            //---edit tour
+            $tour_list.delegate(".lnEdit","click",function(){
+              var id = $(this).attr("data-t_id");
+              frmTour("edit",id);
+            });
+
+            //---save
+            btnSave.on("click",function(){
+              saveTour();
+            });
+        }
+        return{ getEvent:getEvent}
+    })();
+    vTour.getEvent();
+});
+</script>

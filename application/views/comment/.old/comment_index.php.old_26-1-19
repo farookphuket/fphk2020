@@ -1,0 +1,88 @@
+
+<div class="page-header">
+    <h1>Comment version 1.3</h1>
+    <p>Current url 
+    <?php echo current_url(); ?>
+    </p>
+</div>
+<div class="panel panel-info">
+        <div class="panel-heading">
+            <h2>Write your comment</h2>
+        </div>
+        <div class="panel-body">
+            <div class="well">
+                <h4>
+                    Please Note dear&nbsp; 
+                    <span class="label label-warning">
+                        "<?php echo $this->user_type;?>"
+                    </span>&nbsp;
+                     : your comment will be appear at the below list after it has approve by admin. 
+                </h4>
+            </div>
+            <!--form start--> 
+            <form class="form-horizontal" action="<?php echo site_url("comment/saveComment");?>" id="commentForm">
+                        <!--comment user name-->
+                        <div class="form-group">
+                            <label class="label-control col-sm-4">User Name</label>
+                            <div class="col-sm-6">
+                                <input type="text" name="c_user_name" class="form-control c_user_name" required minlength="4">
+                               <input type="hidden" class="c_id" name="c_id">
+                               <input type="hidden" class="comment_url" name="comment_url" value="<?php echo current_url();?>"> 
+                            </div>
+                        </div>
+
+                        <!--comment user email-->
+                        <div class="form-group">
+                            <label class="label-control col-sm-4">User Email</label>
+                            <div class="col-sm-6">
+                                <input type="email" name="c_user_email" class="form-control c_user_email" required>
+                               <p>Your email will not show to public | email ของคุณจะไม่แสดงต่อสาธารณะ</p> 
+                            </div>
+                        </div>
+
+
+                        <!--comment title-->
+                        <div class="form-group">
+                            <label class="label-control col-sm-4">Title</label>
+                            <div class="col-sm-6">
+                                <input type="text" name="c_title" class="form-control c_title" required>
+                                
+                            </div>
+                        </div>
+                        
+                        <!--comment body-->
+                        <div class="form-group">
+                            <label class="label-control col-sm-4">Comment</label>
+                            <div class="col-sm-6">
+                                <textarea name="c_body" class="form-control c_body" required minlength="30"></textarea>
+                            </div>
+                        </div>
+
+                    </form>
+
+            <!--end form-->
+        </div>
+        <div class="panel-footer">
+            <button class="btn btn-primary btnSave" type="submit" form="commentForm">
+                Comment
+            </button>
+                    
+            
+                    
+                    
+        </div>
+</div>
+<div class="page-header">
+    <h2>All comment 
+    <span class="num_comment">0</span> item(s).
+    </h2>
+</div>
+<div class="comment_list">
+    
+</div>
+<div class="comment_pagination">
+</div>
+
+<?php 
+   require("comment_mainJS.php");
+

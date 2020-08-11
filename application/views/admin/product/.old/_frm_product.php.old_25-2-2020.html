@@ -1,0 +1,44 @@
+<form action="<?php echo site_url("product/adminSave");?>" id="sProduct">
+
+    <div class="col-lg-12">
+        <h1 class="text-center">SEO </h1>
+    </div>
+    <div class="form-group">
+        <label for="keyurl">Share URL</label>
+        <input type="text" name="keyurl" id="keyurl" class="keyurl form-control">
+        
+    </div>
+    <div class="form-group">
+        <label for="keyword">Keyword</label>
+        <input type="text" name="keyword" id="keyword" class="keyword form-control">
+        <input type="hidden" name="kw_id" class="kw_id">
+    </div>
+    <div class="form-group">
+        <label for="keydes">Description</label>
+        <input type="text" name="keydes" id="keydes" class="keydes form-control">
+    </div>
+    <p>&nbsp;</p>
+    <div class="from-group">
+        <label for="p_name">Product Name</label>
+        <input type="text" name="p_name" id="p_name" class="form-control p_name" required>
+        <input type="hidden" name="p_id" class="p_id">
+        <input type="hidden" name="p_user_id" class="p_user_id">
+    </div>
+    <p>&nbsp;</p>
+    <div class="form-group">
+        <label for="p_sum">product summary</label>
+        <textarea class="form-control p_sum" name="p_sum" id="p_sum" rows="10"></textarea>
+    </div>
+    <div><p>&nbsp;</p></div>
+    <div class="form-group">
+        <label for="p_body">Product detail</label>
+        <textarea name="p_body" id="p_body" class="form-control tinymce p_body"></textarea>
+    </div>
+    <p>&nbsp;</p>
+    <div class="form-group">
+        <label for="p_price">Price</label>
+        <input type="number" name="p_price" id="p_price" class="form-control p_price">
+    </div>
+
+
+</form>

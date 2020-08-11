@@ -1,0 +1,25 @@
+<section id="man_tour">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="text-center">Manage tour</h1>
+                <hr class="my-4" />
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <?php 
+                    $form = "admin/tour/_tour_form.php";
+                    $this->load->view($form);
+                ?>
+            </div>
+        </div>
+    </div>
+    
+</section>
+<?php 
+
+    $js = "admin/tour/tourJS.php";
+    $this->load->view($js);

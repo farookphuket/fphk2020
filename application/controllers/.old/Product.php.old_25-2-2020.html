@@ -1,0 +1,161 @@
+<?php
+
+
+class Product extends MY_Controller{
+
+
+  protected $_tb_cat = "tbl_product_cat";
+  protected $_tb_product = "tbl_product";
+
+  //---user info
+  public $ip;
+  public $browser;
+  public $os;
+
+  protected $user_id;
+  public $user_name;
+  public $user_type;
+  public $is_admin;
+  public $is_login;
+  public $moderate;
+
+  //------- public
+  public $sysName = "Product";
+  public $sysDate = "14 Aug 2019";
+  public $sysVersion = "1.20";
+
+  function __construct(){
+    parent::__construct();
+    $this->load->model("Mdl_product");
+    $this->load->model("Mdl_seo");
+    $this->load->model("Mdl_users");
+    $this->load->library("pagination");
+
+    $this->ip = $this->Mdl_product->ip;
+    $this->user_id = $this->Mdl_product->getUserId();
+    $this->user_name = $this->Mdl_product->user_name;
+    $this->user_type = $this->Mdl_product->user_type;
+    $this->data["sysName"] = $this->sysName;
+    $this->data["sysDate"] = $this->sysDate;
+    $this->data["sysVersion"] = $this->sysVersion;
+
+  }
+
+  function index(){
+
+    if($this->is_login):
+      $url = site_url("product/u");
+      if($this->moderate):
+        $url = site_url("product/moderate");
+      endif;
+      if($this->is_admin):
+        $url = site_url("product/admin");
+      endif;
+      redirect($url);
+    endif;
+
+    $this->data["meta_title"] = "{$this->sysName} version {$this->sysVersion} | Buying or saling.";
+    $this->data["subview"] = "product/product_index";
+    $tmp = "_layout_main";
+
+
+    $this->load->view($tmp,$this->data);
+
+  }
+  //------------------------------
+  //---------   detail 
+  //--------  none login user
+  function detail($uniq_id){
+     $where = array(
+        "{$this->_tb_product}.uniq_id" => $uniq_id
+     );
+     $get = $this->Mdl_product->GET_PRODUCT($where)->result();
+     $rUrl = site_url("product/detail/");
+     foreach($get as $row):
+         $this->data["page_keyword"] = "{$row->kw_page_keyword}";
+         $this->data["page_description"] = "{$row->kw_page_des}";
+         $this->data["og_url"] = "{$rUrl}{$row->uniq_id}";
+         $this->data["og_title"] = "{$row->pd_title}";
+         $this->data["og_description"] = "{$row->kw_page_des}";
+         $this->data["og_type"] = "Product";
+         $this->data["meta_title"] = "{$row->pd_title}|{$this->sysName} version {$this->sysVersion}";
+     endforeach;
+
+     $tmp = "_layout_main";
+     $this->data["get"] = $get;
+     $this->data["subview"] = "product/view_product";
+     $this->load->view($tmp,$this->data);
+  }
+
+  //-----------------------------
+  /* userView */
+
+  //------------------------------
+  /*  Admin Section  Start*/
+  function admin(){
+    if(!$this->is_admin):
+      redirect(site_url("users/logout"));
+      exit();
+    endif;
+      $title = "Admin manage Product | {$this->user_type}";
+      $this->data["meta_title"] = $title;
+      $this->data["subview"] = "admin/product/list_product";
+      $tmp = "_ADMIN_TMP";
+      $this->load->view($tmp,$this->data);
+  }
+
+  function adminList($page=1){
+    $get  = $this->Mdl_product->GET_PRODUCT()->result();
+    $num = count($get);
+
+    $url = "adminList";
+    $per_page = 2;
+    $conf = $this->getConfPagin($per_page,$num,$url);
+    $this->pagination->initialize($conf);
+    $start = ($page-1)*$per_page;
+    $get_p = $this->Mdl_product->GET_PRODUCT(null,$per_page,$start)->result();
+    if($num > $per_page):
+      $this->o_put["pagination"] = $this->pagination->create_links();
+    endif;
+
+    $this->o_put["get_all"] = $get;
+    $this->o_put["get_p"] = $get_p;
+    $this->output->set_output(json_encode($this->o_put));
+  }
+
+  //----------------
+  //------- adminFirstSave
+  function adminFirstSave(){
+    $save = $this->Mdl_product->adminFirstSave();
+    $kw_id = $save["kw_id"];
+    $id = $save["pd_id"];
+    $this->o_put["id"] = $id;
+    $this->o_put['kw_id'] = $kw_id;
+    $this->output->set_output(json_encode($this->o_put));
+  }
+  //----------------------------------
+  //----------   adminEdit
+  function adminEdit($id){
+    $get = $this->Mdl_product->GET_PRODUCT(array("{$this->_tb_product}.pd_id" => $id))->result();
+    $this->o_put["get"] = $get;
+    $this->output->set_output(json_encode($this->o_put));
+  }
+  //-------------------------
+  //----------  adminSave
+  function adminSave(){
+    $save = $this->Mdl_product->adminSave();
+    $id = $save["pd_id"];
+    $this->o_put["p_id"] = $id;
+    $this->output->set_output(json_encode($this->o_put));
+  }
+  //----------
+  //-----   adminDel
+  function adminDel($id){
+      $del = $this->Mdl_product->adminDel($id);
+      $this->o_put["last_num"] = $del["last_num"];
+      $this->output->set_output(json_encode($this->o_put));
+  }
+
+  /* END OF ADMIN SECTION */
+
+}//end of the file

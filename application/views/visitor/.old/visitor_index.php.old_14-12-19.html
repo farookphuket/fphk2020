@@ -1,0 +1,118 @@
+<section id="visitor">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <h1 class="text-center">Visitor</h1>
+      </div>
+      <div class="col-lg-12">
+        <div class="row">
+          <div class="col-md-3">
+            <div class="alert alert-info">
+              <h1 style="text-align:right" class="numToday">0</h1>
+            </div>
+            <p>Visitor today</p>
+          </div>
+          <div class="col-md-3">
+            <div class="alert alert-info">
+              <h1 style="text-align:right;color:blue;" class="numMonth">0</h1>
+            </div>
+            <p>Visitor this month</p>
+          </div>
+          <div class="col-md-3">
+            <div class="alert alert-info">
+              <h1 style="text-align:right;color:blue;" class="numAll">0</h1>
+            </div>
+            <p>All Visitor</p>
+          </div>
+          <div class="col-md-3">
+            <p class="cur_ip">
+              IP : <?php echo $ip;?>
+            </p>
+            <p class="cur_os">
+              OS  : <?php echo $os;?>
+            </p>
+            <p class="cur_browser">
+              Browser : <?php echo $browser." version ".$version;?>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+  //---last edit 15-july-2019
+
+  var $v = $("#visitor");
+  var visit = (function(){
+
+    var $uInfo = $v.find(".user_info");
+
+    var cur_ip = "<?php echo $ip;?>";
+    var os = "<?php echo $os;?>";
+    var browser = "<?php echo $browser;?>";
+    var browser_ver = "<?php echo $version;?>";
+
+    //---visitor count
+    var $numAll = $v.find(".numAll");
+    var $numToday = $v.find(".numToday");
+    var $numMonth = $v.find(".numMonth");
+
+    var numV = 0;
+    var numAll = 0;
+    var numToday = 0;
+    //-----------
+    function getMonthVisit(){
+
+      var url = "<?php echo site_url("visitor/getMonthVisit");?>";
+      $.ajax({
+        url : url,
+        success : function(e){
+          var rs = $.parseJSON(e);
+          $numMonth.html(rs.num);
+        }
+      });
+
+    }
+    //-----------
+    //----getTodayVisit
+    function getTodayVisit(){
+      var url = "<?php echo site_url("visitor/getTodayVisit");?>";
+      $.ajax({
+        url : url,
+        success : function(e){
+          var rs = $.parseJSON(e);
+          numToday = rs.num;
+          $numToday.html(numToday);
+        }
+      });
+    }
+    //--------------
+    function getUser(){
+      //-- sent this info to server
+      var url = "<?php echo site_url("visitor/getUser");?>";
+      $.ajax({
+        url : url,
+        success : function(e){
+          var rs = $.parseJSON(e);
+
+          numAll = rs.num_all;
+          $numAll.html(numAll);
+        }
+      });
+    }
+    //----------
+    function getSummary(){
+      getUser();
+      getTodayVisit();
+      getMonthVisit();
+    }
+    //------------
+    function getEvent(){
+      getSummary();
+    }
+    return{getEvent:getEvent}
+  })();
+  visit.getEvent();
+
+</script>

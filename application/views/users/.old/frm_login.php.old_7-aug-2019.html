@@ -1,0 +1,162 @@
+<!--last edit Sun 27 Jan 2019-->
+<section  id="member">
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-8 mx-auto">
+              <h2 class="text-center ">Member Login</h2>
+              <p class="text-faded">Facebook
+              <!--facebook login button-->
+              <!--stop using facebook
+              <fb:login-button
+            id = "btnSocialLogin"
+            scope="public_profile,email"
+            onlogin="checkLoginState();">
+            </fb:login-button>
+              Stop using facebook
+              end facebook button-->
+
+              </p>
+              <hr class="my-4" />
+
+              <form class="form-horizontal" id="loginForm" action="<?php echo site_url("login/getLogin");?>">
+                <div class="form-group">
+                  <label class="label-control col-sm-4">User Name</label>
+                  <div class="col-sm-6">
+                    <input type="text" name="u_name" class="form-control u_name" required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="label-control col-sm-4">Password</label>
+                  <div class="col-sm-6">
+                    <input type="password" name="u_pass" class="form-control u_pass" required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="label-control col-sm-4">&nbsp;</label>
+                  <div class="col-sm-6">
+                    <button class="btn btn-sm btn-primary btnLogin" type="submit">Login</button>
+                    <hr class="my-4"/>
+                    <button class="btn btn-sm btn-warning lnForgot" type="button">Forgot Password</button> 
+                    <hr class="my-4"/>
+                    <a class="btn btn-sm btn-primary lnRegister" href="<?php echo site_url("register");?>">Register</a>
+                  </div>
+                </div>
+              </form>
+
+            </div>
+
+            <!--show result-->
+            <div class="col-lg-8 loginRes">
+
+            </div>
+
+          </div>
+        </div>
+      </section>
+      <!--end of member
+      //--event handler by homeJS.php
+      -->
+
+
+
+<script>
+
+  /*
+    Delete my facebook account since 4/4/19
+    now cannot use facebook api
+  */
+  /*
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId      : '166509584186131',
+      cookie     : true,
+      xfbml      : true,
+      version    : 'v3.0'
+    });
+
+    FB.AppEvents.logPageView();
+
+    //--copy from section 2
+
+        FB.getLoginStatus(function(response) {
+            statusChangeCallback(response);
+        });
+    //--end copy
+
+
+
+  };
+
+    (function(d, s, id){
+     var js, fjs = d.getElementsByTagName(s)[0];
+     if (d.getElementById(id)) {return;}
+     js = d.createElement(s); js.id = id;
+     js.src = "https://connect.facebook.net/en_US/sdk.js";
+     fjs.parentNode.insertBefore(js, fjs);
+   }(document, 'script', 'facebook-jssdk'));
+
+
+
+    //---function 1
+    function statusChangeCallback(response){
+        if(response.status === "connected"){
+            //console.log("user is login");
+            getUserData(response);
+
+        }else{
+            //console.log("not login");
+        }
+    }
+
+    //---end function 1
+    //--function 2
+
+    function checkLoginState() {
+        //--user click login with facebook will fire this method
+        FB.getLoginStatus(function(response) {
+            statusChangeCallback(response);
+        });
+    }
+
+    //---
+    //--getUserData
+    function getUserData(u){
+        var msg = `
+            You have request to login with facebook if this is your first time to visit please press F5
+           `;
+
+
+        FB.api("/me?fields=name,email",function(res){
+            if(res && !res.error){
+                var url = "<?php //echo site_url("users/ajaxGetUser");?>";
+                var data = {fb_name : res.name,fb_email : res.email};
+                $.ajax({
+                    type : "post",
+                    url : url,
+                    data : data,
+                    success : function(e){
+                        //alert(e);
+                        //console.log(e);
+                        var rs = $.parseJSON(e);
+                        var url = rs.url;
+
+                        location.href = url;
+                    }
+                });
+            }
+        });
+        if(confirm(msg) === true){
+            location.reload();
+        }else{
+            //alert("You will not redirect until you reload the page");
+            setTimeout(function(){location.reload();},2000);
+        }
+
+
+    }
+    //---end getUserData
+
+    */
+
+
+</script>

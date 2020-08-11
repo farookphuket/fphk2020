@@ -1,0 +1,87 @@
+<!-- Navigation -->
+<?php
+    $home_url = site_url();
+    $cur_url = current_url();
+    $login_page = site_url("login");
+    $article = site_url("article");
+
+    $home = $home_url;
+    if($is_login):
+        $home = site_url("users/u");
+    endif;
+    #about
+    $product = site_url("product");
+    if($cur_url != $home_url):
+        $about = $home_url."#about";
+       // $article = $home_url."#article";
+        $contact = $home_url."#contact";
+        $member = $home_url."#member";
+        $services = $home_url."#services";
+
+    else:
+        $about = "#about";
+        $member = "#member";
+        $services = "#services";
+        //$product = ;
+        //$article = "#article";
+        $contact = "#contact";
+    endif;
+
+    #article
+    #services
+    #portfolio
+    #member
+?>
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+      <div class="container">
+        <a class="navbar-brand js-scroll-trigger" href="#page-top">
+<?php echo $sysName; ?>
+        </a>
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+          <ul class="navbar-nav ml-auto">
+
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="<?php echo $home;?>">Home</a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="<?php echo $about;?>">About</a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="<?php echo $article;?>">Article</a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="<?php echo $services ;?>">Services</a>
+            </li>
+
+
+
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="<?php echo $product;?>">Product</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="<?php echo $contact;?>">Contact</a>
+            </li>
+            <li class="nav-item">
+              <?php
+                if($is_login):
+                  ?>
+                  <a class="nav-link js-scroll-trigger" href="<?php echo site_url("users/logout");?>">Logout</a>
+                  <?php
+                else:
+                  ?>
+                  <a class="nav-link js-scroll-trigger" href="<?php echo $login_page;?>">Member LogIn</a>
+                  <?php
+                endif;
+              ?>
+
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>

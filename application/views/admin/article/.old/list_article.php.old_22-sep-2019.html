@@ -1,0 +1,596 @@
+<div class="masthead d-flex">
+  <div class="container my-auto">
+    <div class="row">
+      <div class="col-lg-12 mx-auto">
+          <h1 class="text-center">system last update on 23-july-2019</h1>
+          <p>remove table view</p>
+          <p>Add new label to show the status</p>
+          <p>replace the default php with using ajax</p>
+      </div>
+    </div>
+  </div>
+</div>
+<section id="man_article">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="text-right">
+                    <button class="btn btn-primary lnAddAr">Create</button>
+                </div>
+            </div>
+            <div class="col-lg-12">
+                <h1 class="text-center">All Post
+                  &nbsp;
+                  <span class="badge badge-success numAllPost">0
+                  </span>
+                </h1>
+                <hr class="my-4" />
+            </div>
+            <p>&nbsp;</p>
+            <div class="col-md-3">
+              <div class="alert alert-info">
+                <h1 style="text-align:right;" class="numAllPost">0</h1>
+
+              </div>
+              <p style="text-align:right;">
+                All post
+              </p>
+            </div>
+            <div class="col-md-4">
+              <div class="alert alert-info">
+                <h1 style="text-align:right;" class="numNotApprovePost">0</h1>
+              </div>
+              <p style="text-align:right;">
+                Not Approve
+              </p>
+            </div>
+            <div class="col-md-4">
+              <div class="alert alert-info">
+                <h1 style="text-align:right;color:red;" class="numApprovePost">0</h1>
+              </div>
+              <p style="text-align:right;">
+                Approve
+              </p>
+            </div>
+            <div class="col-md-3">
+              <div class="alert alert-info">
+                <h1 style="text-align:right;" class="numPublicPost">0</h1>
+              </div>
+              <p style="text-align:right;color:green;">
+                Public Post
+              </p>
+            </div>
+            <div class="col-md-3">
+              <div class="alert alert-info">
+                <h1 style="text-align:right;" class="numPrivatePost">0</h1>
+              </div>
+              <p style="text-align:right;">
+                Private Post
+              </p>
+            </div>
+            <div class="col-md-3">
+              <div class="alert alert-warning">
+                <h1 style="text-align:right;" class="numIndexPost">0</h1>
+              </div>
+              <p style="text-align:right;">
+                Index Post
+              </p>
+            </div>
+            <div class="col-md-2">
+              <div class="alert alert-info">
+                <h1 style="text-align:right;color:green;" class="numMyPost">0</h1>
+              </div>
+              <p style="text-align:right">
+                All my post
+              </p>
+            </div>
+            <p>&nbsp;</p>
+            <div class="col-lg-12">
+              <p>&nbsp;</p>
+              <div class="post_list">
+
+              </div>
+              <div class="post_pagin">
+
+              </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+
+
+    <div class="modal fade mdFrm">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title frmTitle">Create new post</h1>
+                    <button class="close" data-dismiss="modal">&times;
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <?php
+                    $fr = "admin/article/_form_ar.php";
+                    $this->load->view($fr);
+                    ?>
+                </div>
+                <div class="modal-footer">
+                <button class="btn btn-primary btnSave" type="submit" form="arForm">
+                Save
+                </button>
+                <button class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</section>
+<script>
+    $(function(){
+
+        var $el = $("#man_article");
+        //var $modal_status = $(".modal_status");
+        var manAr = (function(){
+
+            var $numAllPost = $el.find(".numAllPost");
+            var $numNotA = $el.find(".numNotApprovePost");
+            var $numApprove = $el.find(".numApprovePost");
+            var $numIndex = $el.find(".numIndexPost");
+            var $numPub = $el.find(".numPublicPost");
+            var $numPriPost = $el.find(".numPrivatePost");
+            var $numMyPost = $el.find(".numMyPost");
+
+            var $post_list = $el.find(".post_list");
+            var $post_pagin = $el.find(".post_pagin");
+            var lnEdit = $el.find(".lnEdit");
+            var lnDel = $el.find(".lnDel");
+            var lnAddAr = $el.find(".lnAddAr");
+            var $md = $el.find(".mdFrm");
+            var $mdTitle = $el.find(".frmTitle");
+            var $modal_status = $el.find(".modal_status");
+
+            //---------
+            //---form name
+            var frmArticle = $el.find("#arForm");
+            //---form element seo
+            var og_url = $el.find(".og_url");
+            var keyword = $el.find(".meta_keyword");
+            var des = $el.find(".meta_des");
+
+            var kw_id = $el.find(".kw_id");
+            var ar_id = $el.find(".ar_id");
+            var ar_user_id = $el.find(".ar_user_id");
+
+            //---form element
+            var ar_title = $el.find(".ar_title");
+            var ar_sum = $el.find(".ar_sum");
+            var sum_wordCount = $el.find(".sum_wordCount");
+            var ar_body = $el.find(".ar_body");
+
+            //----check box
+            var pub = $el.find(".ar_pub");
+            var show_index = $el.find(".show_index");
+            var approve = $el.find(".approve");
+
+            //---button
+            var btnSave = $el.find(".btnSave");
+
+            //---myself
+            var myId = "<?php echo $user_id;?>";
+            //---num
+            var numAll = 0;
+            //var numMy = 0;
+            //var numNotA = 0;
+            //var numA = 0;
+            //var numPub = 0;
+            //var numPri = 0;
+            //var numIndex = 0;
+            //--show the last result
+            var $sumResult = $el.find(".sumResult");
+            var $bodyResult = $el.find(".bodyResult");
+
+
+            //----showPostLabel
+            function showPostLabel(){
+              var numMy = 0;
+              var numNotA = 0;
+              var numA = 0;
+              var numPub = 0;
+              var numPri = 0;
+              var numIndex = 0;
+
+              var url = "<?php echo site_url("article/adminListAr");?>";
+              $.ajax({
+                url : url,
+                success : function(e){
+                  var rs = $.parseJSON(e);
+                  $.each(rs.get_all,function(i,v){
+                    //console.log(v);
+                    if(parseInt(v.ar_is_approve) !== 0){
+                      numA++;
+                    }else{
+                      numNotA++;
+                    }
+
+                    if(parseInt(v.ar_show_public) !== 0){
+                      numPub++;
+                    }else{
+                      numPri++;
+                    }
+
+                    if(parseInt(v.ar_show_index) !== 0){
+                      numIndex++;
+                    }
+
+                    if(parseInt(v.ar_user_id) === parseInt(myId)){
+                      numMy++;
+                    }
+                  });
+                  $numNotA.html(numNotA);
+                  $numApprove.html(numA);
+                  $numPub.html(numPub);
+                  $numPriPost.html(numPri);
+                  $numIndex.html(numIndex);
+                  $numMyPost.html(numMy);
+                }
+              });
+            }
+            //----------------------------
+            function getPostList(page=1){
+              $post_list.html("");
+              var url = "<?php echo site_url("article/adminListAr/");?>"+page;
+              $.ajax({
+                url : url,
+                success : function(e){
+                  //console.log(e);
+                  var rs = $.parseJSON(e);
+                  numAll = rs.get_all.length;
+                  $numAllPost.html(numAll);
+                  $.each(rs.get_ar,function(i,v){
+                    //console.log(v);
+
+                    var approveLabel = `<span class="badge badge-success">Yes</span>`;
+                    if(parseInt(v.ar_is_approve) === 0){
+                      approveLabel = `<span class="badge badge-danger">No</span>`;
+                    }
+
+                    var indexLabel = `<span class="badge badge-success">
+                    Yes
+                    </span>
+                    `;
+                    if(parseInt(v.ar_show_index) === 0){
+                      indexLabel = `<span class="badge badge-danger">
+                      No
+                      </span>
+                      `;
+                    }
+
+                    var tmp = `<div class="card">
+                      <div class="card-header">
+                        <h2 class="text-center">${v.ar_title}</h2>
+                      </div>
+                      <div class="card-body">
+                        ${v.ar_summary}
+                        <div class="table-responsive">
+                          <table class="table table-bordered">
+                            <tr>
+                              <th>IP</th>
+                              <td>${v.ar_post_ip}</td>
+                            </tr>
+                            <tr>
+                              <th>Approve</th>
+                              <td>
+                              Approve : ${approveLabel} &nbsp;&nbsp;
+                              show Index : ${indexLabel}
+                              </td>
+                            </tr>
+                            <tr>
+                              <th>Date</th>
+                              <td>
+                                  <p>
+                                  Add : ${v.date_add}&nbsp;&nbsp;
+                                  Edit : ${v.date_edit}
+                                  <p>
+                              </td>
+                            </tr>
+                            <tr>
+                              <th>Post By</th>
+                              <td>
+                              name : ${v.ar_post_by}&nbsp;
+                              IP : ${v.ar_post_ip}&nbsp;
+                              </td>
+                            </tr>
+                          </table>
+                        </div>
+                      </div>
+                      <div class="card-footer">
+                        <div class="float-right">
+                          <a class="btn btn-primary lnEdit" data-ar_id="${v.ar_id}">
+                            edit
+                          </a>
+                          <a class="btn btn-danger lnDel" data-ar_id="${v.ar_id}">
+                            delete
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                    <p>&nbsp;</p>
+                    `;
+                    $post_list.append(tmp);
+                  });
+
+                  if(rs.pagination){
+                    $post_pagin.html(rs.pagination);
+                  }
+                }
+              });
+            }
+
+            function getSummary(){
+              getPostList();
+              showPostLabel();
+            }
+            //--------------------
+            function getFrm(cmd,id){
+                $mdTitle.html("");
+                tinymce.activeEditor.setMode("design");
+                frmArticle.trigger("reset");
+                switch(cmd){
+                    case"edit":
+                        var url = "<?php echo site_url("article/adminEditAr/");?>"+id;
+                        $.ajax({
+                            url : url,
+                            success : function(e){
+                                var rs = $.parseJSON(e);
+                                $.each(rs.get_ar,function(i,v){
+                                    //console.log(v);
+
+                                    kw_id.val(v.kw_id);
+                                    ar_id.val(v.ar_id);
+                                    ar_user_id.val(v.ar_user_id);
+                                    og_url.val(v.og_url);
+                                    keyword.val(v.kw_page_keyword);
+                                    des.val(v.kw_page_des);
+
+                                    $mdTitle.html(`Editing ${v.ar_title}`);
+                                    var showStatus = `<span class="alert alert-warning">
+                                    Editing ${v.ar_title}...
+                                    </span>`;
+                                    $modal_status.html(showStatus).show();
+                                    ar_title.val(v.ar_title);
+                                    ar_sum.val(v.ar_summary);
+                                    ar_body.val(v.ar_body);
+                                    tinymce.activeEditor.setContent(v.ar_body);
+
+                                    var p = parseInt(v.ar_show_public);
+                                    if(p !== 0){
+                                        pub.prop("checked",true);
+                                    }
+
+                                    //---approve
+                                    var a =  parseInt(v.ar_is_approve);
+                                    if(a !== 0){
+                                        approve.prop("checked",true);
+                                    }
+
+                                    //--show index
+                                    var sIndex = parseInt(v.ar_show_index);
+                                    if(sIndex !== 0){
+                                        show_index.prop("checked",true);
+                                    }
+
+
+
+                                });
+                            }
+
+                        });
+                    break;
+                    default:
+                        $mdTitle.html("Create new Post");
+                        frmArticle.trigger("reset");
+                        showTemplate();
+                    break;
+                }
+
+                  $($md).modal("show");
+
+            }
+            //---------------
+            //-----showSummary
+            function showSummary(){
+                var sum = ar_sum.val();
+                var showSum = `${sum}`;
+                $sumResult.html(showSum);
+            }
+            //------
+            //----count the word in ar_sum on typing
+            function ar_sumCount(){
+                var sum = parseInt(ar_sum.val().length);
+                sum_wordCount.html(sum);
+                showSummary();
+            }
+            //-----
+            function getBodyContent(){
+                var bd = ar_body.val();
+                $bodyResult.html(bd);
+            }
+
+            //---arFirstSave
+            function arFirstSave(){
+                //---will do first save then show in edit mode
+                if(ar_id.val()){
+                    //alert(`The id is ${ar_id.val()} no need to run first save!`);
+                    return false;
+                }else{
+                    var url = "<?php echo site_url("article/adminFirstSave");?>";
+                    var data = {ar_title : ar_title.val()};
+                    //alert(ar_title.val());
+
+                    $.post(url,data,function(e){
+                        var rs = $.parseJSON(e);
+                        ar_id.val(rs.ar_id);
+                        kw_id.val(rs.kw_id);
+                        console.log(rs);
+                        showTemplate();
+                    });
+                }
+
+
+            }
+            //----------------
+            //------- showTemplate
+            function showTemplate(){
+              var sum_tmp = "";
+              var body_tmp = "";
+              var img_sample_1 = "http://cdn.differencebetween.net/wp-content/uploads/2018/01/Difference-between-Coding-and-Programming.jpg";
+
+              var img_sample_2 = "https://static.dezeen.com/uploads/2017/08/clifton-house-project-architecture_dezeen_hero-1-852x479.jpg"; //--house
+              
+              //---sum 
+              sum_tmp = `<div class="row">
+                <div class="col-lg-4">
+                  <img src="${img_sample_1}" class="responsive" />
+                </div>
+                <div class="col-lg-8">
+                <p>the pattern</p>
+              
+                </div>
+              </div>
+              `;
+              body_tmp = `<section id="ar_body">
+              <div class="row">
+                <div class="col-lg-12">
+                <img src="${img_sample_2}" class="responsive" />
+                <p class="text-center">Photo name</p>
+                </div>
+                <div class="col-lg-12">
+                  <p>The paragraph text</p>
+                </div>
+              </div>
+              </section>
+              `;
+              ar_sum.val(sum_tmp);
+              tinymce.activeEditor.setContent(body_tmp);
+
+            }
+
+            //-------saveAr
+            function saveAr(){
+                btnSave.unbind();
+                frmArticle.submit(function(o){
+                    o.preventDefault();
+                    var url = $(this).attr("action");
+                    var data = $(this).serialize();
+                    $.post(url,data,function(o){
+                        //alert(o);
+                        var rs = $.parseJSON(o);
+                        var showMsg = `<span class="alert alert-success">Success : data has been save</span>`;
+                        $modal_status.html(showMsg).show();
+                        setTimeout(function(){
+                          getSummary();
+                          ar_id.val(rs.ar_id);
+                          kw_id.val(rs.kw_id);
+                          getFrm("edit",rs.ar_id);
+                        },4000);
+                    });
+                });
+            }
+            //-----------
+            //---delAr
+            function delAr(cmd,id){
+                switch(cmd){
+                    case"delete":
+                        var url = "<?php echo site_url("article/adminDelAr/");?>"+id;
+                        $.ajax({
+                            url : url,
+                            success : function(e){
+                                alert(e);
+                            }
+                        });
+                    break;
+                    default:
+                        var msg = `You are about to delete post id ${id} this operation cannot be undo\n are you sure to delete?`;
+                        if(confirm(msg) === true){
+                            delAr("delete",id);
+                        }else{
+                            return false;
+                        }
+                    break;
+                }
+            }
+
+            //-----
+            function getEvent(){
+
+                //getFrm();
+                getSummary();
+                //---ar_title blur
+                ar_title.on("blur",function(){
+                    arFirstSave();
+                });
+                //---
+                ar_sum.on("keyup",function(){
+                    ar_sumCount();
+                });
+
+
+                //--ar
+                ar_body.on("blur",function(){
+                    getBodyContent();
+                });
+
+                //---lnAddAr
+                lnAddAr.on("click",function(){
+                    getFrm();
+                });
+
+                //---btnEdit
+                $post_list.delegate(".lnEdit","click",function(){
+                  var id = $(this).attr("data-ar_id");
+                  getFrm("edit",id);
+                });
+
+                //--btnDel
+                //---btnEdit
+                $post_list.delegate(".lnDel","click",function(){
+                  var id = $(this).attr("data-ar_id");
+                  delAr(null,id);
+                });
+                /*
+                //--edit article
+                lnEdit.on("click",function(e){
+                    e.preventDefault();
+                    var id = $(this).attr("data-ar_id");
+                    getFrm("edit",id);
+                });
+                //----lnDel
+                lnDel.on("click",function(e){
+                    e.preventDefault();
+                    var id = $(this).attr("data-ar_id");
+                    delAr(null,id);
+                });
+                */
+                $post_pagin.delegate(".pagination a","click",function(e){
+                  e.preventDefault();
+                  var page = $(this).attr("data-ci-pagination-page");
+                  //alert(page);
+                  getPostList(page);
+                });
+
+                //---btnSave click
+                btnSave.on("click",function(){
+                    saveAr();
+                });
+            }
+            return{ getEvent:getEvent}
+        })();
+
+        manAr.getEvent();
+    });
+
+</script>

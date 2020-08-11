@@ -1,0 +1,129 @@
+<section class="tour" id="man_tour">
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <h1 class="text-center">Tour Program</h1>
+            <hr class="my-4" />
+            <p>The tour program below only can create by Admin.</p>
+        </div>
+    </div>
+</div>
+<div class="container-fluid">
+    
+    <div class="row">
+        <div class="col-lg-4">
+            <h2>Menu Tour</h2>
+            <a href="<?php echo site_url("tour/admin");?>">Manage Tour</a>
+        </div>
+        <div class="col-lg-8">
+
+            
+            <br />
+            <div class="tour_list"></div>
+            <div class="tour_pagin"></div>
+        </div>
+    </div>
+
+</div>
+</section>
+<script>
+
+$(function(){
+    var $el = $("#man_tour");
+
+    var tourList = (function(){
+        
+        var $tour_list = $el.find(".tour_list");
+        var $tour_pagin = $el.find(".tour_pagin");
+        var $tour_num = $el.find(".tour_num");
+
+        function getTourList(page=1){
+            $tour_list.html("");
+
+            var url = "<?php echo site_url("tour/modGetTourList/");?>"+page;
+            $.ajax({
+                url : url,
+                success : function(e){
+                    //alert(e);
+                    var rs = $.parseJSON(e);
+                    console.log(rs);
+                    
+                    $.each(rs.get_tour,function(i,v){
+                        var editUrl = "<?php echo site_url("tour/modEditTour/");?>"+v.t_id;
+                        var onSalse = `
+                        <span class="badge badge-success">
+                        Yes
+                        </span>
+                        `;
+                        if(parseInt(v.mark_draft) !== 0){
+                            onSalse = `
+                        <span class="badge badge-danger">
+                        No
+                        </span>
+                        `; 
+                        }
+                        var tmp = `
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                ${v.t_name}
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-lg-8">
+                    ${v.t_summary}
+                </div>
+                <div class="col-lg-4">
+                    <div class="table-responsive">
+                        <table class="table table-brodered">
+                            <tr>
+                                <th>Tour on salse</th>
+                                <td>${onSalse}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button class="btn btnprimary btnEditTour" data-t_id="${v.t_id}">Edit</button>
+        </div>
+    </div>                    
+    <br />                   
+                        `;
+
+                    $tour_list.append(tmp);
+                    });
+
+                    $tour_pagin.html(rs.pagination);
+                    //$tour_pagin.html("show me now");
+                }
+            });
+        }
+
+        //----------------
+        //---editTour
+        function editTour(id){
+            alert("will open edit page "+id);
+        }
+        function getSummary(){
+            getTourList();
+        }
+        function getEvent(){
+            getSummary();
+
+
+            $tour_list.delegate(".btnEditTour","click",function(){
+                var id = $(this).attr("data-t_id");
+                editTour(id);
+            });
+        }
+        return{getEvent: getEvent}
+    })();
+
+    //--call function
+    tourList.getEvent();
+});
+
+</script>

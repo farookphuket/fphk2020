@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <?php 
+        $tag_head = "component/_tag_in_head.php";
+        $this->load->view($tag_head);
+    ?>
+    <title>
+    <?php //echo $meta_title; ?>
+    </title>
+    
+</head>
+<body id="page-top">
+
+<section class="bg-primary" id="about">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto text-center">
+            <h2 class="section-heading text-white">This page can be close</h2>
+            <hr class="light my-4">
+            <p class="text-faded mb-4">This page or Tab can be close after you have read the content below.</p>
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <?php $this->load->view($subview); ?>
+
+
+    <?php 
+        $tag_tail = "component/_tag_in_tail.php";
+        $this->load->view($tag_tail);
+    ?>
+</body>
+</html>
+
+
+

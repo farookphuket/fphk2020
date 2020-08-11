@@ -1,0 +1,57 @@
+<?php 
+
+
+
+foreach($get_ar as $row):
+
+    ?>
+<div class="jumbotron">
+    <h2><?php echo $row->ar_title;?></h2>
+</div>
+<div class="row">
+    <div class="col-sm-4">
+    <h3>Post by 
+        &nbsp;<span class="label label-info">
+            <?php echo $row->ar_post_by;?>
+        </span>
+    </h3>
+    </div>
+    <div class="col-sm-4">
+    <h4>Create Date 
+        <span class="label label-info">
+            <?php echo $row->date_add;?>
+        </span>
+    </h4>
+    <h4>last Update
+        <span class="label label-warning">
+            <?php echo $row->date_edit;?>
+        </span>
+    </h4>
+    </div>
+</div>
+<div class="container">
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="page-header">
+                <h1><?php echo $row->ar_title;?></h1>
+            </div>
+            <span>
+                <?php echo $row->ar_summary;?>
+            </span>
+            <br style="clear:both"/>
+            <?php echo $row->ar_body;?>
+        </div>
+    </div>
+    
+  
+    <br style="clear:both" />
+    <?php
+            $this->load->view("comment/comment_index.php");
+    ?>
+</div>
+
+
+    <?php
+
+endforeach;

@@ -1,0 +1,44 @@
+<?php
+
+  $own_name = $owner_name;
+  $own_email = $owner_email;
+  $ar_title = "";
+  $ar_sum = "";
+  $ar_body = "";
+  foreach($get_ar as $row):
+    $ar_title = $row->ar_title;
+    $ar_sum = $row->ar_summary;
+    $ar_body = $row->ar_body;
+  endforeach;
+?>
+<section id="article">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <h1 class="text-center">
+          <?php echo $ar_title;?>
+        </h1>
+        <p>
+          Post By : <strong><?php echo $own_name;?></strong>
+          <input type="hidden" class="page_owner_email" name="page_owner_email" value="<?php echo $own_email;?>"/>
+          <input type="hidden" class="page_owner_name" name="page_owner_name" value="<?php echo $own_name;?>" />
+        </p>
+        <p>&nbsp;</p>
+      </div>
+      <div class="col-lg-12">
+        <?php echo $ar_sum;?>
+        <p>&nbsp;</p>
+      </div>
+      <div class="col-lg-12">
+        <?php echo $ar_body;?>
+        <p>&nbsp;</p>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+  $(function(){
+    var owner_email = "<?php echo $own_email;?>";
+    Cookies.set("ck_page_owner_email",owner_email);
+  });
+</script>

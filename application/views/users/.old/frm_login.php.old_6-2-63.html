@@ -1,0 +1,121 @@
+<!--last edit Sun 27 Jan 2019-->
+<section  id="member">
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-8 mx-auto">
+              <h2 class="text-center ">Member Login</h2>
+
+              <hr class="my-4" />
+
+              <form class="form-horizontal" id="loginForm" action="<?php echo site_url("login/getLogin");?>">
+                <div class="form-group">
+                  <label class="label-control col-sm-4">User Name</label>
+                  <div class="col-sm-6">
+                    <input type="text" name="user_name" class="form-control user_name" required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="label-control col-sm-4">Password</label>
+                  <div class="col-sm-6">
+                    <input type="password" name="user_pass" class="form-control user_pass" required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="label-control col-sm-4">&nbsp;</label>
+                  <div class="col-sm-6">
+                    <div class="row">
+                    <button class="btn btn-sm btn-primary btnLogin" type="submit" form="loginForm">Login</button>
+
+                    <a class="btn btn-sm btn-warning lnForgot" style="font-weight:bold;color:white;"  href="<?php echo site_url("login/forgotPass"); ?>" type="button">Forgot Password</a>
+
+                    <a class="btn btn-sm btn-primary lnRegister" href="<?php echo site_url("register");?>">Register</a>
+
+                    </div>
+                  </div>
+                </div>
+              </form>
+
+            </div>
+
+            <!--show result-->
+            <div class="col-lg-8 loginResult">
+
+            </div>
+
+          </div>
+        </div>
+      </section>
+<script>
+
+$(function(){
+
+    var $p = $("#member");
+
+    var login = (function(){
+
+
+        var $frm = getEl("#loginForm");
+        var user_name = getEl(".user_name");
+        var user_pass = getEl(".user_pass");
+
+        var btnLogin = getEl(".btnLogin");
+        var $fResult = getEl(".loginResult");
+
+
+        function getLogin(){
+            btnLogin.unbind();
+            $fResult.html("");
+
+            $frm.submit(function(e){
+                e.preventDefault();
+                var url = $(this).attr("action");
+                var data = $(this).serialize();
+                $.post(url,data,function(e){ 
+                    //alert(e);
+                    var rs = $.parseJSON(e);
+                    var tmp = "";
+                    if(parseInt(rs.error) === 0){
+                        tmp = `<div class="alert alert-success">${rs.msg}</div>`;                   
+                    }else{
+                        
+                        tmp = `<div class="alert alert-danger">${rs.msg}</div>`;                   
+                    }
+                    $fResult.html(tmp).show();
+                    setTimeout(function(){ 
+                        location.href=rs.url;
+                    },4000);
+                });
+            });
+
+
+        }
+
+        function setFocus(el){
+            el = getEl(el);
+            var p_val = el.val();
+            if(!p_val){
+                el.focus();
+            }else{
+                el.select().focus();
+            }
+        }
+
+        function getEl(el){
+            return $p.find(el);
+        }
+        function getEvent(){
+            user_name.on("mouseenter",function(){
+                setFocus(this);
+            });
+            btnLogin.on("click",function(){
+                getLogin();
+            });
+        }
+        return{getEvent:getEvent}
+    })();
+    login.getEvent();
+
+});
+
+
+</script>

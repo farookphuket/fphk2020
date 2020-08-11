@@ -1,0 +1,78 @@
+<div class="container">
+  <div class="jumbotron">
+    <h1>Gallery of <?php echo $user_name; ?></h1>
+
+  </div>
+
+<!--Modal start-->
+<div class="modal-dialog">
+<div class="modal-content">
+<div class="modal-header">
+<h1>Add new Picture</h1>
+</div>
+<div class="modal-body">
+<?php
+    echo form_open_multipart("gallery/ajaxOwnUpload","class='form-horizontal' id='frmUpload'");
+?>
+<div class="form-group">
+<label class="label-control col-sm-2">Pic Name</label>
+<div class="col-sm-6">
+<input type="text" class="form-control txtPicTitle" name="txtPicTitle" required oninvalid="this.setCustomValidity('Please Enter valid title | ใส่หัวข้อให้สักนิดเหอะ')" oninput="setCustomValidity('')">
+</div>
+</div>
+
+<div class="form-group">
+  <label class="label-control col-sm-2">Show Public</label>
+  <div class="col-sm-6">
+    <select required class="form-control pic_pub" name="pic_pub">
+      <option value=''>Select</option>
+      <option value='0'>NO</option>
+      <option value=1>Yes</option>
+    </select>
+  </div>
+</div>
+
+
+<div class="form-group">
+<label class="label-control col-sm-2"></label>
+<div class="col-sm-6">
+<input type="file" name="userfile" class="userfile" hidden required>
+</div>
+</div>
+<div class="form-group">
+</div>
+
+</div>
+<div class="modal-footer">
+<button class="btn btn-info btnUpload" type="submit">
+Upload
+</button>
+
+</form>
+</div>
+</div>
+
+  
+  
+  <div id="show_pic" class="cf">
+
+  </div>
+<div class="page-header">
+  <h2>Photo Gallery 1.02</h2>
+  <h3>You have คุณมี
+  <span class="label label-info pic_count">0</span> photo(s) รูป
+  </h3>
+</div>
+<div class="gallery cf photo_list">
+
+</div>
+<div class="pagination pagin_div">
+
+</div>
+</div>
+</div><!--end of div.container-->
+
+
+
+<?php 
+    require("ownJS.php");

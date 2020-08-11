@@ -1,0 +1,260 @@
+<section id="tour">
+    <div class="status"></div>
+    <div class="row">
+        <div class="col-lg-12">
+            <h1 class="text-center frm_title">Add new Tour</h1>
+        </div>
+        <h1>&nbsp;</h1>
+        <div class="container">
+
+            <?php 
+                //var_dump($get);
+                $keyword = "";
+                $keydes = "";
+                $rdUrl = "";
+                $t_name = "";
+                $t_id = "";
+            if($get):
+                foreach($get as $row):
+                    $keyword = $row->kw_page_keyword;
+                    $keydes = $row->kw_page_des;
+                    $rdUrl = $row->kw_canonical;
+                    $t_name = $row->t_name;
+                    $t_id = $row->t_id;
+                endforeach;
+            endif;
+            ?>
+            <form id="fTour" class="form-horizontal" action="<?php echo site_url("tour/modSaveTour");?>">
+                
+                <div class="form-group">
+                    <label for="meta_url">Meta URL</label>
+                    <input type="text" class="form-control meta_url" name="meta_url" id="meta_url" value="<?php echo $rdUrl;?>">
+                </div>
+                
+                <div class="form-group">
+                    <label for="meta_keyword">Keyword</label>
+                    <input type="text" class="form-control meta_keyword" name="meta_keyword" id="meta_keyword" value="<?php echo $keyword;?>" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="meta_description">Description Key</label>
+                    <input type="text" class="form-control meta_description" name="meta_description" id="meta_description" value="<?php echo $keydes;?>">
+                </div>
+                <h2>&nbsp;</h2>
+                <div class="form-group">
+                    <label for="tour_title">
+                    Tour Title
+                    </label>
+                    <input type="text" name="tour_title" id="tour_title" class="form-control tour_title" value="<?php echo $t_name;?>" required/>
+                    
+                    <input type="hidden" class="kw_id" name="kw_id" />
+                    <input type="hidden" class="tour_id" name="tour_id" value="<?php echo $t_id;?>"/>
+                </div>
+
+                <!--duration location price-->
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="tour_duration">
+                            Tour Duration
+                            </label>
+                            <input type="text" name="tour_duration" id="tour_duration" class="form-control tour_duration col-sm-8" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="tour_location">
+                            Tour Location
+                            </label>
+                            <input type="text" name="tour_location" id="tour_location" class="form-control tour_location col-sm-8">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="tour_fullprice">
+                            Tour Price
+                            </label>
+                            <input type="number" name="tour_fullprice" id="tour_fullprice" class="form-control tour_fullprice col-sm-4">
+                        </div>
+                    
+                    </div>
+                
+                </div>
+
+                <!--summary--> 
+                <div class="form-group">
+                    <label for="tour_summary">Tour summary
+                    </label>
+                    <textarea class="form-control tour_summary" name="tour_summary" id="tour_summary"  rows=10></textarea>
+                </div>
+
+                <!--detail--> 
+                <div class="form-group">
+                    <label for="tour_detail">Tour Detail
+                    </label>
+                    <textarea class="form-control tour_detail" name="tour_detail" id="tour_detail"  rows=25></textarea>
+                </div>
+                <h1>&nbsp;</h1>
+                <div class="res_sum"></div>
+                <div class="res_body"></div>
+                <h1>&nbsp;</h1>
+                <div class="form-check-inline">
+                    <label class="form-check-label">
+                    <input type="checkbox" class="form-check-input mark_draft" name="mark_draft" id="mark_draft">
+                    Save As Draft | Please uncheck this to public your program
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <div class="float-right">
+                        <button class="btn btn-primary btn-sm btnSave" type="submit">Save
+                        </button>
+                        <a href="<?php echo site_url("tour");?>" class="btn btn-sm btn-danger">Cancle</a>
+                    </div>
+                    
+                </div>
+            </form>
+
+                
+        
+        </div>
+    </div>
+</section>
+<script>
+ 
+ //----jQuery
+ $(function(){
+    var $el = $("#tour");
+    var $page_status = $el.find(".status");
+
+
+    var manTour = (function(){
+
+
+        
+        var $f = $el.find("#fTour");
+        var $fTitle = $el.find(".frm_title");
+        var kw_id = $el.find(".kw_id");
+        var t_id = $el.find(".tour_id");
+
+        //--checkbox
+        var mark_draft = $el.find(".mark_draft");
+        
+        var tour_title = $el.find(".tour_title");
+        var tour_sum = $el.find(".tour_summary");
+        var tour_detail = $el.find(".tour_detail");
+        var price = $el.find(".tour_fullprice");
+        var location = $el.find(".tour_location");
+        var duration = $el.find(".tour_duration");
+
+        var btnSave = $el.find(".btnSave");
+        var cur_url = "<?php echo current_url();?>";
+
+
+        //----check url
+        function checkUrl(){
+            var editUrl = "<?php echo site_url("tour/create/");?>"+t_id.val();
+            if(cur_url === editUrl){
+                setFirstSave();
+            }else{
+                alert(`Create new tour`);
+            }
+        }
+        
+        function editTour(id){
+            //alert(`We will edit ${id} now`);
+            //---get the info load them in the form to submit with ajax
+            var url = "<?php echo site_url("tour/modEditTour/");?>"+id;
+            $.ajax({
+                url : url,
+                success : function(e){
+                    //alert(e);
+                    var rs = $.parseJSON(e);
+                    $.each(rs.get_tour,function(i,v){
+                        t_id.val(v.t_id);
+                        kw_id.val(v.kw_id);
+                        $fTitle.html(`editing..${v.t_name}`);
+                        tour_sum.val(v.t_summary);
+                        tour_detail.val(v.t_program);
+                        //--price duration location
+                        price.val(v.full_price);
+                        location.val(v.t_destination 	);
+                        duration.val(v.t_duration);
+
+                        //console.log(v);
+                        if(parseInt(v.mark_draft) !== 0){
+                            //console.log(v.mark_draft);
+                            mark_draft.prop("checked",true);
+                        }
+                    });
+                }
+            });
+
+        }
+        
+        //---------
+        //----saveTour
+        function saveTour(){
+            btnSave.unbind();
+            $f.submit(function(e){
+                e.preventDefault();
+                var url = $(this).attr("action");
+                var data = $(this).serialize();
+                $.post(url,data,function(e){
+                    var rs = $.parseJSON(e);
+                    $page_status.html(rs.msg).show();
+                    setTimeout(function(){
+                        $page_status.html("Loading...").fadeOut("slow");
+                    },2000);
+                });
+            });
+        }
+        //----setFirstSave
+        function setFirstSave(){
+            if(t_id.val()){
+                //---no need to save
+                //alert(`The id is ${t_id.val()}`);
+                editTour(t_id.val());
+            }else{
+                
+                if(tour_title.val()){
+                    var url = "<?php echo site_url("tour/seoFirstSave");?>";
+                    var data = {tour_title:tour_title.val()};
+                    $.ajax({
+                        type : "post",
+                        url : url,
+                        data : data,
+                        success : function(e){
+                            var rs = $.parseJSON(e);
+                            $.each(rs.get_tour,function(i,v){
+                                kw_id.val(v.kw_id);
+                                t_id.val(v.t_id);
+                                editTour(v.t_id);
+                            });
+                        }
+                    });
+                }else{
+                    return false;
+                }
+            }
+        }
+        //--------------
+        function getEvent(){
+            //---check current url
+            checkUrl();
+            
+            //$page_status.html("Loading...").show();
+            tour_title.on("blur",function(){
+                setFirstSave();
+            });
+
+            btnSave.on("click",function(){
+                saveTour();
+            });
+        }
+        return{getEvent : getEvent}
+    })();
+
+    manTour.getEvent();
+
+ });
+
+</script>

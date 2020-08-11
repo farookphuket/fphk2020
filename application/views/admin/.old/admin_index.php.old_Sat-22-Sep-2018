@@ -1,0 +1,163 @@
+
+
+<div class="page-header">
+<h1>Notification <?php echo $num_notice;?> item(s).</h1>
+</div>
+<div class="what_new">
+    <ul>
+        <li class="alert alert-success">
+            Fri 20 Apr. 2018 : add feature {Select one,Select All} to notification.
+        </li>
+    </ul>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Notice Title</th>
+                
+                <th width="10%">
+                    <div class="row">
+                    <span>Read</span>
+                    <input type="checkbox" class="select_all" name="select_all">
+                    </div>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php 
+                if($num_notice == 0):
+                    
+                    ?>
+                <tr>
+                    <td colspan="3">
+                        <div class="alert alert-danger">
+                            There is no any notification yet.
+                        </div>
+                    </td>
+                </tr>
+                    <?php
+                endif;
+                $num = 0;
+                foreach($get_notice as $row):
+                    $num++;
+
+                    ?>
+                    <tr>
+                    <td><?php echo $num;?></td>
+                    <td>
+                        
+                        <div class="row">
+                            <span>
+                                <?php echo $row->notice_title;?>
+                            </span>
+                            <p>
+                                <?php echo $row->notice_body;?>
+                            </p>
+                            <p>
+                                Action on <?php echo $row->notice_date;?>
+                            </p>
+                        </div>
+                    </td>
+                    <td>
+                        <input type="checkbox" name="mark_read" class="mark_read" data-note_id="<?php echo $row->notice_id;?>">
+                    </td>
+
+                    </tr>
+                    <?php
+                endforeach;
+                if($num_notice > $per_page):
+
+                    ?>
+                    <tr>
+                    <td colspan="3">
+                        <?php echo $this->pagination->create_links();?>
+                    </td>
+                    </tr>
+                    <?php
+                endif;
+            ?>
+        </tbody>
+    </table>
+</div>
+<div class="row">
+    <div class="col-sm-6">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h2>Article Summary</h2>
+            </div>
+            <div class="panel-body">
+                <div id="arShowList">
+
+                </div>
+
+                
+            </div>
+            <div class="panel-footer">
+                Article Ajax Call
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6">
+        
+        <div class="panel panel-warning">
+            <div class="panel-heading">
+                <h2>Booking Summary</h2>
+            </div>
+            <div class="panel-body">
+                <div id="bkShowList">
+
+                </div>
+
+                
+            </div>
+            <div class="panel-footer">
+                Ajax show booking
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6">
+        <div class="panel panel-warning">
+            <div class="panel-heading">
+                <h2>FAQ Summary</h2>
+            </div>
+            <div class="panel-body">
+                <div id="fqShowList">
+
+                </div>
+
+                
+            </div>
+            <div class="panel-footer">
+                Call by Ajax
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6">
+        <div class="panel panel-danger">
+            <div class="panel-heading">
+                <h2>Member Summary</h2>
+            </div>
+            <div class="panel-body">
+                <div id="mShowList">
+
+                </div>
+
+                
+            </div>
+            <div class="panel-footer">
+                Show member summary ajax call
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+<?php 
+    require("adminJS.php");

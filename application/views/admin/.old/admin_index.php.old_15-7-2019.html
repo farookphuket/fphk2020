@@ -1,0 +1,64 @@
+<!--last edit on 11/4/19-->
+
+<section id="notice">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h2>Notification</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<section id="booking">
+    <div class="row">
+
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h2>Booking</h2>
+                </div>
+                <div class="card-body">
+                    <p>Show list of booking only last 10 record</p>
+                    <ul>
+                        <li>
+                        <a href="#">Name user | Date of going | pay status</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        
+    </div>
+</section>
+<section id="tour">
+    
+        <div class="card">
+            <div class="card-header">
+                <h2 class="text-center tour_head">Tour</h2>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <div class="list-group-item list-group-item-action active text-center">Show Tour List</div>
+                    <div class="tour_list"></div>
+                    <br />
+                    <div class="tour_pagin"></div>
+                </div>
+            </div>
+        </div>
+    
+</section>
+<section id="user">
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="text-center userHead">New Member</h2>
+        </div>
+    </div>
+        
+</section>
+<?php 
+    $js = "admin/adminJS.php";
+    $this->load->view($js);

@@ -1,0 +1,230 @@
+<script>
+
+
+$(function(){
+
+    var $el = $("#container");
+    var modal_status = $el.find(".modal_status");
+
+
+    var booking = (function(){
+
+        var lnEdit = $el.find(".lnEdit");
+
+        var url = "<?php echo site_url("booking/moderate");?>";
+
+        var bk_result = $el.find(".book_result");//show result above the form
+
+        //--modal to show booking result and form
+        var mdBook = $el.find(".mdBook");
+
+        //--form to confirm booking
+        var frmBooking = $el.find("#frmBooking");
+        var bk_id = $el.find(".bk_id");
+        var h_done = $el.find(".has_done");
+        var h_txt = $el.find(".done_txt");
+        h_txt.attr("placeholder","Not On Tour ลูกค้ายังไม่เดินทาง")
+        .val("");
+
+        //--set confirm status
+        var b_conf = $el.find(".bk_confirm");
+        var conf_txt = $el.find(".conf_txt");
+        conf_txt.attr("placeholder","Not Confirm ยังไม่ยืนยัน");
+        
+        var btnSave = $el.find(".btnSave");
+
+        //--set confirm
+        function setConf(){
+            var c = 0;
+
+            var c_txt = "Not Confirm ยังไม่ยืนยัน";
+            conf_txt.removeClass("label-success")
+            .addClass("label-danger");
+            
+            if(b_conf.is(":checked") === true){
+                c = 1;
+                c_txt = "Has Confirm ยืนยันแล้ว";
+                conf_txt.removeClass("label-danger")
+                .addClass("label-success");
+            }
+            conf_txt.val(c_txt);
+            parseInt(c);
+            b_conf.val(c);
+        }
+
+        //--set done
+        function setDone(){
+            var d = 0;
+            var t = "Not On Tour ยังไม่ไป";
+            h_txt.removeClass("label-success")
+            .addClass("label-danger");
+            if(h_done.is(":checked") === true){
+                t = "Done Tour ไปแล้ว";
+                d = 1;
+                h_txt.removeClass("label-danger")
+                .removeClass("label-warning")
+                .addClass("label-success");
+            }
+            h_txt.val(t);
+            h_done.val(d);
+        }
+
+        function editBooking(id){
+            bk_result.html("");
+            b_conf.val(0);
+            var data = {
+                bk_id : id,
+                cmd : "edit"
+            };
+            $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    
+                    $.each(rs.get,function(i,v){
+                        $(".modal-title").html(`ข้อมูลจองของ ${v.bk_name} กรุณายืนยันสถานะการจ่ายเงิน ก่อนอนุมัติ`);
+                        var tmp = `
+                        <table class="table table-striped">
+                            <tr>
+                                <th width="35%">Name </th>
+                                <td>${v.bk_name}</td>
+                            </tr>
+                            <tr>
+                                <th>Email </th>
+                                <td>${v.bk_email}</td>
+                            </tr>
+                            <tr>
+                                <th>Tour </th>
+                                <td>${v.tour_name}</td>
+                            </tr>
+                            <tr>
+                                <th>Person/pax(s).</th>
+                                <td>${v.bk_num}</td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <div>Booking Date </div>
+                                    <div>Date Departure </div>
+                                </th>
+                                <td>
+                                    <h4>วันจอง
+                                        <span class="label label-default">  
+                                            ${v.bk_date}
+                                        </span>
+                                    </h4>
+                                    <h3>วันเดินทาง/วันทำทัวร์
+                                    <span class="label label-danger">${v.going_date}</span>
+                                    </h3>
+                                </td>
+                            </tr>
+                            <tr>
+                            <th>Customer Detail </th>
+                            <td>
+                                <div class="alert alert-info">
+                                    ${v.bk_more}
+                                </div>
+                            
+                            
+                            </td>
+                            </tr>
+                            <tr>
+                                <th>Price</th>
+                                <td>
+                                    <h4>
+                                        ราคาเต็ม
+                                        <span class="label label-info">
+                                        ${v.price_total}
+                                        </span>
+                                    </h4>
+                                    <h4>
+                                        เงินต้องมัดจำ
+                                        <span class="label label-warning">
+                                            ${v.price_of_deposite}
+                                        </span>
+                                    </h4>
+                                    <h4>
+                                        ต้องเก็บเพิ่ม
+                                        <span class="label label-danger">
+                                            ${v.collect_more}
+                                        </span>
+                                    </h4>
+                                </td>
+                            </tr>
+                        </table>
+                        `;
+                        //--show in table result
+                       bk_result.append(tmp);
+                        var d_txt = "Not On tour ลูกค้ายังไม่เดินทาง";
+                        h_txt.addClass("label-warning");
+                        if(parseInt(v.mark_as_done)!== 0){
+                            d_txt = "ON Tour ลูกค้าเดินทางแล้ว";
+                        }
+                        h_txt.val(d_txt);
+
+                        //--pay
+                        var c_txt = "Not Confirm ยังไม่ยืนยัน";
+                        conf_txt.removeClass("label-success")
+                        .addClass("label-danger");
+                        if(parseInt(v.bk_confirm) !== 0){
+                            c_txt = "Has Confirm ยืนยันแล้ว";
+                            b_conf.prop("checked",true);
+                            conf_txt.removeClass("label-danger")
+                            .addClass("label-success");
+                        }
+                        conf_txt.val(c_txt);
+                        bk_id.val(v.bk_id);
+                        
+                        $(mdBook).modal("show");
+                    });
+                }
+            });
+        }
+
+        //---save change
+        function bookSave(){
+            btnSave.unbind();
+            frmBooking.submit(function(o){
+                o.preventDefault();
+                var url = $(this).attr("action");
+                var data = $(this).serialize()+"&cmd=save";
+                $.post(url,data,function(o){
+                    var rs = $.parseJSON(o);
+                    //console.log(e);
+                    modal_status.html(rs.msg);
+                    setTimeout(function(){
+                        location.reload();
+                    },2000);
+                    
+                });
+            });
+        }
+
+        function getEvent(){
+            lnEdit.on("click",function(){
+                var id = $(this).attr("data-bk_id");
+                editBooking(id);
+            });
+
+            //--checkbox conf
+            b_conf.on("change",function(){
+                setConf();
+            });
+
+            //--checkbox done
+            h_done.on("change",function(){
+
+                setDone();
+            });
+
+            btnSave.on("click",function(){
+                bookSave();
+            });
+        }
+        return{getEvent : getEvent}
+    })();
+
+    booking.getEvent();
+});
+</script>

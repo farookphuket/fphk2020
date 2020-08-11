@@ -1,0 +1,533 @@
+<script> 
+
+//jQuery
+$(function(){
+
+    var $el = $(".container");
+    var page_status = $el.find(".status");
+    var modal_status = $el.find(".modal_status");
+
+    /*
+    member can read the public post from oter
+
+    */
+    var pubAr = (function(){
+
+        //--read link
+        var lnRead = $el.find(".lnRead");
+
+        
+        
+        //--modal mdRead
+        var mdRead = $el.find(".mdRead");
+        var mdReadTitle = $el.find(".mdReadTitle");
+        var mdReadBody = $el.find(".mdReadBody");
+        var btnMdClose = $el.find(".btnClose");
+        
+        //--tr list
+        var trList = $el.find("#ar_list");
+        var get_paginator = $el.find("#get_paginator");
+
+        var url = "<?php echo site_url("article/own");?>";
+
+        //---get the public article
+        function getPubAr(){
+            var data = {cmd : "listPublicAr",page : 1};
+            $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    //console.log(rs);
+                    $.each(rs.ar_pub,function(i,v){
+                        var tr = `<tr>
+                            <td>
+                            <a href='' class='lnRead' data-ar_id='${v.ar_id}'>
+                                ${v.ar_title}
+                            </a>
+                            </td>
+                            <td>
+                                ${v.ar_post_by}
+                            </td>
+                        </tr>`;
+                        trList.append(tr);
+                    });
+                    get_paginator.html(rs.showPagination);
+                    
+                }
+            });
+        }
+        //--show pagination link by ajax
+        function showPagination(page){
+            trList.html("");
+            var url = "<?php echo site_url("article/own");?>";
+            var data = {cmd : "listPublicAr",page:page};
+            $.ajax({
+                type : "post",
+                url : url+"/page/"+page,
+                data : data,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    //console.log(rs);
+                    $.each(rs.ar_pub,function(i,v){
+                        var tr = `
+                    <tr>
+                    <td>
+                    <a href='' class='lnRead' data-ar_id='${v.ar_id}'>
+                                ${v.ar_title}
+                            </a>
+                            </td>
+                            <td>
+                                ${v.ar_post_by}
+                            </td>
+                    </tr>
+                    `;
+
+                    trList.append(tr);
+
+                    });
+                    //get_paginator.html(rs.showPagination);
+                    
+                }
+            });
+        }
+
+        function TMP_READ_AR(o){
+            var title = o.ar_title;
+            var body = o.ar_body;
+            var post_by = o.ar_post_by;
+            var readCount = o.ar_read_count;
+
+            mdReadTitle.html(title);
+            var toShow = `
+            <div class="text-center">
+                <h2>
+                    ${title}
+                </h2>
+            </div>
+            <div class="text-left">
+                ${body}
+            
+            </div>
+            <div class='row'>
+                <div class="col-sm-4 col-sm-push-8" style="background-color:lavender;">
+                    <p>Post by ${o.ar_post_by}</p>
+                </div>
+                <div class="col-sm-8 col-sm-pull-4" style="background-color:lavenderblush;">
+                    <p>Post On ${o.date_add}</p>
+                </div>
+  
+            </div>
+            `;
+            $(mdReadBody).html(toShow);
+
+        }
+
+        function readAr(id){
+            var data = {
+                cmd : "readAr",
+                ar_id : id
+                };
+            $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success : function(e){
+                    //alert(e);
+                    //--view article by modal
+                    var rs = $.parseJSON(e);
+                    $.each(rs.get,function(i,v){
+                        TMP_READ_AR(v);
+                    });
+                    $(mdRead).modal("show");
+                }
+            });
+        }
+        //---
+        function getEvent(){
+            
+            setTimeout(function(){
+                //--wait 5 sec to show public article
+                getPubAr();
+            },500);
+
+            trList.delegate(".lnRead","click",function(evt){
+                evt.preventDefault();
+                var id = $(this).attr("data-ar_id");
+                readAr(id);
+            });
+
+            get_paginator.delegate("#paginator a","click",function(evt){
+                evt.preventDefault();
+                var cur_page = $(this).attr("data-ci-pagination-page");
+                //alert(`will open ${cur_page} page`);
+                showPagination(cur_page);
+            });
+            
+            //---mdClose button
+            btnMdClose.on("click",function(){
+                location.reload();
+            });
+            
+        }
+        return{getEvent : getEvent}
+    })();
+
+    //--call pubAr
+    pubAr.getEvent();
+
+
+//-----member will add,edit or delete his own post
+//---last update Tue 24/4/2018
+    var Template = function(){
+        this.construct = function(){
+            //console.log("Template is working!");
+        };
+
+        this.modalArForm = function(obj){
+            var output = "";
+
+            var mdTitle = $el.find(".mdArTitle");
+            var ar_title = $el.find(".ar_title");
+            var ar_summary = $el.find("ar_summary");//add 24/4/2018
+            mdTitle.html(obj.ar_title);
+            return output;
+        };
+        this.construct();
+    };
+
+    function showErrorMsg(param){
+        var err = 0;
+        var msg = '';
+        var time = 0; //--default will set to 0 secound
+        
+        
+        
+        if(typeof(param.time) === 'undefined'){
+            param.time = 7000;//--if not defined time will set time to 7 secound
+            
+        }
+            
+        time = param.time;
+        
+        console.log(`type of param.time is `+typeof(param.time));
+        
+        if(parseInt(param.err) === 1){
+            msg = `
+            
+                <h3>
+                    <span class='label label-danger'>
+                        ${param.msg}
+                    </span>
+                </h3>
+            
+            `;
+        }else{
+            msg = `
+            <h3>
+            <span class='label label-success'>
+            ${param.msg}
+            </span>
+            </h3>
+            `;
+        }
+
+        //---need the modal_status
+        modal_status.html(msg).show();
+        setTimeout(function(){
+            modal_status.fadeOut("slow");
+        },time);
+
+        
+
+    }
+
+    var manArticle = (function(){
+
+        Template = new Template();
+
+        //--Link to call modal-form
+        var lnAddAr = $el.find(".lnAddAr");
+        var lnEditAr = $el.find(".lnEditAr");
+        var lnDelAr = $el.find(".lnDelAr");
+
+        //------modal Form and it component
+        var mdAr = $el.find(".mdArticle");
+        var mdArTitle = $el.find(".mdArTitle");
+
+        //id of the form article
+        var frmAr = $el.find("#frmAr");
+        
+        //the title and body in the fom
+        var ar_title = $el.find(".ar_title");
+        var ar_summary = $el.find(".ar_summary");//--the short briefting
+        
+        //--place will show text length
+        var txt_length = $el.find(".txt_length");
+        var ar_body= $el.find(".ar_body");
+
+        var url = "<?php echo site_url("article/own");?>";//--add 24/4/18
+
+        //id of the article
+        var ar_id = $el.find(".ar_id");
+
+        //select the category from the list
+        var sel_cat = $el.find(".sel_cat");
+        //the checkbox public article
+        var ar_pub = $el.find(".ar_pub");
+        var pub_txt = $el.find(".pub_txt");
+        var df = `Your post is NOT public`;
+        pub_txt.addClass("label-danger")
+        .val(df);
+        ar_pub.val(0);
+
+        var btnSaveAr = $el.find(".btnSaveAr");
+
+        //modal form show
+        function mdForm(edit=false){
+            tinymce.activeEditor.setMode("design");
+            pub_txt.removeClass("label-success")
+            .addClass("label-danger")
+            .val(df);
+            if(!edit){
+                //if no id set just load new empty form
+                mdArTitle.html("Create New Article");
+                sel_cat.val(1);
+                var title_txt = `The title should not be longer than 100 letters, ส่วนนี้คือ หัวข้อ ของบทความ ข้อความในช่องนี้ไม่ควรยาวเกิน 100 ตัวอักษร`;
+                ar_title.attr("placeholder",title_txt)
+                .val("");
+
+                //---sumary text
+                var summ_txt = `This will be the short briefing to the list in page,
+                ส่วนนี้เป็นส่วนที่จะโชว์ด้านล่างของไตเติ้ล เพื่ออธิบายคร่าวๆ ว่าบทความนี้มีอะไร หรือเกี่ยวกับอะไรบ้าง
+                `;
+                ar_summary.attr("placeholder",summ_txt)
+                .val("");
+                tinymce.activeEditor.setContent("");
+                ar_id.val("");
+                ar_pub.prop("checked",false);
+                btnSaveAr.html("Please process the form")
+                .prop("disabled",true);
+                setTimeout(function(){
+                    ar_title.focus();
+                },1000);
+            }else{
+                
+                //var url = "<?php echo site_url("article/own");?>";
+                var data = {
+                    cmd : "editAr",
+                    ar_id : edit
+                };
+                $.ajax({
+                    type : "post",
+                    url : url,
+                    data : data,
+                    success : function(e){
+                        var rs = $.parseJSON(e);
+                        btnSaveAr.html("Update");
+                        $.each(rs.get_ar,function(i,v){
+                            mdArTitle.html("Editing..."+v.ar_title);
+                            ar_title.val(v.ar_title);
+                            if(!v.ar_summary || v.ar_summary.length === 0){
+                                var summ_hold = `your article has none of briefing text`;
+                                ar_summary.attr("placeholder",summ_hold)
+                                .val("");
+                            }
+                            ar_summary.val(v.ar_summary);
+                            ar_body.val(tinymce.activeEditor.setContent(v.ar_body));
+                            sel_cat.val(v.cat_id);
+                            ar_id.val(v.ar_id);
+                            var p = 0;
+                            var t = `this post is private`;
+                            if(parseInt(v.ar_show_public) !== 0){
+                                t = `this post is public`;
+                                ar_pub.prop("checked",true);
+                                pub_txt.removeClass("label-danger")
+                                .addClass("label-success")
+                                .val(t);
+                                p = 1;
+                            }else{
+                                ar_pub.prop("checked",false);
+                                pub_txt.removeClass("label-success")
+                                .addClass("label-danger")
+                                .val(t);
+                                
+                            }
+                            ar_pub.val(p);
+                        });
+                    }
+                });
+            }
+
+            //show modal-form
+            $(mdAr).modal("show");
+        }//-------
+
+        //---function chk_title to check and enable the button 
+        function chk_title(){
+            var t_length = numFieldLength(ar_title);
+            var err = 0;
+            var msg = '';
+            var time = 4000;
+            if(t_length < 25){
+                err = 1;
+                msg = `your title is too short.`;
+                showErrorMsg({err : 1,msg : msg});
+            }
+
+            if(err === 1){
+                btnSaveAr.prop("disabled",true);
+            }else{
+                btnSaveAr.html("Create").prop("disabled",false);
+            }
+
+        }
+        //--
+        //------------function numFieldLength will count how many letters
+        //--the user has been typing
+        function numFieldLength(field){
+            
+            var ele_length = 0;
+            if(!field.val() || field.val().length !== 0){
+                ele_length = field.val().length;
+            }
+            
+            var msg = `<h4>you have type&nbsp; 
+            <span class='label label-default'>
+                ${ele_length}
+            </span>&nbsp;
+            letter(s).
+            </h4>
+            `;
+            txt_length.html(msg);
+            return parseInt(ele_length);
+            
+        }
+
+        //-----
+       function editAr(id){
+           mdForm(id);
+
+       }
+        //---------
+        function setArPub(){
+            var p = 0;
+            var t = df;
+            pub_txt.removeClass("label-success")
+            .addClass("label-danger");
+            if(ar_pub.is(":checked") === true){
+                pub_txt.removeClass("label-danger")
+                .addClass("label-success");
+                t = "Your post will set to PUBLIC";
+                p = 2;
+                ;
+            }
+
+            pub_txt.val(t);
+            ar_pub.val(p)
+            //console.log("ar pub is "+p);
+            return parseInt(p);
+        }
+
+//---------------
+        function delAr(id){
+
+            if(confirm("You are about to DELETE the item! \r this operation cannot be UNDO.\n \nare you sure to delete?") === true){
+                //var url = "<?php //echo site_url("article/own");?>";
+                var data = {
+                    cmd : "delAr",
+                    ar_id : id
+                    };
+                $.ajax({
+                    type : "post",
+                    url : url,
+                    data : data,
+                    success : function(e){
+                        var rs = $.parseJSON(e);
+                        page_status.html(rs.show_msg).show();
+                        setTimeout(function(){
+                            page_status.html("Reloading...");
+                            location.reload();
+                        },500);
+                    }
+                });
+        }else{
+            return false;
+        }
+        }
+        //------
+        function saveAr(id=false){
+            btnSaveAr.unbind();
+            frmAr.submit(function(e){
+                e.preventDefault();
+                var url = $(this).attr("action");
+                var data = $(this).serialize()+"&cmd=saveAr";
+                $.post(url,data,function(e){
+                    
+                    
+                    var rs = $.parseJSON(e);
+                    //$(".modal_status").html(rs.msg).show();
+                    showErrorMsg({err : 0,msg : rs.msg});
+                    setTimeout(function(){
+                        location.reload();
+                    },2000);
+                    
+                });
+            });
+
+        }
+        //-----------
+        function getEvent(){
+           // $(mdAr).modal("show");
+           
+           lnAddAr.on("click",function(){
+               //call the modal form
+                mdForm();
+           });
+
+           ar_title.on("keyup",function(){
+               numFieldLength(ar_title);
+           });
+           //---summary length
+           ar_summary.on("keyup",function(){
+               numFieldLength(ar_summary);
+           });
+
+
+           ar_title.on("blur",function(){
+               chk_title();
+           });
+
+           //edit the article
+           lnEditAr.on("click",function(evt){
+               evt.preventDefault();
+               var id = $(this).attr("data-ar_id");
+               editAr(id);
+           });
+
+           //delete article
+           lnDelAr.on("click",function(){
+               var id = $(this).attr("data-ar_id");
+               delAr(id);
+           });
+
+           //--submit form
+           btnSaveAr.on("click",function(){
+                //evt.preventDefault();
+                saveAr();
+           });
+
+           
+           //set the public article
+           ar_pub.on("change",function(){
+               setArPub();
+           });
+        }
+        return{getEvent : getEvent}
+    })();
+
+    manArticle.getEvent();
+});
+//End of jQuery
+</script>

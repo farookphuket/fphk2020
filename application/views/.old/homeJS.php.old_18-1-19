@@ -1,0 +1,337 @@
+<script>
+
+/*
+*   this is the javascript which control the home script
+*
+*/
+
+$(function(){
+
+    var $el = $(".container");
+    var modal_status = $el.find(".modal_status");
+    var page_status = $el.find(".status");
+   var show_time = $el.find(".show_time"); 
+    //Start the home variable
+
+
+    var u_data = {
+    ip : "<?php echo $ip; ?>",
+    browser : "<?php echo $browser; ?>",
+    version : "<?php echo $version; ?>",
+    os : "<?php echo $os; ?>",
+   };
+
+    
+
+    function checkTime(i) {
+            if (i < 10) {
+                        i = "0" + i;
+                            }
+                return i;
+    }
+
+    function startTime() {
+            var today = new Date();
+                var h = today.getHours();
+                var m = today.getMinutes();
+                    var s = today.getSeconds();
+                    // add a zero in front of numbers<10
+               m = checkTime(m);
+              s = checkTime(s);
+        var show  = h + ":" + m + ":" + s;
+        show_time.html(show).show();
+          t = setTimeout(function () {
+                            startTime()
+                          }, 500);
+        }
+    
+
+
+
+var home = (function(){
+
+    function getEvent(){
+         startTime();
+    }
+    return{ getEvent : getEvent} 
+    })();
+    home.getEvent();
+
+
+
+    var ansPage = (function(){
+
+        var viewAns = $el.find(".viewAns");
+        var show_answer = $el.find(".show_answer");
+        show_answer.hide();
+        function viewAnswer(v){
+            var url = "<?php echo site_url("home/show_answer");?>";
+            var data = {
+                ms_id : v,
+                
+                command : "show_answer"
+            };
+            $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success : function(e){
+                   // console.log(e);
+                    var rs = $.parseJSON(e);
+
+                    $.each(rs,function(i,v){
+                       // console.log("<p>title "+v.an_title+" </p>");
+                        var q_title = "<h1>Question Title ["+rs[i].ms_title+"] </h1>";
+                        var q_body = "<p>"+rs[i].ms_body+"</p>";
+                        var title = "<p>"+rs[i].an_title+"</p>";
+                        var body = "<p>"+rs[i].an_body+"</p>";
+                        var show = "<div class='col-sm-10'>";
+                        show +=     q_title;
+                        show += q_body;
+                        show += "<p><pre>";
+                        show += "<h2>"+title+"</h2>";
+                        show += "<p>"+body+"</p>";
+                        show += "</pre></p>";
+                        show += "</div>";
+                        $(show_answer).append(show).show();
+                    });    
+                    
+                
+                }
+            });
+
+        }
+        function getEvent(){
+            viewAns.on("click",function(){
+                viewAnswer($(this).attr("id"));
+            });
+        }
+        return{getEvent : getEvent}
+    })();
+    ansPage.getEvent();
+
+    var contact_frm = (function(){
+
+        var q_ip = "<?php echo $ip; ?>";
+        var ms_count_sent = $el.find(".ms_count_sent");
+        var q_id = $el.find(".q_id");
+        var q_name = $el.find(".q_name");
+        var q_email = $el.find(".q_email");
+        var q_title = $el.find(".q_title");
+        var q_body = $el.find(".q_body");
+        var q_btn = $el.find(".btnQues");
+        q_btn.html("Waiting...")
+            .prop("disabled",true);
+
+      //  q_email.prop("disabled",true);
+        
+        var setField = {
+            setInactive : function(f){
+                for(var i in f){
+                    f[i].prop("disabled",true);
+                }
+            },
+            setActive : function(f,val=false,pHolder=false){
+
+                for(var i in f){
+                    if(val){
+                        f[i].val(val)
+                            .prop("disabled",false);        
+                    }else if(pHolder){
+                        f[i].attr(pHolder)
+                            .val("")
+                            .prop("disabled",false);
+                    }
+                }
+                    
+            }
+        };
+        setField.setInactive({q_email,q_title,q_body});
+        function check(f,v){
+            switch(f){
+                case"name":
+                    if(!v || v.length < 4){
+                        alert("Error : Name is too short");
+                        setTimeout(function(){
+                            q_name.focus();
+
+                        },2000);
+                    }else{
+                        q_email.prop("disabled",false)
+                            .focus();
+                    }
+
+                break;
+                case"email":
+                    q_title.prop("disabled",false)
+                        .focus();
+                    q_body.prop("disabled",false)
+                        .val("");
+
+                break;
+            }
+        }
+        
+        function getValid(){
+            //check the valid data before sent
+            if(!q_title.val()|| q_title.val().length < 5){
+                alert("title is too short!!");
+            }else if(q_body.val().length < 20){
+                alert("Detail is too short!");
+            }else{
+                page_status.html("Waiting...").show();
+                setTimeout(function(){
+                    q_btn.html("Sent My Message")
+                        .prop("disabled",false);
+                    page_status.fadeOut("slow");
+                },2000);
+            }
+        }
+
+
+        function get_my_message(){
+
+            //q_btn.hide();
+            var url = "<?php echo site_url("home/my_contact");?>";
+            var data = {
+            q_ip : "<?php echo $ip;?>"
+            };
+           // console.log("the data before sent "+data.q_ip);
+            $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    //console.log("test rrs "+rs.q_name+" edit is "+rs.edit);
+                    if(parseInt(rs.edit) === 0){
+                       q_name.attr("placeholder","Name is required!");
+                       q_btn.show();
+                    }
+
+                    setField.setActive({q_email},rs.q_email);
+                    setField.setActive({q_title},rs.q_title);
+                    setField.setActive({q_body},rs.q_body);
+                    q_id.val(rs.q_id);
+                    ms_count_sent.val(rs.ms_count_sent);
+                    //q_title.val(rs.q_title);
+                   // q_body.val(rs.q_body);
+                    q_name.val(rs.q_name);
+                   // q_email.val(rs.q_email);
+                  
+                    q_body.on("blur",function(){
+                        sentMsg("edit",rs.q_id);
+                    });
+
+                }
+            });
+        }
+
+        function sentMsg(c=false,i=false){
+            var data = {
+                q_name : q_name.val(),
+                q_email : q_email.val(),
+                q_title : q_title.val(),
+                q_body : q_body.val(),
+                q_ip : "<?php echo $ip;?>"
+            };
+            var url = "<?php echo site_url("home/sentMsg");?>";
+            switch(c){
+                case"edit":
+                    data.q_id = i;
+                    data.ms_count_sent =  ms_count_sent.val();
+                    $.ajax({
+                        type : "post",
+                        url : url,
+                        data : data,
+                        success : function(e){
+                            page_status.html(e).show();
+                            setTimeout(function(){
+                            page_status.fadeOut("slow");
+                            location.reload();
+                            },2000);
+                        }
+                    });
+                break;
+                default:
+                    $.ajax({
+                        type : "post",
+                        url : url,
+                        data : data,
+                        success : function(e){
+                            alert(e);
+                        }
+                    });
+
+                break;
+            }
+
+        }
+        function getEvent(){
+
+            get_my_message();
+            q_name.on("blur",function(){
+                check("name",$(this).val());
+            });
+            q_email.on("blur",function(){
+                check("email",$(this).val());
+            });
+            q_body.on("blur",function(){
+                getValid();
+            });
+            q_btn.on("click",sentMsg);
+        }
+        return{ getEvent : getEvent}
+    })();
+    contact_frm.getEvent();
+    
+    var getTour = (function(){
+        
+        var show_area = $el.find(".tour_result");
+        var url = "<?php echo site_url("home/get_tour");?>";
+        
+        function get_tour(){
+            var data = {
+                command : "tour_program"
+            };
+            $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success :function(e){
+                    var rs = $.parseJSON(e);
+                    if(parseInt(rs.error) === 1){
+                        return false;
+                    }else{
+                        $.each(rs.get_tour,function(i,v){
+                            
+                            var bd = "<div class='ar_list'>";
+                            var title = v.ar_title;
+                            var body = v.ar_body;
+                            
+                            
+                            bd += "<h2>"+title+"</h2>";
+                            bd += "<p>"+body+"</p>";
+                            bd += "</div";
+                            var title = v.ar_title;
+                            $(".tour_result").append(bd);
+                            console.log("rs is "+title);
+                        });
+                    }
+                }
+            });
+        }
+        
+        function getEvent(){
+            get_tour();
+        }
+        return{getEvent : getEvent}
+    })();
+    
+    getTour.getEvent();
+
+    
+});
+
+
+</script>

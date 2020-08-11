@@ -1,0 +1,464 @@
+<script>
+
+
+$(function(){
+
+    var $el = $(".container");
+    var page_status = $el.find(".status");
+    var modal_status = $el.find(".modal_status");
+
+    function showModalError(ele){
+        var err = 0;
+        var msg = '';
+        var time = ele.time;
+        
+        if(parseInt(ele.err) === 1){
+            err = 1;
+            msg = `
+            <h4>
+            Error :&nbsp;
+            <span class="label label-danger">
+                ${ele.msg}
+            </span>
+                
+            </h4>
+            `;
+            
+        }else{
+            err = 0;
+            msg = `
+            <h4>
+            Success :&nbsp;
+            <span class="label label-success">
+                ${ele.msg}
+            </span>
+                
+            </h4>
+            `;
+
+        }
+        
+        if(parseInt(ele.time) !== 0){
+            //console.log("set time out");
+            time = ele.time;
+        }
+            time = 10000;
+        
+
+        modal_status.html(msg).show();
+        setTimeout(function(){
+                modal_status.fadeOut("slow");
+            },time);
+
+
+        var data = {
+            err : err,
+            msg : msg,
+            time : time
+
+        };
+        //return data;
+
+    }
+
+    //--set focus
+    function setFocus(ele){
+        var time = ele.time;
+        var f = ele.field;
+        if(parseInt(time) === 0){
+            time = 1000;
+        }
+        var s = setTimeout(function(){
+            if(!f){
+                f = false;
+            }else{
+                f.focus();
+            }
+        },time);
+
+        
+        
+    }
+
+    //---check if field is empty
+    function chkEmpty(fs){
+        var msg = '';
+        var err = 0;
+        for(var i in fs){
+            if(!fs[i].val() || fs[i].val().length < 5){
+                fs[i].css("background","red");
+                err = 1;
+                msg = `Error : the field cannot be empty!`;
+            }else{
+                fs[i].css("background","transparent");
+                err = 0;
+            }
+        }
+        if(parseInt(err) === 1){
+            showModalError({err : err,msg : msg,time : 4000});
+        }
+        //return true;
+    }
+
+    function setDisabled(fs){
+        var not_set = 0;
+        //var field = 0;
+        for(var i in fs){
+            
+            //not_set = 0;
+            fs[i].prop("disabled",true);
+            
+        }
+    }
+
+    //-----
+
+    var login = (function(){
+
+        //--login form
+        var frmLogin = $el.find("#frmLogin");
+        var u_name = $el.find(".u_name");
+        var u_pass = $el.find(".u_pass");
+        var btnLogin = $el.find(".btnLogin");
+        
+        //u_pass.prop("disabled",true);
+        // btnLogin.html("Loging in...")
+        // .prop("disabled",true);
+
+        
+        var u_id = $el.find(".u_id");
+        
+        //---check user
+        // function check_user(){
+        //     btnLogin.html("please process the form").prop("disabled",true);
+        //     if(!u_name.val() || !u_pass.val()){
+        //         alert("Error : fill the form");
+        //         setTimeout(function(){
+        //             frmLogin.trigger("reset");
+        //             u_name.focus();
+        //         },2000);
+        //         //return false;
+                
+        //     }else{
+                
+        //         btnLogin.html("Login").prop("disabled",false);
+        //     }   
+            
+            
+        // }
+        //---comment out on thu 31 may 2018
+
+        //-----------
+        function makeLogin(){
+            btnLogin.unbind();
+            frmLogin.submit(function(o){
+                o.preventDefault();
+                var url = $(this).attr("action");
+                var data = $(this).serialize()+"&cmd=login";
+                $.post(url,data,function(o){
+                    var rs = $.parseJSON(o);
+                    var url = rs.url;
+                    var err = rs.error;
+                    var msgShow = rs.msg;
+                    if(parseInt(rs.error) === 1){
+                        err = 1;
+                        msgShow = rs.msg;
+                    }else{
+                        err = 0;
+                        msgShow = rs.msg;
+                    }
+                    showModalError({err:err,msg:msgShow});
+                    setTimeout(function(){
+                        location.href = url;
+                    },2000);
+                });
+            });
+
+        }
+        //---getEvent
+        function getEvent(){
+            setTimeout(function(){
+                //--set null to the form
+                u_name.attr("placeholder","your user name")
+                .val("");
+                u_pass.attr("placeholder","your password")
+                .val("");
+            },400);
+
+            
+
+            //--check user name and pass
+            // u_pass.on("blur",function(){
+            //     check_user();
+            // });
+
+            btnLogin.on("click",function(){
+                makeLogin();
+            });
+            
+        }
+        return{ getEvent : getEvent}
+    })();
+
+    //--call login
+    login.getEvent();
+
+
+    //----Sun/22/42018
+    //---after found so many bug in login script
+    var forgotPass = (function(){
+
+        var lnForgot = $el.find(".lnForgotPass");
+
+        //--modal form
+        var mdForgot = $el.find(".mdForgot");
+        var mdTitle = $el.find(".mdForgotPassTitle");
+        var frm = $el.find("#forgotPass");
+        var fg_email = $el.find(".fgEmail");
+        fg_email.attr("placeholder","Enter your email");
+        var fg_tel = $el.find(".fgTel");
+        fg_tel.attr("placeholder","Enter your tel.");
+        var u_id = $el.find(".u_id");
+
+        var newP = $el.find(".newP");
+        newP.attr("placeholder","enter New password");
+        var re_pass = $el.find(".re-pass");
+        re_pass.attr("placeholder","enter new password again");
+
+        //--button
+        var btnSubmit = $el.find(".btnResetPass");
+        btnSubmit.html("please porcess the form")
+        .prop("disabled",true);
+        var btnClose = $el.find(".btnClose");
+
+        var url = "<?php echo site_url("users/forgotpass");?>";
+
+        var err = 0;
+        var msg = '';
+        function frmForgot(){
+            //show modal form
+            //--reset the form 
+            $(mdForgot).modal("show");
+            setTimeout(function(){
+                frm.trigger("reset");
+                fg_email.focus();
+            },2000);
+        }
+        //-----------
+        //--check email
+        function chk_email(){
+            if(!fg_email.val()){
+                msg = `Error : email field cannot be empty!`;
+                showModalError({err : 1,msg : msg});
+                setFocus({time : 2000,field :fg_email});
+            }else{
+                var data = {
+                    cmd : "chk_email",
+                    email : fg_email.val()
+                };
+                $.ajax({
+                    type : "post",
+                    url : url,
+                    data : data,
+                    success : function(e){
+                        var rs = $.parseJSON(e);
+                        var msg = ``;
+                        var f = '';
+                        if(parseInt(rs.err) === 1){
+                            err = 1;
+                            msg = `${rs.msg}`;
+                            f = fg_email
+                            
+                        }else{
+                            msg = `${fg_email.val()} match found`;
+                            err = 0;
+                            f = fg_tel;
+                            fg_tel.prop("disabled",false);
+                        }
+
+                        showModalError({err : err,msg : msg,time : 4000});
+                        setFocus({time:2000,field : f});
+
+                    }
+                });
+            }
+
+        }
+
+        //---check tel
+        function chk_tel(){
+            var data = {
+                cmd : "chk_tel",
+                tel : fg_tel.val(),
+                email : fg_email.val()
+                };
+            $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    var msg = '';
+                    var f = fg_tel;
+                    var err = 0;
+                    if(parseInt(rs.err) === 1){
+                        err = 1;
+                        msg = rs.msg;
+                    }else{
+                        f = newP;
+                        err = 0;
+                        msg = `${fg_email.val()} match found,please set your new password`;
+                        newP.prop("disabled",false);
+                        re_pass.prop("disabled",false);
+                    }
+
+                    showModalError({err : err,msg : msg});
+                    setFocus({time : 2000,field : f});
+                    
+                }
+            });
+            
+        }
+
+        //--check password
+        function chk_pass(){
+            var f = '';
+            var err = 0;
+            var msg = '';
+            if(chkEmpty({newP})){
+                err = 1;
+                f = newP;
+                msg = "Error : password field is empty or too short";
+            }else if(chkEmpty({re_pass})){
+                f = re_pass;
+                err = 1;
+                msg = "Error : re-password field cannot be empty";
+            }else if(newP.val() !== re_pass.val()){
+                f = re_pass;
+                err = 1;
+                msg = "Error : password are not match please re-check";
+            }else{
+                //--send request
+                
+                
+                f = 0;
+                err = 0;
+                var data = {
+                    cmd : "set_user",
+                    email : fg_email.val(),
+                    tel : fg_tel.val()
+                    };
+                
+                $.ajax({
+                    type : "post",
+                    url : url,
+                    data : data,
+                    success : function(e){
+                        var rs = $.parseJSON(e);
+                        var err = 0;
+                        var msg = '';
+                        if(parseInt(rs.err) === 1){
+                            msg = rs.msg;
+                            err = 1;
+                        }else{
+                            $.each(rs.get,function(i,v){
+                                u_id.val(v.id);
+                                msg = `<h3>Thank you 
+                                <span class='label label-info'>${v.name}</span>
+                                for your information </h3>,
+                                <p>please click submit button to complete the process.</p>`;
+                                //console.log(`This user ${v.name} has id ${v.id}`);
+                            });
+                        }
+                        showModalError({err : err,msg : msg});
+                    }
+                });
+                
+                
+            }
+            //console.log(`The error is ${err}`);
+            if(parseInt(err) === 0){
+                btnSubmit.html("Reset Password")
+                .prop("disabled",false);
+            }else{
+                msg = `There is some error found!your password is too short,not match. please re-check your password`;
+            }
+            showModalError({err : err,msg : msg});
+            setFocus({time : 400,field : f});
+
+        }
+        //----
+        function resetPass(){
+            btnSubmit.unbind();
+            frm.submit(function(evt){
+                evt.preventDefault();
+                var url = $(this).attr("action");
+                var data = $(this).serialize()+"&cmd=resetMyPass";
+                $.post(url,data,function(o){
+                    //console.log(o);
+                    var rs = $.parseJSON(o);
+                    showModalError({err : 0,msg : rs.msg});
+                    setTimeout(function(){
+                        location.reload();
+                    },5000);
+                });
+            });
+
+        }
+
+        //------trigger method
+        function getEvent(){
+            //console.log("this is my forgot pass will run now");
+            //--Mon 23/4/2018 set field disabled
+            setDisabled({fg_tel,newP,re_pass});
+            //---
+            lnForgot.on("click",function(){
+                frmForgot();
+            });
+            
+            //---fg_email lost focus
+            fg_email.on("blur",function(){
+                chk_email();
+            });
+
+            //--fg_tel lost focus
+            fg_tel.on("blur",function(){
+                chk_tel();
+            });
+
+            //--re_pass lost focus
+            re_pass.on("blur",function(){
+                chk_pass();
+            });
+            //---reload the page
+            btnClose.on("click",function(){
+                location.reload();
+            });
+
+            //--submit form
+            btnSubmit.on("click",function(){
+                resetPass();
+            });
+        }
+        return{getEvent : getEvent}
+    })();
+
+    //---call forgotPass
+    forgotPass.getEvent();
+
+    //---member landing page will show the info first page
+    
+
+
+});
+/*
+//|--last update on Wed 18 Apr 2018
+//|--user can login,reset his password in case of forgot
+
+*/
+
+
+
+
+
+</script>

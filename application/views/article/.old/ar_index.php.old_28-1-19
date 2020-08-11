@@ -1,0 +1,49 @@
+<div class="page-header">
+    <h1>Category</h1>
+
+  
+</div>
+<div class="row">
+    <?php 
+        foreach($get_cat as $row):
+
+            ?>
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2><?php echo $row->cat_title;?></h2>
+                </div>
+                <div class="panel-body">
+                    <p><?php echo $row->cat_des;?></p>
+                    <a class="btn-pay" href="<?php echo site_url("article/categoryList/{$row->cat_id}");?>" >View Content</a>
+                </div>
+            </div>
+            <?php
+        endforeach;
+        if($num_cat >= $per_page):
+            ?>
+            <div class="pagination" id="c_pagination">
+                <?php echo $this->pagination->create_links(); ?>
+            </div>
+            <?php
+        endif;
+?>
+</div>
+
+<div class="page-header">
+<h2>Recent Post 
+<span class="label label-info sp_num_post">0</span>&nbsp; item(s).
+</h2>
+</div>
+<div class="row">
+    <!--dynamic content list last 10 article-->
+    <div class="div_ar_list">
+        <!--show list of article-->
+    </div>
+    <div class="div_ar_pagin">
+        <!--show the pagination-->
+    </div>
+</div>
+
+
+<?php 
+    require("arJS.php");

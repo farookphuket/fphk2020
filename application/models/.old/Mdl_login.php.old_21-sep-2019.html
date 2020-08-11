@@ -1,0 +1,258 @@
+<?php
+/*
+* class Users last edit on Sat-3-Sep-2016
+*
+*/
+class Mdl_login extends MY_Model{
+    protected $_tb_user = "users";
+    protected $_order_by;
+
+    //add $_tb_user on Thu 15 June 2017
+
+    public $ip;
+    public $browser;
+    public $os;
+
+    
+
+    function __construct() {
+        parent::__construct();
+
+        $this->ip = $this->getIP();
+        $this->os = $this->getOS();
+        $this->browser = $this->getBrowser();
+   }
+
+
+   //--getStatus
+   function getStatus($u){
+     $data = "";
+     $ban = 0;
+     $active = 0;
+     $get = $this->get($u)->result();
+     foreach($get as $row):
+       if($row->is_ban != 0):
+         $ban++;
+       endif;
+       if($row->is_activated != 0):
+         $active++;
+       endif;
+     endforeach;
+     $data = array(
+       "ban_user" => $ban,
+       "active_user" => $active
+     );
+     return $data;
+   }
+
+
+   /**
+    *  user login with google
+    *  21 Sep 2019
+    */
+    
+   function getGoogleLogin(){
+        //-- check if this user is exited
+        //-- only if it the first time login
+        //-- will create an account 
+        $g = $this->_createGoogleUser();
+        $user_name = $g["user_name"];
+        $user_email = $g["user_email"];
+
+        $data = array(
+            "user_name" => $user_name,
+            "user_email" => $user_email
+        );
+
+        return $data;
+
+   }
+
+   function _createGoogleUser(){
+       //-- this method will create new account if the user login using their google account
+       $g_name = $this->getEl("g_name");
+       $g_email = $this->getEl("g_email");
+       $user_id = 0;
+      
+
+        $where = array("name" => $g_name,"email" => $g_email);
+        $get = $this->db->where($where)->get($this->_tb_user)->result();
+        $num = count($get);
+        
+
+       $about = "<div class='alert alert-warning'><p>
+ Dear {$g_name} your account is create by the auto login script using your google account your auto password is '1234' and it is not secure for your longterm run as it is a security risk please change your password!            
+</p>
+</div>";
+       $g_data = array(
+           "about_user" => $about,
+           "name" => $g_name,
+           "passwd" => $this->make_hash(1234),
+           "email" => $g_email,
+           "user_type" => 409,
+           "is_activated" => 1,
+           "date_register" => $this->today_andTime
+       );
+
+        if($num == 0):
+            $this->SAVE($g_data,$this->_tb_user);
+        endif;
+
+        foreach($get as $row):
+            $user_id = $row->id;
+        endforeach;
+        //--- return data for login 
+        $r_data = $this->_getLoginUser($user_id); 
+        return $r_data;
+
+   }
+
+   /* end google login */
+
+   //------------
+
+
+   function getLogin(){
+    $user_name = $this->getEl("user_name");
+    $user_pass = $this->make_hash($this->getEl("user_pass"));
+    $user_id = 0; 
+    $is_activate = 0;
+    $is_ban = 0;
+    $err = 0;
+    $url = site_url();
+    //--check if this user name is exited
+    $where =array(
+        "name" => $user_name,
+        "passwd" => $user_pass
+    );
+    $get = $this->db
+        ->where($where)
+        ->get($this->_tb_user)->result();
+    $num = count($get);
+    if($num == 0):
+        $err = 1;
+        //$lo = 0;
+        $errorMsg = "Error : wrong user name or password";
+    else:
+        foreach($get as $row):
+           $user_id = $row->id; 
+
+        endforeach;
+    
+        $lo = $this->_getLoginUser($user_id);
+        $is_ban = $lo["user_ban"];
+        $is_activate = $lo["user_active"];
+        $url = $lo["user_url"];
+
+        if($is_ban != 0):
+            $errorMsg = "Error : your accout is BAN";
+            $err = 1;
+        endif;
+        if($is_activate == 0):
+            $errorMsg = "Error : your accout is NOT ACTIVATE please check your e-mail AT {$lo["user_email"]}";
+            $err = 1;
+            endif;
+        $successMsg = "Welocne {$lo["user_name"]} to {$lo["user_type"]} zone";
+        $url = $lo["user_url"];
+
+            $user_set = array(
+                "user_name" => $lo["user_name"],
+                "user_id" => $lo["user_id"],
+                "user_email" => $lo["user_email"],
+                "moderate" => $lo["is_mod"],
+                "is_admin" => $lo["is_admin"],
+                "is_login" => $lo["is_login"],
+                "user_type" => $lo["user_type"]
+            );
+
+        $this->session->set_userdata($user_set);
+
+     endif;
+
+    if($err == 1):
+        $msg = $errorMsg;
+    else:
+        $msg = $successMsg;
+    endif;     
+
+    /*
+    $this->o_put["msg"] = $msg;
+    $this->o_put["url"] = $url;
+    $this->o_put["error"] = $err;
+    $this->output->set_output(json_encode($this->o_put)); 
+     */
+    
+        $data = array(
+            "msg" => $msg,
+            "url" => $url,
+            "error" => $err
+        );
+
+        return $data;
+
+   }
+
+   function _getLoginUser($id){
+       $user_name = "";
+       $user_pass = "";
+       $user_email = "";
+       $user_id = "";
+
+       $is_active = 0;
+       $is_ban = 0;
+       $is_login = 0;
+       $is_admin = 0;
+       $moderate = 0;
+       $user_type = 0;
+       $user_url = "";
+
+       $where = array("{$this->_tb_user}.id" => $id);
+       $get = $this->db
+           ->where($where)
+           ->get($this->_tb_user)->result();
+       foreach($get as $row):
+            $user_name = $row->name;
+            $user_pass = $row->passwd;
+            $user_email = $row->email;
+            $user_id = $row->id;
+            $is_login = 1;
+            $is_active = $row->is_activated;
+            $is_ban = $row->is_ban;
+            $user_type = $row->user_type;
+            $moderate = $row->moderate;
+
+            
+            endforeach;
+             
+        //-- get url for this user
+        if($user_type == 642):
+            $user_url = site_url("admin");
+            $is_admin = 1;
+            $user_type = "Admin";
+            endif;
+        if($user_type == 409):
+            $user_url = site_url("users/u");
+            $user_type = "Member";
+            endif;
+        if($moderate != 0):
+            $user_url = site_url("users/mod");
+            $moderate = 1;
+            $user_type = "Moderate";
+            endif;
+            $data = array(
+                "user_id" => $user_id,
+                "user_name" => $user_name,
+                "user_email" => $user_email,
+                "is_login" => $is_login,
+                "user_url" => $user_url,
+                "user_active" => $is_active,
+                "user_ban" => $is_ban,
+                "user_type" => $user_type,
+                "is_mod" => $moderate,
+                "is_admin" => $is_admin
+            );
+            return $data;
+   }
+
+
+}//end class

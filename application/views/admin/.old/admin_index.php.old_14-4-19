@@ -1,0 +1,56 @@
+<section class="notice_admin">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-10">
+                <h2>All notification Admin</h2>
+                <ul class="list-group">
+                    <li class="list-group-item text-right">
+                    <h3>
+                        This is the text
+                        <span class="badge badge-warning text-white">Msg</span>
+                    </h3>
+                    
+                    </li>
+                    <li class="list-group-item">กำลังพัฒนา</li>
+                    <li class="list-group-item">menu 3</li>
+                    <li class="list-group-item">menu 4</li>
+                </ul>
+            </div>
+            
+        </div>
+    </div>
+</section>
+
+
+<section class="ticket" id="ticket">
+    <?php 
+
+    $ticket = "admin/booking/book_index.php";
+    $this->load->view($ticket);
+    ?>
+</section>
+
+<section class="tour" id="tour">
+    <?php 
+        $tour = "tour/admin.php";
+        $this->load->view($tour);
+    ?>
+</section>
+
+<?php 
+    $ar = "admin/article/article_admin.php";
+    $this->load->view($ar);
+?>
+
+
+<section class="users" id="users">
+    <?php 
+        $users = "admin/user/user_index.php";
+        $this->load->view($users);
+    ?>
+</section>
+
+<?php 
+    $js = "admin/adminJS.php";
+    $this->load->view($js);
+?>

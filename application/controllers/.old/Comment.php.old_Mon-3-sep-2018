@@ -1,0 +1,138 @@
+<?php 
+
+class Comment extends MY_Controller{
+
+    
+    public $o_put;
+    public $user_id;
+
+    public $user_name;
+    public $ip;
+    public $os;
+    public $browser;
+    public $post_day;
+    
+    function __construct(){
+        parent::__construct();
+
+        $this->load->model("Mdl_comment");
+        $this->load->model("Mdl_users");
+        $this->load->model("Mdl_article");
+        $this->load->library("pagination");
+
+        $this->user_id = $this->Mdl_comment->getUserId();
+        $this->user_name = $this->Mdl_comment->getUserName();
+
+        $this->ip = $this->Mdl_comment->getIP();
+        $this->os = $this->Mdl_comment->getOS();
+        $this->browser = $this->Mdl_comment->getBrowser();
+
+        $this->post_day = date("Y-m-d",time());
+
+    }
+
+    function index(){
+        echo"This is the comment page my name {$this->Mdl_comment->user_name}";
+    }
+
+
+    function getCommentCount($seg=1){
+        /*--
+        //--will recieve POST section_name item_id
+        //--This method will get all of the comment base on the section name and item id recieve by ajax call at the first form load
+        */
+        $section_name = $this->input->post("section_name");
+        $item_id = $this->input->post("item_id");
+
+        
+        
+        $where = array(
+            "c_section_name" => $section_name,
+            "c_item_id" => $item_id
+        );
+        $get = $this->Mdl_comment->getComment($where)->result();
+        $num_comment = count($get);
+
+        //---pagination
+        $url = "getCommentCount";
+        $per_page = 4;
+        $conf = $this->getConfPagin($per_page,$num_comment,$url);
+        $this->pagination->initialize($conf);
+        $page = $seg;
+        $start = ($page-1)*$conf["per_page"];
+
+        $get_all_comment = $this->Mdl_comment->getComment($where,$conf["per_page"],$start)->result();
+        if($num_comment >= $per_page):
+            $this->o_put["pagination"] = $this->pagination->create_links();
+        endif;
+        
+        $this->o_put["get_comment"] = $get_all_comment;
+        $this->o_put["num_comment"] = $num_comment;
+
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+    //--getMyComment
+    function getMyComment(){
+        //--will fetch only one row
+        $section_name = $this->input->post("section_name");
+        $item_id = $this->input->post("item_id");
+
+        
+        
+        $where = array(
+            "c_section_name" => $section_name,
+            "c_item_id" => $item_id,
+            "c_user_ip" => $this->ip,
+            "c_date_create" => $this->post_day
+        );
+        $get = $this->Mdl_comment->getComment($where)->result();
+
+        $this->o_put["get_my_comment"] = $get;
+
+        $this->output->set_output(json_encode($this->o_put));
+    }
+
+
+    function saveComment(){
+
+        //--only submit by ajax to save data
+        $c_id = $this->input->post("c_id");
+        $c_title = $this->input->post("c_title",true);
+        $c_body = $this->input->post("c_body",true);
+        $section_name = $this->input->post("section_name",true);
+        $item_id = $this->input->post("item_id",true);
+
+        //--user name and email
+        $c_user_name = $this->input->post("c_user_name",true);
+        $c_user_email = $this->input->post("c_user_email",true);
+
+
+        //--post day time
+        $post_day = date("Y-m-d",time());
+        $post_time = date("h:i:s",time());
+        $comment_data = array(
+            "c_section_name" => $section_name,
+            "c_item_id" => $item_id,
+            "c_user_ip" => $this->ip,
+            "c_user_name" => $c_user_name,
+            "c_user_email" => $c_user_email,
+            "c_comment_title" => $c_title,
+            "c_comment_body" => $c_body,
+            "c_date_create" => $post_day,
+            "c_date_update" => $post_day,
+            "c_comment_time" => $post_time,
+        );
+
+        if($c_id):
+            unset($comment_data["c_date_create"]);
+            $save = $this->Mdl_comment->saveComment($comment_data,array("c_id" => $c_id));
+            
+        else:
+            unset($comment_data["c_date_update"]);
+            $save = $this->Mdl_comment->saveComment($comment_data);
+        endif;
+        
+        echo"Comment {$save} has been save";
+    }
+}//end of file

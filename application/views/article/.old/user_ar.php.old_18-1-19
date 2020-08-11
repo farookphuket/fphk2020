@@ -1,0 +1,228 @@
+<div class="page-header">
+    <h1><?php echo"Hi {$user_name}";?></h1>
+    <p>This is your article page. </p>
+    <p>You can create ,edit or delete your post. </p>
+    <div class="pull-right">
+        <a href="#" class="btn btn-primary btnAddAr">
+        <span class="glyphicon glyphicon-plus"></span>
+        Write New Post
+        </a>
+    </div>
+    
+</div>
+<div class="row">
+    <!--show dynamic content of category as a tab public, own,not allow by admin-->
+    <ul class="nav nav-tabs">
+		<li class="active">
+            <a  href="#1" id="tab_own_post" data-toggle="tab">
+            <h4>
+              My Post
+              <span class="label label-primary own_post_count">0</span>
+              &nbsp;item(s).
+            </h4>
+            </a>
+            
+		</li>
+		<li>
+          
+            <a href="#2" id="tab_approve_post" data-toggle="tab">    
+                <h4>
+                  Not Approve Post
+                  <span class="label label-danger approve_count">0</span>
+                  &nbsp;item(s).
+                </h4>
+            </a>
+            
+		</li>
+
+        <li>
+            <a href="#3" id="tab_pub_post" data-toggle="tab">
+            <h4>
+              Public Post
+              <span class="label label-info pub_post_count">0</span>
+              &nbsp;item(s).
+            </h4>
+            </a>
+		</li>
+		
+	</ul>
+    <div class="tab-content">
+        <div class="tab-pane active" id="1">
+            <!--tab 1 own category--> 
+            <div class="own_post">
+                <!--ajax content-->
+            </div>
+            <div class="own_pagin">
+                <!--ajax pagination-->
+            </div>
+        </div>
+        
+        <!--////start div-->
+        <div class="tab-pane" id="2">
+            <!--tab 2 not approve own category--> 
+            <div class="page-header">
+                <h2>Not Approve Section | ยังไม่ได้รับอนุญาต</h2>
+                <p>Your post has not yet approve by admin | โพสของคุณยังไม่ได้รับการอนุญาตจากเจ้าหน้าที่</p>
+                <p>if you make any change to any of the list below please refresh the page | หากคุณทำการเปลี่ยนแปลงใดๆ ในโพสต่างๆ ข้างล่างนี้ กรุณากดปุ่ม รีเฟรช เพื่อให้ข้อมูลได้อัพเดทด้วย</p>
+            </div>
+            <!--ajax content-->
+            <div class="approve_post">
+                <h2>There is no data!</h2>
+                <!--ajax content-->
+            </div>
+            <div class="approve_pagin">
+                <!--ajax pagination-->
+            </div>
+            <!--end of ajax content-->
+
+        </div>
+        <!--////// end div-->
+
+        <!--tab 3 start-->
+        <div class="tab-pane" id="3">
+            <!--tab3 public category--> 
+            <div class="show_pubPost"></div>
+            <div class="pub_pagin"></div>
+        </div>
+        <!--//end of tab 3-->
+    </div>
+</div>
+<!--end of tab content-->
+<!--///////////////-->
+
+<div class="modal fade modalArForm">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="close" data-dismiss="modal">&times;</button>
+                <h1 class="modal-title">Form title </h1>
+                
+            </div>
+            <div class="modal-body">
+                <!--form start--> 
+                <form class="form-horizontal"id="arForm" action="<?php echo site_url("article/own_saveAr");?>">
+                    
+                    <!--choose cat  start-->
+                    <div class="form-group">
+                        <label class="label-control col-sm-4">Category</label>
+                        <div class="col-sm-6">
+                            <select name="cat_id" class="form-control cat_id" required>
+                                <option value="">
+                                Select The Category
+                                </option>
+                                <?php 
+                                    $num = 0;
+                                    foreach($get_cat as $row):
+                                        $num++;
+                                        ?>
+                                        <option value="<?php echo $row->cat_id;?>">
+                                        <?php echo $row->cat_title;?>
+                                        </option>
+                                        <?php
+                                    endforeach;
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                    <!--choose cat end-->
+
+                    <!--title start-->
+                    <div class="form-group">
+                        <label class="label-control col-sm-4">Title</label>
+                        <div class="col-sm-6">
+                            <input type="text" class="form-control ar_title" name="ar_title" required>
+
+                            <!--input hidden--> 
+                            <input type="hidden" class="ar_id" name="ar_id">
+                        </div>
+                    </div>
+                    <!--title end-->
+
+                    <!--summary start-->
+                    <div class="form-group">
+                        <label class="label-control col-sm-4">Summary</label>
+                        <div class="col-sm-6">
+                            <textarea class="form-control ar_summary" name="ar_summary" required></textarea>
+                        </div>
+                    </div>
+                    <!--summary end-->
+
+                    <!--body start-->
+                    <div class="form-group">
+                        <label class="label-control col-sm-12">Body text</label>
+                        
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-12">
+                            <textarea class="form-control tinymce ar_body " name="ar_body"></textarea>
+                        </div>
+                    </div>
+                    <!--body end-->
+
+                    <!--ar status show public or private-->
+                    <div class="form-group">
+                            <label class="label-control col-sm-4">&nbsp;</label>
+                            <div class="col-sm-6">
+                                    <div class="row">
+
+                                        <!-- checkbox 1 start-->
+                                        <div class="col-sm-8 input-group">
+                                            <span class="input-group-addon">
+                                                <input type="checkbox" name="show_pub" class="show_pub">
+                                            </span>
+                                            <input type="text" class="form-control pub_txt" value="Private Post. Only you can see this post." disabled>
+                                        </div>
+                                        <!-- checkbox 1 End-->
+
+                                        
+
+                                    </div>
+                            </div>
+                    </div>
+                    <!--end of ar status-->
+
+                </form>
+
+                <!--form end-->
+                <div class="ar_result">
+                        <!--dynamic result-->
+                        <h2>Show result</h2>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="row">
+                    <div class="col-sm-4">
+                        <button class="btn btn-primary btnSave" type="submit" form="arForm">
+                            Create
+                        </button>
+                        <button class="btn btn-danger" type="button" data-dismiss="modal">Hide</button>
+                        
+                        
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="pull-right">
+                                        IP 
+                                        <span class="label label-info">
+                                            <?php echo $ip;?>
+                                        </span>&nbsp;
+                                        Date 
+                                        <span class="label label-default">
+                                            <?php echo $today;?>
+                                        </span>
+                                        
+                        </span>
+                    </div>
+                    
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<?php 
+
+        require("user_arJS.php");

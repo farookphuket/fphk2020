@@ -1,0 +1,76 @@
+<section id="article">
+    <div class="row">
+        <div class="container">
+            <div class="col-lg-12">
+                <h1 class="text-center">Post</h1>
+                <p class="card-text">
+                The list show below is the post from the user
+                </p>
+                <hr class="my-4"/>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-3">
+                <h2>Menu</h2>
+                
+            </div>
+
+            <div class="col-lg-9">
+                <span class="float-right">
+                    <a href="#" class="btn btn-primary lnAddAr">Create New</a>
+                </span>
+                <h2 class="ar_head_num">content</h2>
+                
+                
+                <div class="ar_list">
+                    <!--dynamic content from js-->
+                </div>
+                <div class="ar_pagin">
+                    <!--dynamic content from js-->
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!--modal form add new post-->
+    <div class="modal fade mdAr">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content ">
+                <div class="modal-header">
+                    <h1 class="modal-title">Add new post</h1>
+                    <button class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <?php 
+                            $frmAr = "admin/article/_form_ar.php";
+                            $this->load->view($frmAr);
+                    ?>
+                    <div class="form_result">
+                        <!--dynamic content from ajax-->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary btnSave" type="submit" form="arForm">
+                        Save
+                    </button>
+                    <button class="btn btn-danger btnClose" type="button">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--End of modal form add new post-->
+
+
+
+</section>
+<?php 
+
+    $arJS = "admin/article/article_adminJS.php";
+    $this->load->view($arJS);

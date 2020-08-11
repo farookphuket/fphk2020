@@ -1,0 +1,42 @@
+<?php
+
+
+class Product extends MY_Controller{
+
+
+  protected $_tb_cat = "tbl_product_cat";
+  protected $_tb_product = "tbl_product";
+
+  //---user info
+  protected $ip;
+  protected $browser;
+  protected $os;
+
+  function __construct(){
+    parent::__construct();
+    $this->load->model("Mdl_product");
+
+    $this->ip = $this->Mdl_product->ip;
+    
+    
+  }
+
+  function index(){
+
+    
+    $this->data["meta_title"] = "Buying or saling.";
+    $this->data["subview"] = "product/product_index";
+    $tmp = "_layout_main";
+
+
+    $this->load->view($tmp,$this->data);
+    
+  }
+
+  
+    
+
+
+
+
+}//end of the file

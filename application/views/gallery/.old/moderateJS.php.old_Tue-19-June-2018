@@ -1,0 +1,418 @@
+<script>
+
+
+$(function(){
+
+
+    var $el = $("#container");
+    var page_status = $el.find(".status");
+
+    var mod_pic = (function(){
+
+
+        var emp_div = `
+            <div class="well">
+                <h2 class="alert alert-danger">There are no data</h2>
+            </div>
+        `;
+
+
+        var url = "<?php echo site_url("gallery/moderate");?>";//---global url action
+        
+        //--public image
+        var num_pub = $el.find(".num_pub");
+        var pub_list = $el.find(".pub_list");
+        var pub_pagin = $el.find(".pub_pagin");
+
+        //-----private photo album
+        var num_pri = $el.find(".num_pri");
+        var pri_list = $el.find(".pri_list");
+        var pri_pagin = $el.find(".pri_pagin");
+
+        //---edit image
+        var edit_place = $el.find(".edit_place");
+
+        //---upload form
+        var frmUploadPic = $el.find("#frmUploadPic");
+        var pic_pub = $el.find(".pic_pub");
+        var btnSave = $el.find(".btnSave");
+
+        //---uploadPic
+        function uploadPic(){
+            btnSave.unbind();
+            frmUploadPic.submit(function(o){
+                o.preventDefault();
+                var url = $(this).attr("action");
+                var data = new FormData(this);
+                $.ajax({
+                    type : "post",
+                    url : url,
+                    data : data,
+                    processData:false,
+                    contentType:false,
+                    cache:false,
+                    async:false,
+                    success : function(e){
+                        var rs = $.parseJSON(e);
+                        var pic_id = 0;
+                        var thumb = 0;
+                        $.each(rs.img,function(i,v){
+                            pic_id = v.pic_id;
+                            thumb = "<?php echo site_url("public/image/thumb/");?>"+v.thumb_name;
+                            var tmp = `
+                            <img class="responsive" src="${thumb}">
+                            `;
+                            page_status.html(tmp).show();
+                            setTimeout(function(){
+                                page_status.fadeOut("slow");
+                                showPic(v.pic_id);
+                                getPic();
+                                frmUploadPic.trigger("reset");
+                            },2000);
+                        });
+                    }
+                });
+            });
+        }
+
+        //---getPic
+        function getPic(page=1){
+
+            //---clear place
+            pub_list.html("");
+
+            //--clear place
+            pri_list.html("");
+            //--will use get method
+            var url = "<?php echo site_url("gallery/mod_getPic/");?>"+page;
+            $.ajax({
+                url : url,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+
+                    //console.log(rs);
+                    /*
+                    $.each(rs.get_pub,function(i,v){
+                        var thumb = "<?php echo site_url("public/image/thumb/");?>"+v.thumb_name;
+
+                        var pic = "<?php echo site_url("public/image/");?>"+v.pic_name;
+                        var tmp = `
+                        <div class="img_thumb">
+                            <a href="${pic}" target="_blank" title="click to see full image">
+                                <img src="${thumb}" alt="click for full image">
+                            </a>
+                            <span>
+                                <a href="#" class="showPic" data-pic_id="${v.pic_id}">
+                                    ${v.pic_title}
+                                </a>
+                            </span>
+                            
+                        </div>
+                        
+                        `;
+
+                        pub_list.append(tmp);
+                    });
+                    */
+
+                    if(!rs.get_pub.length || rs.get_pub.length ===  0){
+                        pub_list.html(emp_div);
+                    }else{
+                        $.each(rs.get_pub,function(i,v){
+                            var thumb = "<?php echo site_url("public/image/thumb/");?>"+v.thumb_name;
+                            var tmp = `
+                            <div class="img_thumb">
+                                <img src="${thumb}">
+                                <a href="#" class="showPic" data-pic_id="${v.pic_id}">
+                                    <span>
+                                        ${v.pic_title}
+                                    </span>
+                                </a>
+                            </div>
+                            `;
+                            pub_list.append(tmp);
+                        });
+                    }
+
+
+                    pub_pagin.html(rs.pagin_pub);
+                    num_pub.html(rs.num_pub);
+
+                    //--private image
+                    num_pri.html(rs.num_own);
+                    pri_pagin.html(rs.own_pagin);
+
+                    if(!rs.get_own.length || rs.get_own.length ===  0){
+                        pri_list.html(emp_div);
+                    }else{
+                        $.each(rs.get_own,function(i,v){
+                            var thumb = "<?php echo site_url("public/image/thumb/");?>"+v.thumb_name;
+                            var tmp = `
+                            <div class="img_thumb">
+                                <img src="${thumb}">
+                                <a href="#" class="showPic" data-pic_id="${v.pic_id}">
+                                    <span>
+                                        ${v.pic_title}
+                                    </span>
+                                </a>
+                            </div>
+                            `;
+                            pri_list.append(tmp);
+                        });
+                    }
+
+                    
+                }
+
+            });
+
+        }
+
+        //-----showPic
+        function showPic(id){
+            var data = {cmd : "edit",pic_id:id};
+            $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    $.each(rs.get,function(i,v){
+
+                        var pic = "<?php echo site_url("public/image/");?>"+v.pic_name;
+                        var thumb = "<?php echo site_url("public/image/thumb/");?>"+v.thumb_name;
+
+                        var pub = `<option value="0">No</option>`;
+                        if(parseInt(v.allow_public) !== 0){
+                            pub = `<option value="1">Yes</option>`;
+                        }
+
+                        var allow = `<option value="0">No</option>`;
+                        if(parseInt(v.admin_allow) !== 0){
+                            allow = `<option value="1">Yes</option>`;
+                        }
+
+                        var tmp = `
+                        <div class="page-header">
+                            <h2>Edit ${v.pic_name} prop.</h2>
+                        </div>
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h2 class="modal-title">
+                                    ${v.pic_name}
+                                    </h2>
+                                </div>
+                                <div class="modal-body">
+                                    <p class="text-center">
+                                        <img class="responsive" src="${pic}">
+                                    </p>
+                                    
+                                    <!--form start-->
+                                    <form class="form-horizontal">
+                                        <div class="form-group">
+                                            <label class="label-control col-sm-4">BBCode Image</label>
+                                            <div class="col-sm-6">
+                                                <textarea class="form-control pic_code" readonly="readonly">&lt;img class="responsive" src='${pic}'&gt;</textarea>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="label-control col-sm-4">BBCode Thumbnail</label>
+                                            <div class="col-sm-6">
+                                                <textarea class="form-control pic_code" readonly="readonly">&lt;img class="responsive" src='${thumb}'&gt;</textarea>
+                                            </div>
+                                        </div>
+
+                                        <!--edit title--> 
+                                        <div class="form-group">
+                                            <label class="label-control col-sm-4">หัวข้อ</label>
+                                            <div class="col-sm-6">
+                                                <input type="text" value="${v.pic_title}" class="form-control txtPicTitle" name="txtPicTitle" data-pic_id="${v.pic_id}" required>
+                                            </div>
+                                        </div>
+
+                                        <!-- update public --> 
+                                        <div class="form-group">
+                                            <label class="label-control col-sm-4">ตั้งเป็นสาธารณะ</label>
+                                            <div class="col-sm-6">
+                                                <select class="form-control pic_pub" data-pic_id="${v.pic_id}">
+                                                    ${pub}
+                                                    <option value=0>No</option>
+                                                    <option value=1>Yes</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <!-- Allow by admin --> 
+                                        <div class="form-group">
+                                            <label class="label-control col-sm-4">ได้รับการตรวจสอบ</label>
+                                            <div class="col-sm-6">
+                                                <select class="form-control admin_allow" data-pic_id="${v.pic_id}">
+                                                    ${allow}
+                                                    <option value=0>No</option>
+                                                    <option value=1>Yes</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+
+                                    </form>
+                                    <!--form-end-->
+                                </div>
+                                
+                                
+                            </div>
+                            
+                        </div>
+                        `;
+
+                        edit_place.html(tmp);
+                    });
+                }
+            });
+        }
+
+
+        //---saveTitle
+        function saveTitle(val,id){
+            
+            var data = {cmd : "updateTitle",pic_id : id,pic_title : val};
+            $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+
+                    var msg = rs.msg;
+                    page_status.html(msg).show();
+                    setTimeout(function(){
+                        page_status.fadeOut("slow");
+                        showPic(rs.pic_id);
+                    },2000);
+                }
+            });
+            
+
+        }
+
+        //--savePub
+        function savePub(val,id){
+            var data = {cmd : "updatePub",pic_id : id,pic_pub : val};
+
+            $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    
+                    
+                    var msg = rs.msg;
+                    page_status.html(msg).show();
+                    setTimeout(function(){
+                        page_status.fadeOut("slow");
+                        showPic(rs.pic_id);
+                        getPic();
+                    },2000);
+                    
+                }
+            });
+            
+        }
+
+        //--saveAllow
+        function saveAllow(val,id){
+            var data = {cmd : "updateAllow",pic_id : id,admin_allow : val};
+
+            $.ajax({
+                type : "post",
+                url : url,
+                data : data,
+                success : function(e){
+                    var rs = $.parseJSON(e);
+                    
+                    
+                    var msg = rs.msg;
+                    page_status.html(msg).show();
+                    setTimeout(function(){
+                        page_status.fadeOut("slow");
+                        showPic(rs.pic_id);
+                    },2000);
+                    
+                }
+            });
+            
+        }
+        
+        //---getEvent
+        function getEvent(){
+            getPic(1);
+            
+            btnSave.on("click",function(){
+                uploadPic();
+            });
+            pub_list.delegate(".showPic","click",function(ev){
+                ev.preventDefault();
+                var id = $(this).attr("data-pic_id");
+                showPic(id);
+            });
+
+            pri_list.delegate(".showPic","click",function(ev){
+                ev.preventDefault();
+                var id = $(this).attr("data-pic_id");
+                showPic(id);
+            });
+
+            //--pagination link of public image
+            pub_pagin.delegate(".pagination a","click",function(evt){
+                evt.preventDefault();
+                var cur_page = $(this).attr("data-ci-pagination-page");
+                getPic(cur_page);
+
+            });
+
+            //---pagination link of private image
+            pri_pagin.delegate(".pagination a","click",function(evt){
+                evt.preventDefault();
+                var cur_page = $(this).attr("data-ci-pagination-page");
+                getPic(cur_page);
+
+            });
+
+            edit_place.delegate(".pic_code","click",function(){
+                $(this).select();
+            });
+
+
+            //--edit title
+            edit_place.delegate(".txtPicTitle","blur",function(){
+                var val = $(this).val();
+                var id = $(this).attr("data-pic_id");
+                saveTitle(val,id);
+            });
+
+            //---update public status
+            edit_place.delegate(".pic_pub","change",function(){
+                var val = $(this).val();
+                var id = $(this).attr("data-pic_id");
+                
+                savePub(val,id);
+            });
+
+            //---update allow status
+            edit_place.delegate(".admin_allow","change",function(){
+                var val = $(this).val();
+                var id = $(this).attr("data-pic_id");
+                
+                saveAllow(val,id);
+            });
+        }
+        return{
+            getEvent : getEvent
+        }
+    })();
+    //---call mod_pic
+    mod_pic.getEvent();
+});
+</script>

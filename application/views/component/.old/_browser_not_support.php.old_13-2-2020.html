@@ -1,0 +1,43 @@
+
+            <?php
+                $ie = "Internet Explorer";
+                $safari = "Safari";
+                $firefox = "Firefox";
+                $b  = $this->data["browser_name"];
+                if($b == $ie || $b == $safari || $b == $firefox):
+                    ?>
+                    <div class="container">
+                        <div class="alert alert-danger">
+                            <h1 class="text-center">Your browser is not support!</h1>
+                            <p>Dear user you have using <?php echo $b;?> which is not support for this web site.<br>this maybe cause some form that has using "Javascript" will be not working as you expected</p>
+                            <p>
+                                please change your browser.
+                            </p>
+                            <p class="text-center">
+                                <strong>ขออภัย!</strong> <?php echo $b;?> &nbsp;ไม่รองรับการทำงานในเว๊บไซต์นี้ซึ่งใช้ Javascript อาจจะทำให้ฟอร์มนี้ไม่ทำงานตามที่ต้องการได้
+                            </p>
+                        </div>
+                        <div class="alert alert-success">
+                            <h1 class="text-center">Support Browser</h1>
+                            <ol>
+                                <li>
+                                    Opera
+                                </li>
+                                <li>
+                                    Google Chrome
+                                </li>
+                                <li>
+
+                                    Chromium
+                                </li>
+                                <li class="alert alert-warning">
+                                    Firefox (is not support if you are going to create a new "Article" but you still can use this browser).
+                                </li>
+
+                            </ol>
+                        </div>
+                    </div>
+
+                    <?php
+                endif;
+?>
