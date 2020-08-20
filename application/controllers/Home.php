@@ -13,6 +13,7 @@ New edit with the MY_Model class on Thu-25-Aug-2016
 
         protected $_tb_ar = "tbl_article";
         protected $_tb_seo = "seo";
+        protected $_tb_ustd = "tbl_ustd";
 
         //--public variable
 
@@ -27,6 +28,7 @@ New edit with the MY_Model class on Thu-25-Aug-2016
         $this->load->model("Mdl_home");
         $this->load->model("Mdl_article");
         $this->load->model("Mdl_tour");
+        $this->load->model("Mdl_ustd");
 
         $this->load->library("pagination");
 
@@ -49,6 +51,19 @@ public function index()
     $this->data['subview'] = "home_index";
     $this->data['meta_title'] = "Welcome  to {$url} | {$this->browser_name}";
 
+    //get last what's new for the keyword 
+    $where = array(
+        "{$this->_tb_ustd}.show_public !=" => 0,
+        "{$this->_tb_ustd}.friend_only " => 0,
+        "{$this->_tb_ustd}.private_only" => 0
+    );
+    $se = $this->Mdl_ustd->getSt($where,1)->result();
+    foreach($se as $item):
+       $this->data["meta_title"] = $item->st_title; 
+       $this->data["publisher"] = $item->name; 
+       $this->data["page_keyword"] = $item->st_title; 
+       $this->data["page_description"] = $item->st_title; 
+    endforeach;
 
 
     $this->load->view("_layout_main", $this->data);

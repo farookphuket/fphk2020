@@ -105,7 +105,21 @@ class Ustd extends MY_Controller {
         );
         $get = $this->Mdl_ustd->getSt($where)->result();
         $num = count($get);
-        $this->o_put["get_all"] = $get;
+
+
+        $url = "getWhatNewList";
+        $per_page = 16;
+
+        $conf = $this->getConfPagin($per_page,$num,$url);
+        $this->pagination->initialize($conf);
+
+        $start = ($page-1)*$per_page;
+        $get_page = $this->Mdl_ustd->getSt($where,$per_page,$start)->result();
+        if($num > $per_page):
+            $this->o_put["pagination"] = $this->pagination->create_links();
+        endif;
+
+        $this->o_put["get_all"] = $get_page;
        $this->output->set_output(json_encode($this->o_put)); 
 
     }

@@ -8,8 +8,8 @@
                 <p>&nbsp;</p>
             </div>
             <div class="col-lg-12">
-                <div class="st_list">
-                </div>
+                <ul class="list-group st_list">
+                </ul>
                 <div class="st_pagin">
                 </div>
             </div>
@@ -18,46 +18,87 @@
   </section>
 <script charset="utf-8">
 $(function(){
-    var $ST = $("#ustd");
 
- 
-    var st = (function(){
-    
-        var st_list = getEl(".st_list");
-        var st_pagin = getEl("st_pagin"); 
 
-        function getWhatNew(page=1){
-            st_list.html("");
-            var url = "<?php echo site_url("ustd/getWhatNewList/"); ?>"+page;
+    const $WT = (function(){
+
+
+        //-- use Cookies
+        let WT_page = Cookies.get("WT_page");
+        if(!WT_page || WT_page === 0){
+            WT_page = 1;
+        }
+        let $st_list = getEl(".st_list");
+        let $st_pagin = getEl(".st_pagin");
+
+        function getWhatNewList(page=1){
+            $st_list.html("");
+            let url = "<?php echo site_url("ustd/getWhatNewList/"); ?>"+page;
+
             $.ajax({
-            url : url,
+                url : url,
                 success : function(e){
-                    
-                    //console.log(e);
-                    var rs = $.parseJSON(e);
-                    $.each(rs.get_all,function(i,v){
-                        var tmp = `
-                            
-                            ${v.st_sum}
-                            
-                            <p class="pt-4">&nbsp;</p>
-                        `;
-                        st_list.append(tmp);
+
+                    let rs = $.parseJSON(e);
+                    $.each(rs.get_all,(i,v)=>{
+                          let tmp = `<li class="list-group-item">
+                            <div class="container">
+                                ${v.st_sum}
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <tr>
+                                            <th>
+                                                On 
+                                            </th>
+                                            <td>
+                                                ${v.date_create}
+                                            </td>
+                                        </tr>
+                                        
+                                        <tr>
+                                            <th>
+                                                title 
+                                            </th>
+                                            <td>
+                                                ${v.st_title}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+
+                        </li><p class="pt-2">&nbsp;</p>`;  
+                        $st_list.append(tmp);
                     });
+                    if(rs.pagination){
+                        $st_pagin.html(rs.pagination);
+                    }
                 }
-                                     
             });
         }
+
         function getEl(el){
-            return $ST.find(el);
+            return $(el);     
         }
         function getEvent(){
-           getWhatNew(); 
+            getWhatNewList(WT_page);
+            //console.log(`wt is ${WT_page}`);
+            $st_pagin.delegate(".pagination a","click",function(e){
+                e.preventDefault();
+                let page = $(this).attr("data-ci-pagination-page");
+                Cookies.set('WT_page',page);
+                getWhatNewList(page); 
+                 
+            });
         }
         return{getEvent:getEvent}
     })();
-    st.getEvent();
+    $WT.getEvent();
 });
+
+
+
+
 </script>
 
 
